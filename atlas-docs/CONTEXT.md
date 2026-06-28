@@ -2268,19 +2268,9 @@ Comando iniciado:
 
 /rank
 
-Subcomando implementado:
+Subcomandos implementados:
 
 set
-
-Uso:
-
-/rank set <jogador> <cargo>
-
-O jogador pode estar offline, mas precisa já estar cadastrado no Atlas.
-
-Apenas o console e jogadores com cargo OWNER/DONO ou ADMIN/ADM podem utilizar `set`.
-
-Subcomandos planejados:
 
 remove
 
@@ -2293,6 +2283,14 @@ reload
 permission add
 
 permission remove
+
+Uso:
+
+/rank set <jogador> <cargo>
+
+O jogador pode estar offline, mas precisa já estar cadastrado no Atlas.
+
+Apenas o console e jogadores com cargo OWNER/DONO ou ADMIN/ADM podem utilizar os comandos administrativos de rank.
 
 ---
 
@@ -2333,6 +2331,8 @@ Implementado:
 ✔ TAB
 
 ✔ /rank set
+
+✔ Administração completa de ranks
 
 ✔ Chat Formatter
 
