@@ -2038,13 +2038,23 @@ OP
 
 LuckPerms
 
+O cargo OWNER/Dono possui a permissão especial:
+
+minecraft.*
+
+Essa permissão libera os comandos administrativos vanilla do Minecraft sem adicionar o jogador à lista de OP.
+
+O feedback de comandos executados por jogadores é privado.
+
+O resultado aparece apenas para quem executou o comando e permanece registrado no log do servidor para auditoria.
+
 ---
 
 # Rank Formatter
 
 Status
 
-🚧 Em desenvolvimento
+✅ Implementado
 
 Responsável por transformar:
 
@@ -2076,6 +2086,8 @@ Exemplo
 
 Primeira implementação visual.
 
+Status: ✅ Implementado
+
 Objetivo:
 
 Mostrar:
@@ -2090,15 +2102,13 @@ Sem alterar o nome verdadeiro do jogador.
 
 # Chat
 
-Planejado
+Status: ✅ Implementado
 
 Formato:
 
-[ADM] Victor
+[ADM] Victor » Olá pessoal!
 
-Olá pessoal!
-
-Suporte a:
+Suporte futuro:
 
 Hover
 
@@ -2250,13 +2260,23 @@ Todas utilizando EconomyService.
 
 # Rank Administration
 
-Será criado:
+Comando iniciado:
 
 /rank
 
-Subcomandos:
+Subcomando implementado:
 
 set
+
+Uso:
+
+/rank set <jogador> <cargo>
+
+O jogador pode estar offline, mas precisa já estar cadastrado no Atlas.
+
+Apenas o console e jogadores com cargo OWNER/DONO ou ADMIN/ADM podem utilizar `set`.
+
+Subcomandos planejados:
 
 remove
 
@@ -2304,13 +2324,15 @@ Implementado:
 
 ✔ Wildcards
 
+✔ RankFormatter
+
+✔ TAB
+
+✔ /rank set
+
+✔ Chat Formatter
+
 Em desenvolvimento:
-
-RankFormatter
-
-TAB
-
-Chat Formatter
 
 Nametag Formatter
 

@@ -19,3 +19,7 @@ Economy.
 v0.0.4
 
 Ranks.
+
+---
+
+O histórico detalhado dos builds do mod está em `atlas-docs/versions/`.

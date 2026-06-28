@@ -14,10 +14,10 @@ Sprint 1
 
 Sprint 2
 
-[ ] Rank Formatter
+[x] Rank Formatter
 
-[ ] Chat
+[x] Chat
 
 [ ] Nametag
 
-[ ] TAB
+[x] TAB
