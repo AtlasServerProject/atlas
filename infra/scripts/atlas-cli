@@ -1,0 +1,67 @@
+#!/bin/bash
+
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+COMMAND="${1:-}"
+
+case "$COMMAND" in
+
+    install)
+        "$SCRIPT_DIR/install.sh"
+        ;;
+
+    doctor)
+        "$SCRIPT_DIR/doctor.sh"
+        ;;
+
+    backup)
+        "$SCRIPT_DIR/backup.sh"
+        ;;
+
+    restore)
+        "$SCRIPT_DIR/restore.sh"
+        ;;
+
+    update)
+        "$SCRIPT_DIR/update.sh"
+        ;;
+    migrate)
+        "$SCRIPT_DIR/migrate.sh"
+        ;;
+
+    start)
+        sudo systemctl start atlas
+        ;;
+
+    stop)
+        sudo systemctl stop atlas
+        ;;
+
+    restart)
+        sudo systemctl restart atlas
+        ;;
+
+    status)
+        sudo systemctl status atlas
+        ;;
+
+    logs)
+        journalctl -u atlas -f
+        ;;
+
+    *)
+        echo "Atlas CLI"
+        echo
+        echo "Uso:"
+        echo "  atlas-cli install"
+        echo "  atlas-cli doctor"
+        echo "  atlas-cli start"
+        echo "  atlas-cli stop"
+        echo "  atlas-cli restart"
+        echo "  atlas-cli status"
+        echo "  atlas-cli logs"
+        echo "  atlas-cli migrate"
+        ;;
+esac

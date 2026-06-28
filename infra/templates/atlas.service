@@ -1,0 +1,19 @@
+[Unit]
+Description=Atlas Minecraft Server
+After=network.target
+
+[Service]
+User=somente
+Group=somente
+
+WorkingDirectory=/opt/atlas/server/fabric
+
+ExecStart=/opt/atlas/server/fabric/start.sh
+
+Restart=always
+RestartSec=5
+
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=multi-user.target
