@@ -1798,7 +1798,7 @@ O projeto está preparado para crescimento modular sem necessidade de refatoraç
 
 # Sprint 2 — Visual Identity & Rank System
 
-Status: 🚧 Em desenvolvimento
+Status: ✅ Concluída
 
 ---
 
@@ -2328,6 +2328,8 @@ Implementado:
 
 ✔ RankFormatter
 
+✔ Tags visuais de cargos
+
 ✔ TAB
 
 ✔ /rank set
@@ -2344,7 +2346,7 @@ Implementado:
 
 # Próximo Objetivo
 
-Concluir completamente o sistema visual de cargos.
+Iniciar a Sprint 3 com o sistema próprio de login para jogadores offline.
 
 Ao final da Sprint 2 o servidor deverá apresentar:
 
@@ -2358,4 +2360,4 @@ Ao final da Sprint 2 o servidor deverá apresentar:
 
 ✔ Framework de comandos iniciado
 
-A Sprint 2 termina quando a identidade visual completa do servidor estiver operacional.
+A Sprint 2 foi concluída com a identidade visual completa do servidor operacional.
