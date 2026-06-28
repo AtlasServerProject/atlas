@@ -18,6 +18,6 @@ Sprint 2
 
 [x] Chat
 
-[ ] Nametag
+[x] Nametag
 
 [x] TAB

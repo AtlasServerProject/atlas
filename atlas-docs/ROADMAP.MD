@@ -12,9 +12,9 @@ Sprint 2
 
 🚧 Tags
 
-🚧 Chat
+✅ Chat
 
-🚧 Nametag
+✅ Nametag
 
 ---
 

@@ -2124,19 +2124,21 @@ Gradientes
 
 # Nametag
 
-Planejado
+Status: ✅ Implementado
 
 Mostrar acima da cabeça:
 
-[ADM]
-
-Victor
+[ADM] Victor
 
 Atualização automática.
+
+O TAB e o nametag compartilham equipes nativas do scoreboard para manter o mesmo prefixo e cor sem alterar o username verdadeiro.
 
 ---
 
 # Atualização em Tempo Real
+
+Status: ✅ Implementado
 
 Quando um administrador alterar um cargo:
 
@@ -2163,6 +2165,8 @@ Nametag
 Permissões
 
 Instantaneamente.
+
+O Atlas verifica mudanças visuais de jogadores online a cada 5 segundos.
 
 ---
 
@@ -2332,9 +2336,9 @@ Implementado:
 
 ✔ Chat Formatter
 
-Em desenvolvimento:
+✔ Nametag
 
-Nametag Formatter
+✔ Sincronização automática de ranks
 
 ---
 
