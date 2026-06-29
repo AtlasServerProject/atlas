@@ -1,29 +1,60 @@
-Sprint 1
+# Roadmap do Atlas
 
-✅ Core
+## Sprint 1 — Core Foundation
 
-✅ Economy
+Status: ✅ Concluída
 
-✅ Rank
-
----
-
-Sprint 2
-
-✅ Tags
-
-✅ Chat
-
-✅ Nametag
+- Core
+- PostgreSQL
+- Players
+- Economy
+- Ranks e permissões
 
 ---
 
-Sprint 3
+## Sprint 2 — Visual Identity & Ranks
 
-Login
+Status: ✅ Concluída
+
+- Tags de cargos
+- TAB
+- Chat
+- Nametag
+- Administração de ranks
+- Sincronização em tempo real
+
+Versão final: `v1.4.0`
 
 ---
 
-Sprint 4
+## Sprint 3 — Authentication
 
-Homes
+Status: 🚧 Próxima
+
+- Registro de jogadores Offline
+- Login e logout
+- Senhas com BCrypt
+- Sessões persistentes
+- Bloqueio até autenticação
+- Login automático para Premium
+
+---
+
+## Sprint 4 — Homes
+
+Status: ⏳ Planejada
+
+- Criar, remover e utilizar homes
+- Limites por cargo e VIP
+- Teleporte seguro e cooldown
+
+---
+
+## Próximos sistemas
+
+1. Claims
+2. VIP e Crates
+3. GTS
+4. Missões e Eventos
+5. API, Website e Loja
+6. CLI e Discord
