@@ -1,0 +1,3 @@
+[submodule "atlas-core"]
+	path = atlas-core
+	url = https://github.com/AtlasServerProject/atlas-core.git
