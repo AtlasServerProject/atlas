@@ -57,7 +57,7 @@ Status: 🚧 Próxima
 
 ### Proteção
 
-- [ ] Bloquear movimentação antes do login
+- [x] Bloquear movimentação antes do login
 - [ ] Bloquear chat e comandos antes do login
 - [ ] Bloquear inventário e interações antes do login
 - [ ] Bloquear dano antes do login
