@@ -48,11 +48,11 @@ Status: 🚧 Próxima
 
 ### Registro e login
 
-- [ ] `/register <senha> <confirmacao>`
-- [ ] Hash seguro de senha com BCrypt
-- [ ] `/login <senha>`
+- [x] `/register <senha> <confirmacao>`
+- [x] Hash seguro de senha com BCrypt
+- [x] `/login <senha>`
 - [ ] `/logout`
-- [ ] Sessão persistente por jogador
+- [x] Sessão persistente por jogador
 - [ ] Expiração e encerramento de sessões
 
 ### Proteção
