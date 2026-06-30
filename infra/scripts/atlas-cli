@@ -6,6 +6,23 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 COMMAND="${1:-}"
 
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+
+ADMIN_SOCKET="${ATLAS_ADMIN_SOCKET:-/opt/atlas/server/fabric/atlas-admin.sock}"
+
+run_admin_command() {
+    local command="$1"
+
+    if [ ! -S "$ADMIN_SOCKET" ]; then
+        echo "Console Atlas indisponível em $ADMIN_SOCKET."
+        return 1
+    fi
+
+    printf '%s\n' "$command" | nc -N -U "$ADMIN_SOCKET"
+}
+
 case "$COMMAND" in
 
     install)
@@ -51,6 +68,42 @@ case "$COMMAND" in
         journalctl -u atlas -f
         ;;
 
+    console)
+        if ! command -v nc >/dev/null 2>&1; then
+            echo "netcat não está instalado."
+            exit 1
+        fi
+
+        if [ ! -S "$ADMIN_SOCKET" ]; then
+            echo "Console Atlas indisponível em $ADMIN_SOCKET."
+            exit 1
+        fi
+
+        echo "Console administrativo Atlas. Use 'exit' para sair."
+        while IFS= read -r -p "atlas> " admin_command; do
+            case "$admin_command" in
+                exit|quit)
+                    break
+                    ;;
+                "")
+                    continue
+                    ;;
+                *)
+                    run_admin_command "$admin_command"
+                    ;;
+            esac
+        done
+        ;;
+
+    exec)
+        if [ "$#" -eq 0 ]; then
+            echo "Uso: atlas-cli exec <comando>"
+            exit 1
+        fi
+
+        run_admin_command "$*"
+        ;;
+
     *)
         echo "Atlas CLI"
         echo
@@ -62,6 +115,8 @@ case "$COMMAND" in
         echo "  atlas-cli restart"
         echo "  atlas-cli status"
         echo "  atlas-cli logs"
+        echo "  atlas-cli console"
+        echo "  atlas-cli exec <comando>"
         echo "  atlas-cli migrate"
         ;;
 esac
