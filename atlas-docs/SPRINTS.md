@@ -35,7 +35,7 @@ Versão final: `v1.4.0`
 
 ## Sprint 3 — Authentication
 
-Status: 🚧 Próxima
+Status: 🚧 Em andamento
 
 ### Fundação
 
@@ -66,15 +66,16 @@ Status: 🚧 Próxima
 
 ### Premium
 
-- [ ] Identificar contas Premium
-- [ ] Login automático para Premium
-- [ ] Manter `/register` e `/login` para jogadores Offline
+- [x] Identificar contas Premium com prova oficial de sessão
+- [x] Login automático para Premium
+- [x] Manter `/register` e `/login` para jogadores Offline
 
 ### Entrega
 
 - [ ] Testes de registro, login e reconexão
-- [ ] Documentação da versão
-- [ ] Build, implantação e validação em produção
+- [x] Documentação da versão
+- [x] Build e implantação da v1.8.0
+- [ ] Validação Premium e Offline em jogo
 
 ---
 
