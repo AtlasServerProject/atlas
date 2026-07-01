@@ -41,3 +41,9 @@ Console administrativo próprio por socket Unix e remoção do RCON.
 v1.10.0
 
 Bloqueio de chat e comandos para jogadores não autenticados.
+
+---
+
+v1.11.0
+
+Logout manual e expiração ativa das sessões de autenticação.

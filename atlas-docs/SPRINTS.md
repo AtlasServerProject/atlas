@@ -51,9 +51,9 @@ Status: 🚧 Em andamento
 - [x] `/register <senha> <confirmacao>`
 - [x] Hash seguro de senha com BCrypt
 - [x] `/login <senha>`
-- [ ] `/logout`
+- [x] `/logout`
 - [x] Sessão persistente por jogador
-- [ ] Expiração e encerramento de sessões
+- [x] Expiração e encerramento de sessões
 
 ### Proteção
 
