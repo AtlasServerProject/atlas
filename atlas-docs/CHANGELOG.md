@@ -53,3 +53,9 @@ Logout manual e expiração ativa das sessões de autenticação.
 v1.12.0
 
 Primeira entrega do Auth Lobby, com mapa dedicado e saudação individual no login.
+
+---
+
+v1.12.1
+
+Título de entrada compacto e definição do spawn global do Auth Lobby.

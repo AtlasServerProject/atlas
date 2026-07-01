@@ -101,7 +101,8 @@ Status: 🚧 Em andamento
 - [x] Limpar dados legados de jogadores e Cobblemon
 - [x] Instalar o Auth Lobby como mundo inicial
 - [ ] Instalar o Lobby Emerald como mundo selecionável
-- [ ] Definir e validar os pontos de spawn
+- [x] Definir o spawn global do Auth Lobby
+- [ ] Validar o spawn do Auth Lobby em jogo
 
 ### Auth Lobby
 

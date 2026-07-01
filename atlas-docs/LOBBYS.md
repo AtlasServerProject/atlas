@@ -29,6 +29,15 @@ O mapa `Lobby Hub` foi adotado como Auth Lobby. Antes da implantação, foram
 removidos dados legados de jogadores, inventários, Pokémon, Pokédex, estatísticas
 e advancements. Mensagens promocionais e links externos também foram removidos.
 
+Spawn global inicial:
+
+```text
+X: 646
+Y: 83
+Z: 3535
+Orientação: oeste (90°)
+```
+
 ## Seletor
 
 Depois da autenticação, uma bússola abrirá o menu de servidores. A primeira opção
