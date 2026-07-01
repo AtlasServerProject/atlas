@@ -102,6 +102,7 @@ Status: 🚧 Em andamento
 - [x] Instalar o Auth Lobby como mundo inicial
 - [ ] Instalar o Lobby Emerald como mundo selecionável
 - [x] Definir o spawn global do Auth Lobby
+- [x] Forçar o spawn exato em toda conexão
 - [ ] Validar o spawn do Auth Lobby em jogo
 
 ### Auth Lobby

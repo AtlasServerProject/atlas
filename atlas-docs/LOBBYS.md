@@ -38,6 +38,10 @@ Z: 3535
 Orientação: oeste (90°)
 ```
 
+O raio aleatório do spawn está desativado. Toda conexão é teleportada para o
+centro do bloco (`646.5 83 3535.5`), inclusive quando o jogador já possui uma
+posição anterior salva.
+
 ## Seletor
 
 Depois da autenticação, uma bússola abrirá o menu de servidores. A primeira opção

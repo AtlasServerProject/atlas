@@ -59,3 +59,9 @@ Primeira entrega do Auth Lobby, com mapa dedicado e saudação individual no log
 v1.12.1
 
 Título de entrada compacto e definição do spawn global do Auth Lobby.
+
+---
+
+v1.12.2
+
+Spawn exato obrigatório no Auth Lobby para todas as conexões.
