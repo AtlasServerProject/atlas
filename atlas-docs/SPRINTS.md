@@ -58,7 +58,7 @@ Status: 🚧 Em andamento
 ### Proteção
 
 - [x] Bloquear movimentação antes do login
-- [ ] Bloquear chat e comandos antes do login
+- [x] Bloquear chat e comandos antes do login
 - [ ] Bloquear inventário e interações antes do login
 - [ ] Bloquear dano antes do login
 - [ ] Limitar tentativas e aplicar cooldown

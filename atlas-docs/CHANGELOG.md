@@ -35,3 +35,9 @@ Autenticação híbrida segura para contas Premium e Offline, com migração de 
 v1.9.0
 
 Console administrativo próprio por socket Unix e remoção do RCON.
+
+---
+
+v1.10.0
+
+Bloqueio de chat e comandos para jogadores não autenticados.
