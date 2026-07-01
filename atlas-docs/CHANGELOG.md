@@ -47,3 +47,9 @@ Bloqueio de chat e comandos para jogadores não autenticados.
 v1.11.0
 
 Logout manual e expiração ativa das sessões de autenticação.
+
+---
+
+v1.12.0
+
+Primeira entrega do Auth Lobby, com mapa dedicado e saudação individual no login.
