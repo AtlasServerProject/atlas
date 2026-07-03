@@ -114,10 +114,10 @@ case "$COMMAND" in
                 run_admin_command "chunky progress"
                 ;;
             pause)
-                run_admin_command "chunky pause atlas:survival_emerald"
+                run_admin_command "chunky pause"
                 ;;
             continue)
-                run_admin_command "chunky continue atlas:survival_emerald"
+                run_admin_command "chunky continue"
                 ;;
             *)
                 echo "Uso: atlas-cli pregenerate-survival [start|status|pause|continue]"
