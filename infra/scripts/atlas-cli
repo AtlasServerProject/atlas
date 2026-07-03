@@ -104,6 +104,28 @@ case "$COMMAND" in
         run_admin_command "$*"
         ;;
 
+    pregenerate-survival)
+        action="${1:-start}"
+        case "$action" in
+            start)
+                run_admin_command "chunky start atlas:survival_emerald square 0 0 3000"
+                ;;
+            status)
+                run_admin_command "chunky progress"
+                ;;
+            pause)
+                run_admin_command "chunky pause atlas:survival_emerald"
+                ;;
+            continue)
+                run_admin_command "chunky continue atlas:survival_emerald"
+                ;;
+            *)
+                echo "Uso: atlas-cli pregenerate-survival [start|status|pause|continue]"
+                exit 1
+                ;;
+        esac
+        ;;
+
     *)
         echo "Atlas CLI"
         echo
@@ -117,6 +139,7 @@ case "$COMMAND" in
         echo "  atlas-cli logs"
         echo "  atlas-cli console"
         echo "  atlas-cli exec <comando>"
+        echo "  atlas-cli pregenerate-survival [start|status|pause|continue]"
         echo "  atlas-cli migrate"
         ;;
 esac
