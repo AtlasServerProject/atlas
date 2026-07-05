@@ -108,7 +108,7 @@ case "$COMMAND" in
         action="${1:-start}"
         case "$action" in
             start)
-                run_admin_command "chunky start atlas:survival_emerald square 0 0 3000"
+                run_admin_command "chunky start atlas:survival_emerald square 0 0 6000"
                 ;;
             status)
                 run_admin_command "chunky progress"
