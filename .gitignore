@@ -4,3 +4,7 @@ minecraft/staging/
 
 # Pacotes gerados para teste com amigos
 atlas-client-modpack-*.tar.gz
+
+# Ajustes locais de template/ícone do servidor
+infra/templates/server.properties
+infra/templates/server-icon.png
