@@ -1,3 +1,6 @@
 # Mapas e áreas temporárias de implantação
 minecraft/maps/*.7z
 minecraft/staging/
+
+# Pacotes gerados para teste com amigos
+atlas-client-modpack-*.tar.gz
