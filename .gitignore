@@ -1,9 +1,11 @@
 # Mapas e áreas temporárias de implantação
 minecraft/maps/*.7z
 minecraft/staging/
+minecraft/schema/*.litematic
 
 # Pacotes gerados para teste com amigos
 atlas-client-modpack-*.tar.gz
+CobbleSounds*.zip
 
 # Ajustes locais de template/ícone do servidor
 infra/templates/server.properties
