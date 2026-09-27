@@ -108,7 +108,12 @@ case "$COMMAND" in
         action="${1:-status}"
         case "$action" in
             start)
-                run_admin_command "chunky start atlas:survival_emerald square 0 0 6000"
+                run_admin_command "chunky world atlas:survival_emerald"
+                run_admin_command "chunky shape square"
+                run_admin_command "chunky center 0 0"
+                run_admin_command "chunky radius 6000"
+                run_admin_command "chunky quiet 60"
+                run_admin_command "chunky start"
                 ;;
             status)
                 run_admin_command "chunky progress"
@@ -121,6 +126,60 @@ case "$COMMAND" in
                 ;;
             *)
                 echo "Uso: atlas-cli pregenerate-survival [status|start|pause|continue|resume]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    pregenerate-nether)
+        action="${1:-status}"
+        case "$action" in
+            start)
+                run_admin_command "chunky world minecraft:the_nether"
+                run_admin_command "chunky shape square"
+                run_admin_command "chunky center 0 0"
+                run_admin_command "chunky radius 6000"
+                run_admin_command "chunky quiet 60"
+                run_admin_command "chunky start"
+                ;;
+            status)
+                run_admin_command "chunky progress"
+                ;;
+            pause)
+                run_admin_command "chunky pause"
+                ;;
+            continue|resume)
+                run_admin_command "chunky continue"
+                ;;
+            *)
+                echo "Uso: atlas-cli pregenerate-nether [status|start|pause|continue|resume]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    pregenerate-end)
+        action="${1:-status}"
+        case "$action" in
+            start)
+                run_admin_command "chunky world minecraft:the_end"
+                run_admin_command "chunky shape square"
+                run_admin_command "chunky center 0 0"
+                run_admin_command "chunky radius 6000"
+                run_admin_command "chunky quiet 60"
+                run_admin_command "chunky start"
+                ;;
+            status)
+                run_admin_command "chunky progress"
+                ;;
+            pause)
+                run_admin_command "chunky pause"
+                ;;
+            continue|resume)
+                run_admin_command "chunky continue"
+                ;;
+            *)
+                echo "Uso: atlas-cli pregenerate-end [status|start|pause|continue|resume]"
                 exit 1
                 ;;
         esac
@@ -140,6 +199,8 @@ case "$COMMAND" in
         echo "  atlas-cli console"
         echo "  atlas-cli exec <comando>"
         echo "  atlas-cli pregenerate-survival [start|status|pause|continue]"
+        echo "  atlas-cli pregenerate-nether [start|status|pause|continue]"
+        echo "  atlas-cli pregenerate-end [start|status|pause|continue]"
         echo "  atlas-cli migrate"
         ;;
 esac

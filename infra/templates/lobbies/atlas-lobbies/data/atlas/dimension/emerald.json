@@ -4,14 +4,9 @@
     "type": "minecraft:flat",
     "settings": {
       "biome": "minecraft:the_void",
-      "features": true,
+      "features": false,
       "lakes": false,
-      "layers": [
-        {
-          "block": "minecraft:air",
-          "height": 1
-        }
-      ],
+      "layers": [],
       "structure_overrides": []
     }
   }

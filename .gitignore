@@ -6,6 +6,16 @@ minecraft/schema/*.litematic
 # Pacotes gerados para teste com amigos
 atlas-client-modpack-*.tar.gz
 CobbleSounds*.zip
+E19 Cobblemon Minimap Icons.zip
+COBBLEVERSE*/
+mods-qol-*/
+mods-qol-*.tar.gz
+mods-phase3-*/
+mods-phase3-*.tar.gz
+mods-zamega-hotfix-*/
+mods-zamega-hotfix-*.tar.gz
+mods-registry-align-*/
+mods-registry-align-*.tar.gz
 
 # Ajustes locais de template/ícone do servidor
 infra/templates/server.properties
