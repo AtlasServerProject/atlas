@@ -1,0 +1,12 @@
+[Unit]
+Description=Atlas offline backup (PostgreSQL and Minecraft)
+After=postgresql.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/atlas/scripts/backup-manager.py --config /etc/atlas/backup.json backup
+TimeoutStartSec=infinity
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

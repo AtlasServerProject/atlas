@@ -34,11 +34,11 @@ case "$COMMAND" in
         ;;
 
     backup)
-        "$SCRIPT_DIR/backup.sh"
+        "$SCRIPT_DIR/backup.sh" "$@"
         ;;
 
     restore)
-        "$SCRIPT_DIR/restore.sh"
+        "$SCRIPT_DIR/restore.sh" "$@"
         ;;
 
     update)
@@ -46,6 +46,10 @@ case "$COMMAND" in
         ;;
     migrate)
         "$SCRIPT_DIR/migrate.sh"
+        ;;
+
+    backup-verify)
+        exec python3 "$SCRIPT_DIR/backup-manager.py" verify "$@"
         ;;
 
     start)
@@ -191,6 +195,9 @@ case "$COMMAND" in
         echo "Uso:"
         echo "  atlas-cli install"
         echo "  atlas-cli doctor"
+        echo "  atlas-cli backup"
+        echo "  atlas-cli backup-verify <backup>"
+        echo "  atlas-cli restore <backup> --confirm [--target <pasta> --database <banco>]"
         echo "  atlas-cli start"
         echo "  atlas-cli stop"
         echo "  atlas-cli restart"

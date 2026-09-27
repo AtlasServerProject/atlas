@@ -20,3 +20,7 @@ mods-registry-align-*.tar.gz
 # Ajustes locais de template/ícone do servidor
 infra/templates/server.properties
 infra/templates/server-icon.png
+
+# Python infrastructure tooling
+__pycache__/
+*.pyc

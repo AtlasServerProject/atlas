@@ -1,0 +1,14 @@
+{
+  "fabric_path": "/opt/atlas/server/fabric",
+  "backup_path": "/opt/atlas/server/backups/snapshots",
+  "service": "atlas.service",
+  "retention_days": 30,
+  "minimum_copies": 2,
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "atlas_app",
+    "database": "atlas",
+    "passfile": "/etc/atlas/backup.pgpass"
+  }
+}
