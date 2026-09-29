@@ -5,3 +5,6 @@
 	path = atlas-docs
 	url = https://github.com/AtlasServerProject/atlas-docs.git
 	branch = main
+[submodule "atlas-web"]
+	path = atlas-web
+	url = https://github.com/AtlasServerProject/atlas-web.git
