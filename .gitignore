@@ -24,3 +24,6 @@ infra/templates/server-icon.png
 # Python infrastructure tooling
 __pycache__/
 *.pyc
+
+# Local Netlify folder
+.netlify
