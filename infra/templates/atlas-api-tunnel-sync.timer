@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch Atlas free tunnel hostname
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=60
+[Install]
+WantedBy=timers.target
