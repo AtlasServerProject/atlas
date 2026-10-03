@@ -13,10 +13,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import tools.jackson.databind.ObjectMapper;
 @Service
 public class CatalogService {
+ @org.springframework.beans.factory.annotation.Value("${atlas.commerce.sales-enabled:false}") private boolean salesEnabled;
  private final CatalogRepository repo;private final Clock clock;private final ObjectMapper json;
  public CatalogService(CatalogRepository repo,Clock clock,ObjectMapper json){this.repo=repo;this.clock=clock;this.json=json;}
  @Transactional(readOnly=true,isolation=org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
- public Catalog catalog(boolean admin){var now=clock.instant();var products=repo.products(admin);var promotions=repo.promotions(now,admin).stream().filter(p->products.stream().anyMatch(x->x.id()==p.productId())).toList();var priced=products.stream().map(p->{var offer=promotions.stream().filter(x->x.productId()==p.id()&&x.status().equals("ACTIVE")).findFirst().orElse(null);return new Product(p.id(),p.slug(),p.name(),p.description(),p.category(),p.active(),p.server(),p.priceCents(),p.purchasable(),p.revision(),p.durationDays(),offer==null?p.priceCents():offer.finalCents(),offer==null?null:offer.id());}).toList();return new Catalog(now,repo.revision(),priced,promotions);}
+ public Catalog catalog(boolean admin){var now=clock.instant();var products=repo.products(admin);var promotions=repo.promotions(now,admin).stream().filter(p->products.stream().anyMatch(x->x.id()==p.productId())).toList();var priced=products.stream().map(p->{var offer=promotions.stream().filter(x->x.productId()==p.id()&&x.status().equals("ACTIVE")).findFirst().orElse(null);return new Product(p.id(),p.slug(),p.name(),p.description(),p.category(),p.active(),p.server(),p.priceCents(),p.purchasable()&&salesEnabled,p.revision(),p.durationDays(),offer==null?p.priceCents():offer.finalCents(),offer==null?null:offer.id());}).toList();return new Catalog(now,repo.revision(),priced,promotions);}
  private ApiFailure bad(String text){return new ApiFailure(HttpStatus.BAD_REQUEST,"INVALID_OFFER",text);}
  private void revision(long supplied,long actual){if(supplied!=actual)throw new ApiFailure(HttpStatus.CONFLICT,"REVISION_CONFLICT","Outra edição alterou os dados. Atualize o catálogo e revise o formulário antes de salvar.");}
  private String encode(Object value){return value==null?null:json.writeValueAsString(value);}

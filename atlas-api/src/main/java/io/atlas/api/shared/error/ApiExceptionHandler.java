@@ -37,13 +37,19 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiError> method(HttpServletRequest request) {
         return response(request, HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "Método não permitido.", List.of());
     }
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ApiError> invalidParameter(HttpServletRequest request) {
+        return response(request, HttpStatus.BAD_REQUEST, "INVALID_PARAMETER", "Parâmetro inválido.", List.of());
+    }
     @ExceptionHandler(NoResourceFoundException.class)
     ResponseEntity<ApiError> missing(HttpServletRequest request) {
         return response(request, HttpStatus.NOT_FOUND, "NOT_FOUND", "Recurso não encontrado.", List.of());
     }
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     ResponseEntity<ApiError> conflict(HttpServletRequest request) {
-        return response(request, HttpStatus.CONFLICT, "CATALOG_CONFLICT", "Já existe um produto com este identificador ou uma promoção neste intervalo.", List.of());
+        return request.getRequestURI().contains("catalog") || request.getRequestURI().contains("/admin/")
+            ? response(request, HttpStatus.CONFLICT, "CATALOG_CONFLICT", "Já existe um produto com este identificador ou uma promoção neste intervalo.", List.of())
+            : response(request, HttpStatus.CONFLICT, "RESOURCE_CONFLICT", "Os dados mudaram durante a operação. Atualize a página e confira o resultado.", List.of());
     }
     @ExceptionHandler(DataAccessException.class)
     ResponseEntity<ApiError> database(HttpServletRequest request) {

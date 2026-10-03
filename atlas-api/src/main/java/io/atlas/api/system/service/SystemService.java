@@ -18,6 +18,6 @@ public class SystemService {
     }
     public SystemInfo info() {
         var metadata = repository.read();
-        return new SystemInfo("atlas-api", build.getVersion(), "M3_CATALOG", metadata.schemaGeneration(), metadata.initializedAt(), clock.instant());
+        return new SystemInfo("atlas-api", build.getVersion(), "M4_IDENTITY_ORDERS", metadata.schemaGeneration(), metadata.initializedAt(), clock.instant());
     }
 }

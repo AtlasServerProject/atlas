@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--serve', action='store_true')
 parser.add_argument('--api-port', type=int)
 parser.add_argument('--web-tests', action='store_true')
+parser.add_argument('--core-tests', action='store_true')
 args = parser.parse_args()
 pg_bin = Path(os.environ.get('ATLAS_PG_BIN', '/usr/lib/postgresql/18/bin'))
 for tool in ('initdb', 'pg_ctl', 'psql'):
@@ -50,6 +51,7 @@ env.update({
     'ATLAS_DB_URL': f'jdbc:postgresql://127.0.0.1:{pg_port}/postgres',
     'ATLAS_TEST_DB_URL': f'jdbc:postgresql://127.0.0.1:{pg_port}/postgres',
     'ATLAS_TEST_ADMIN_PASSWORD': '',
+    'ATLAS_CORE_KEY': secrets.token_urlsafe(32),
     'SPRING_PROFILES_ACTIVE': 'test',
     'ATLAS_PORT': str(api_port),
     'ATLAS_BIND_ADDRESS': '127.0.0.1',
@@ -83,7 +85,7 @@ def sql(text):
 def start_api():
     global api, api_log
     api_log = open(work / 'api.log', 'a')
-    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.3.1.jar')],
+    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.4.0.jar')],
                            env=env, cwd=root, stdout=api_log, stderr=subprocess.STDOUT)
 
 def stop_api():
@@ -122,9 +124,11 @@ try:
     sql((root / 'infra/postgres/provision.sql').read_text())
     sql("CREATE TABLE public.core_sentinel (id INTEGER PRIMARY KEY); INSERT INTO public.core_sentinel VALUES (1);")
     subprocess.run([str(root / 'mvnw'), '-B', '-ntp', 'verify'], cwd=root, env=env, check=True)
+    if args.core_tests:
+        subprocess.run(['python3',str(root/'scripts/verify-core-identity.py')],env={**env,'ATLAS_CORE_TEST_ISOLATED':'yes'},check=True)
     start_api(); ready()
     status, first = http('/api/v1/system')
-    assert status == 200 and first['schemaGeneration'] == 4
+    assert status == 200 and first['schemaGeneration'] == 5
     assert http('/actuator/metrics')[0] == 401
     jar = CookieJar()
     browser = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
@@ -148,7 +152,7 @@ try:
         web_port = free_port()
         web_env = env.copy()
         web_env.update({'ATLAS_PREVIEW_PORT':str(web_port),'ATLAS_PREVIEW_API_PORT':str(api_port),
-            'ATLAS_TEST_URL':f'http://127.0.0.1:{web_port}', 'ATLAS_E2E_MAIL_DIRECTORY':str(work/'mail')})
+            'ATLAS_TEST_URL':f'http://127.0.0.1:{web_port}', 'ATLAS_E2E_CORE_API_URL':f'http://127.0.0.1:{api_port}', 'ATLAS_E2E_MAIL_DIRECTORY':str(work/'mail')})
         fixture = work/'e2e-accounts.json'
         web_env['ATLAS_E2E_ACCOUNTS_FILE'] = str(fixture)
         accounts = {}

@@ -93,6 +93,10 @@ logging:
     format:
       console: logstash
 atlas:
+  core:
+    key: ${ATLAS_CORE_KEY:}
+  commerce:
+    sales-enabled: ${ATLAS_SALES_ENABLED:false}
   auth:
     verification-duration: 24h
     reset-duration: 30m
