@@ -93,6 +93,9 @@ logging:
     format:
       console: logstash
 atlas:
+  delivery:
+    enabled: ${ATLAS_DELIVERY_ENABLED:false}
+    mode: ${ATLAS_DELIVERY_MODE:production}
   payment:
     enabled: ${ATLAS_PAYMENT_ENABLED:false}
     mode: ${ATLAS_MP_MODE:test}

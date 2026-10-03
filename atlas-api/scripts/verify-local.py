@@ -85,7 +85,7 @@ def sql(text):
 def start_api():
     global api, api_log
     api_log = open(work / 'api.log', 'a')
-    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.5.0.jar')],
+    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.6.0.jar')],
                            env=env, cwd=root, stdout=api_log, stderr=subprocess.STDOUT)
 
 def stop_api():
@@ -128,7 +128,7 @@ try:
         subprocess.run(['python3',str(root/'scripts/verify-core-identity.py')],env={**env,'ATLAS_CORE_TEST_ISOLATED':'yes'},check=True)
     start_api(); ready()
     status, first = http('/api/v1/system')
-    assert status == 200 and first['schemaGeneration'] == 7
+    assert status == 200 and first['schemaGeneration'] == 8
     assert http('/actuator/metrics')[0] == 401
     jar = CookieJar()
     browser = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))

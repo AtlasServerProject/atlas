@@ -37,7 +37,7 @@ for attempt in range(18):
  try:
   response=subprocess.run(['curl','--fail','--silent','--show-error','--max-time','5',site_url+'/api/v1/system'],capture_output=True,text=True,check=True)
   data=json.loads(response.stdout)
-  if data.get('application')=='atlas-api' and data.get('version')=='0.5.0':break
+  if data.get('application')=='atlas-api' and data.get('version') in {'0.5.0','0.6.0'}:break
  except (OSError,ValueError,subprocess.CalledProcessError):pass
  time.sleep(1)
 else:raise SystemExit('Public routing is not ready. Private backup preserved; old tunnel remains active. Check DNS, Pages and the permanent tunnel route before retrying.')

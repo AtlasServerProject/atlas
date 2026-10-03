@@ -52,7 +52,7 @@ def sql(query):
  return r.stdout.strip()
 sql((root/'infra/postgres/provision.sql').read_text())
 with (work/'api.log').open('a') as log:
- process=subprocess.Popen(['java','-jar',str(root/'target/atlas-api-0.5.0.jar')],cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+ process=subprocess.Popen(['java','-jar',str(root/'target/atlas-api-0.6.0.jar')],cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
 state['api_pid']=process.pid;save()
 base=f'http://127.0.0.1:{apiport}';browser=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
 def call(path,body=None,extra=None):
