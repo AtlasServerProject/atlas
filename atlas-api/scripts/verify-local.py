@@ -85,7 +85,7 @@ def sql(text):
 def start_api():
     global api, api_log
     api_log = open(work / 'api.log', 'a')
-    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.4.0.jar')],
+    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.4.1.jar')],
                            env=env, cwd=root, stdout=api_log, stderr=subprocess.STDOUT)
 
 def stop_api():

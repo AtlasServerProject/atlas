@@ -23,7 +23,7 @@ for key in ['ATLAS_BOOTSTRAP_PASSWORD','ATLAS_DB_PASSWORD','ATLAS_MIGRATION_PASS
 pg_bin = Path(env.get('ATLAS_PG_BIN','/usr/lib/postgresql/18/bin'))
 for name in ['initdb','pg_ctl','psql']:
     if not (pg_bin/name).is_file(): raise SystemExit('PostgreSQL 18 tools are required for native local development.')
-jar = root/env.get('ATLAS_API_JAR','target/atlas-api-0.4.0.jar')
+jar = root/env.get('ATLAS_API_JAR','target/atlas-api-0.4.1.jar')
 if not jar.is_file(): raise SystemExit('Build and verify the API before starting local development.')
 runtime = root/'.runtime'
 runtime.mkdir(mode=0o700,exist_ok=True);runtime.chmod(0o700)
