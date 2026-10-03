@@ -1,0 +1,47 @@
+name: Atlas API
+on:
+  push:
+    paths: ['atlas-api/**', '.github/workflows/atlas-api.yml']
+  pull_request:
+    paths: ['atlas-api/**', '.github/workflows/atlas-api.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: atlas-api
+    steps:
+      - uses: actions/checkout@v4
+        # Other Atlas components are submodules; API tests need only atlas-api.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: atlas-api/pom.xml
+      - name: Build and PostgreSQL integration tests
+        run: ./mvnw -B -ntp verify
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-api-test-reports
+          path: atlas-api/target/surefire-reports/
+      - name: Upload versioned application and dependency inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-api-0.3.0
+          path: |
+            atlas-api/target/atlas-api-0.3.0.jar
+            atlas-api/target/dependencies.txt
+  dependencies:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

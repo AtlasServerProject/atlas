@@ -1,0 +1,111 @@
+spring:
+  application:
+    name: atlas-api
+  datasource:
+    url: ${ATLAS_DB_URL}
+    username: ${ATLAS_DB_USERNAME}
+    password: ${ATLAS_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
+      connection-timeout: 3000
+      validation-timeout: 2000
+      schema: atlas_web
+  flyway:
+    url: ${ATLAS_DB_URL}
+    user: ${ATLAS_MIGRATION_USERNAME}
+    password: ${ATLAS_MIGRATION_PASSWORD}
+    default-schema: atlas_web
+    schemas: atlas_web
+    create-schemas: false
+    locations: classpath:db/migration
+    clean-disabled: true
+    baseline-on-migrate: false
+    validate-on-migrate: true
+  session:
+    jdbc:
+      initialize-schema: never
+      table-name: atlas_web.web_sessions
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  mail:
+    host: ${ATLAS_SMTP_HOST:}
+    port: ${ATLAS_SMTP_PORT:587}
+    username: ${ATLAS_SMTP_USERNAME:}
+    password: ${ATLAS_SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+  sql:
+    init:
+      mode: never
+  mvc:
+    problemdetails:
+      enabled: false
+server:
+  address: ${ATLAS_BIND_ADDRESS:127.0.0.1}
+  port: ${ATLAS_PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: none
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: ATLAS_SESSION
+        http-only: true
+        secure: true
+        same-site: lax
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+    jmx:
+      exposure:
+        exclude: '*'
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+        liveness:
+          include: livenessState
+  info:
+    env:
+      enabled: false
+logging:
+  level:
+    org.springframework.web: INFO
+  structured:
+    format:
+      console: logstash
+atlas:
+  auth:
+    verification-duration: 24h
+    reset-duration: 30m
+    absolute-session-duration: 24h
+    rate-window: 15m
+    ip-attempts: 30
+    account-attempts: 5
+  mail:
+    mode: ${ATLAS_MAIL_MODE:smtp}
+    encryption-key: ${ATLAS_MAIL_ENCRYPTION_KEY}
+    from: ${ATLAS_MAIL_FROM:}
+    web-url: ${ATLAS_WEB_URL:}
+    local-directory: ${ATLAS_LOCAL_MAIL_DIRECTORY:.runtime/mail}
+    retry-delay-ms: 5000
+  cors:
+    allowed-origins: ${ATLAS_CORS_ORIGINS:}

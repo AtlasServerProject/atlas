@@ -28,29 +28,65 @@ urls = re.findall(r'https://[a-z0-9-]+\.trycloudflare\.com', log)
 if not urls: raise SystemExit('Tunnel URL is not ready yet.')
 url = urls[-1]
 state = runtime / 'published-tunnel-url'
-if state.exists() and state.read_text().strip() == url: raise SystemExit(0)
+# Even an unchanged URL can expire while cloudflared keeps retrying.
+expired = 'Unauthorized: Tunnel not found' in log
+if expired:
+    subprocess.run(['systemctl','--user','restart','atlas-api-tunnel.service'],check=True)
+    raise SystemExit('Expired tunnel recreated; next timer run publishes its new address.')
 try:
-    with urllib.request.urlopen(url+'/api/v1/auth/csrf', timeout=20) as response:
-        if response.status != 200 or 'token' not in json.load(response):
+    with urllib.request.urlopen(url+'/api/v1/system', timeout=20) as response:
+        if response.status != 200 or json.load(response).get('application') != 'atlas-api':
             raise SystemExit('Tunnel API is not ready.')
 except (OSError, ValueError, urllib.error.URLError):
     # New Quick Tunnel names can encounter negative DNS caching on the VM.
     probe = subprocess.run(['curl', '--doh-url', 'https://cloudflare-dns.com/dns-query',
-                            '--fail', '--silent', '--max-time', '20', url+'/api/v1/auth/csrf'],
+                            '--fail', '--silent', '--max-time', '20', url+'/api/v1/system'],
                            capture_output=True, text=True)
     try:
-        valid = probe.returncode == 0 and 'token' in json.loads(probe.stdout)
+        valid = probe.returncode == 0 and json.loads(probe.stdout).get('application') == 'atlas-api'
     except ValueError:
         valid = False
-    if not valid: raise SystemExit('Tunnel DNS/API is not ready; the timer retries in one minute.')
-if not (web/'dist/atlas-web/browser/index.html').is_file():
+    if not valid:
+        failures = runtime/'tunnel-health-failures'
+        count = int(failures.read_text()) + 1 if failures.exists() else 1
+        failures.write_text(str(count))
+        if count >= 3:
+            try:
+                with urllib.request.urlopen('http://127.0.0.1:4201/api/v1/system', timeout=5) as local:
+                    healthy = local.status == 200
+            except OSError: healthy = False
+            if healthy:
+                subprocess.run(['systemctl','--user','restart','atlas-api-tunnel.service'],check=True)
+                failures.unlink(missing_ok=True)
+                raise SystemExit('Unhealthy tunnel recreated; next timer run publishes its new address.')
+        raise SystemExit('Tunnel DNS/API is not ready; the timer retries shortly.')
+(runtime/'tunnel-health-failures').unlink(missing_ok=True)
+if state.exists() and state.read_text().strip() == url:
+    public_ok = False
+    try:
+        with urllib.request.urlopen('https://atlas-cobblemon.netlify.app/api/v1/system', timeout=10) as response:
+            public_ok = response.status == 200 and json.load(response).get('application') == 'atlas-api'
+    except (OSError, ValueError): pass
+    failures = runtime/'public-proxy-failures'
+    if public_ok:
+        failures.unlink(missing_ok=True)
+        raise SystemExit(0)
+    count = int(failures.read_text()) + 1 if failures.exists() else 1
+    failures.write_text(str(count))
+    if count < 3: raise SystemExit('Public proxy health failed; checking again before republishing.')
+    failures.unlink(missing_ok=True)
+
+publish = runtime/'published-web'
+if not (publish/'index.html').is_file():
     raise SystemExit('Build atlas-web before publishing the API proxy.')
 redirects = f'/api/v1/* {url}/api/v1/:splat 200\n/* /index.html 200\n'
-for path in [web/'public/_redirects', web/'dist/atlas-web/browser/_redirects']:
+for path in [web/'public/_redirects', publish/'_redirects']:
     path.write_text(redirects)
 clis = sorted((Path.home()/'.npm/_npx').glob('*/node_modules/netlify-cli/bin/run.js'))
 if not clis: raise SystemExit('Install and authenticate netlify-cli first.')
-result = subprocess.run(['node',str(clis[0]),'deploy','--prod','--dir=dist/atlas-web/browser','--no-build','--json',
+node = Path.home()/'.local/bin/node'
+if not node.is_file(): raise SystemExit('Install Node in ~/.local/bin for unattended publishing.')
+result = subprocess.run([str(node),str(clis[0]),'deploy','--prod','--dir='+str(publish),'--no-build','--json',
                          '--message=Atualiza endereco do tunel gratuito da API'], cwd=web, capture_output=True, text=True)
 if result.returncode: raise SystemExit('Netlify deployment failed; existing site is preserved. Check local CLI authentication and limits.')
 data = json.loads(result.stdout)

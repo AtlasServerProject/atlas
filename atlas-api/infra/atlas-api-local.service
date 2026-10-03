@@ -1,0 +1,16 @@
+[Unit]
+Description=Atlas API persistent local development
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/dev/atlas/atlas-api
+ExecStart=/usr/bin/python3 %h/dev/atlas/atlas-api/scripts/run-native-local.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=40
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=default.target
