@@ -40,5 +40,14 @@ public class MercadoPagoProvider implements PaymentProvider {
  public List<Payment> search(String reference){UUID.fromString(reference);var result=call("/v1/payments/search?external_reference="+reference+"&sort=date_created&criteria=desc&limit=100",null,null);if(result.path("paging").path("total").asInt()>100)throw new IllegalStateException("Payment search requires review");List<Payment> found=new ArrayList<>();for(var entry:result.path("results"))found.add(parse(entry));return found;}
  private int cents(JsonNode node){return new BigDecimal(node.asText()).movePointRight(2).intValueExact();}
  private Instant instant(JsonNode node){return OffsetDateTime.parse(node.asText()).toInstant();}
- private Payment parse(JsonNode p){return new Payment(p.path("id").asText(),p.path("external_reference").asText(),p.path("collector_id").asText(),cents(p.path("transaction_amount")),p.path("currency_id").asText(),p.path("status").asText(),p.path("live_mode").asBoolean(),instant(p.path("date_last_updated")),p.path("date_approved").isNull()||p.path("date_approved").isMissingNode()?null:instant(p.path("date_approved")),p.path("transaction_amount_refunded").isMissingNode()?0:cents(p.path("transaction_amount_refunded")));}
+ // APP_USR test sellers may return live_mode=true. Only authenticated account evidence
+ // can override that flag; webhook bodies, email and nickname never prove the environment.
+ private boolean verifiedTestCollector(JsonNode p){
+  if(!p.path("live_mode").asBoolean())return false;
+  var account=call("/users/me",null,null);
+  if(!account.path("id").asText().equals(settings.collector)||!p.path("collector_id").asText().equals(settings.collector))return false;
+  for(var tag:account.path("tags"))if("test_user".equals(tag.asText()))return true;
+  return false;
+ }
+ private Payment parse(JsonNode p){return new Payment(p.path("id").asText(),p.path("external_reference").asText(),p.path("collector_id").asText(),cents(p.path("transaction_amount")),p.path("currency_id").asText(),p.path("status").asText(),p.path("live_mode").asBoolean(),instant(p.path("date_last_updated")),p.path("date_approved").isNull()||p.path("date_approved").isMissingNode()?null:instant(p.path("date_approved")),p.path("transaction_amount_refunded").isMissingNode()?0:cents(p.path("transaction_amount_refunded")),verifiedTestCollector(p));}
 }

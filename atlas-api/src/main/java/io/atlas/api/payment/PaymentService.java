@@ -45,7 +45,7 @@ public class PaymentService {
  private void apply(PaymentProvider.Payment payment,String requestedId){
  var now=clock.instant();UUID orderId;try{orderId=UUID.fromString(payment.reference());}catch(Exception e){repo.review(requestedId,"UNKNOWN_REFERENCE",now);return;}
  var order=repo.order(orderId,null,true);var attempt=repo.attempt(orderId);
- if(order==null||attempt==null||!payment.id().equals(requestedId)||!payment.collector().equals(settings.collector)||payment.live()!=settings.live()||!attempt.mode().equals(settings.mode)||payment.cents()!=order.totalCents()||!payment.currency().equals(order.currency())){repo.review(requestedId,"PAYMENT_MISMATCH",now);return;}
+ if(order==null||attempt==null||!payment.id().equals(requestedId)||!payment.collector().equals(settings.collector)||!payment.matchesMode(settings.live())||!attempt.mode().equals(settings.mode)||payment.cents()!=order.totalCents()||!payment.currency().equals(order.currency())){repo.review(requestedId,"PAYMENT_MISMATCH",now);return;}
  var bound=repo.observedOrder(payment.id());if(bound!=null&&!bound.equals(orderId)){repo.review(payment.id(),"PAYMENT_ALREADY_BOUND",now);return;}
  var observed=repo.observedAt(payment.id());if(observed!=null&&payment.changedAt().isBefore(observed))return;
  String prior=repo.previousStatus(payment.id());

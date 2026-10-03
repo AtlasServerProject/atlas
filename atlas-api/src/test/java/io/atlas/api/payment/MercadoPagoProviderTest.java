@@ -18,4 +18,17 @@ class MercadoPagoProviderTest {
  @Test void createsHostedSandboxPreferenceAndRejectsUnsafeRedirect()throws Exception{reply("{\"id\":\"pref-test\",\"sandbox_init_point\":\"https://sandbox.mercadopago.com.br/checkout/test\",\"init_point\":\"https://www.mercadopago.com.br/checkout/live\"}");var now=Instant.now();var s=new Snapshot(1,"VIP 1","vip-1","emerald",30,2500,null,1,1,UUID.randomUUID(),1,UUID.randomUUID(),"Player");var order=new OrderView(UUID.randomUUID(),s,2500,"BRL",1,now,now.plusSeconds(1800),"PENDING","WAITING");assertThat(provider.create(order,"attempt-test").url()).contains("sandbox.mercadopago.com.br");reply("{\"id\":\"pref-test\",\"sandbox_init_point\":\"https://evil.invalid/checkout\"}");assertThatThrownBy(()->provider.create(order,"attempt-test")).isInstanceOf(IllegalStateException.class);}
  @Test void networkFailureDoesNotLeakAuthorizationOrResponse()throws Exception{when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenThrow(new IOException("private-test-token"));assertThatThrownBy(()->provider.payment("123")).hasMessage("Provider unavailable").hasNoCause();}
  @Test void rejectsNonNumericPaymentPath(){assertThatThrownBy(()->provider.payment("../users/me")).isInstanceOf(IllegalArgumentException.class);verifyNoInteractions(client);}
+
+ @Test @SuppressWarnings("unchecked") void liveFlagNeedsAuthenticatedTestSellerEvidence()throws Exception{
+  String payment="{\"id\":123,\"external_reference\":\"bce4c142-c68e-491c-a58c-e6ecac9a7d17\",\"collector_id\":123456,\"transaction_amount\":25,\"currency_id\":\"BRL\",\"status\":\"approved\",\"live_mode\":true,\"date_last_updated\":\"2026-10-03T11:00:01Z\",\"date_approved\":\"2026-10-03T11:00:00Z\",\"transaction_amount_refunded\":0}";
+  for(String account:List.of("{\"id\":123456,\"tags\":[\"test_user\"]}","{\"id\":123456,\"tags\":[]}","{\"id\":999999,\"tags\":[\"test_user\"]}")){
+   when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenAnswer(a->{
+    HttpRequest request=a.getArgument(0);String body=request.uri().getPath().equals("/users/me")?account:payment;
+    HttpResponse<InputStream> response=mock(HttpResponse.class);when(response.statusCode()).thenReturn(200);when(response.body()).thenReturn(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));return response;
+   });
+   var result=provider.payment("123");boolean verified=account.contains("123456")&&account.contains("test_user");
+   assertThat(result.live()).isTrue();assertThat(result.verifiedTestCollector()).isEqualTo(verified);
+   assertThat(result.matchesMode(false)).isEqualTo(verified);assertThat(result.matchesMode(true)).isEqualTo(!verified);
+  }
+ }
 }
