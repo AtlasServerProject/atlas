@@ -1,0 +1,65 @@
+name: Atlas API
+on:
+  push:
+    paths: ['atlas-api/**', '.github/workflows/atlas-api.yml']
+  pull_request:
+    paths: ['atlas-api/**', '.github/workflows/atlas-api.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: atlas-api
+    steps:
+      - uses: actions/checkout@v4
+        # Other Atlas components are submodules; API tests need only atlas-api.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: atlas-api/pom.xml
+      - name: Build and PostgreSQL integration tests
+        run: ./mvnw -B -ntp verify
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-api-test-reports
+          path: atlas-api/target/surefire-reports/
+      - name: Upload versioned application and dependency inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-api-0.5.0
+          path: |
+            atlas-api/target/atlas-api-0.5.0.jar
+            atlas-api/target/dependencies.txt
+  dependencies:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check dependency review availability
+        id: graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPARE_URL: ${{ github.api_url }}/repos/${{ github.repository }}/dependency-graph/compare/${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+        run: |
+          status=$(curl --silent --output /tmp/dependency-review.json --write-out '%{http_code}' \
+            --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' "$COMPARE_URL")
+          if [ "$status" = 200 ]; then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          elif [ "$status" = 403 ] || [ "$status" = 404 ]; then
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+            echo "Dependency review is unavailable or its access is forbidden (HTTP $status). Check the repository dependency graph and permissions. No advisory review was performed; the verify job still uploads the dependency inventory." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Dependency review availability check failed (HTTP $status)."
+            exit 1
+          fi
+      - uses: actions/dependency-review-action@v4
+        if: steps.graph.outputs.available == 'true'
+        with:
+          fail-on-severity: high

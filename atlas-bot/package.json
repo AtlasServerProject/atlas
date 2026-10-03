@@ -1,0 +1,20 @@
+{
+  "name": "atlas-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.17.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "register": "node --env-file-if-exists=.env src/register.js",
+    "notify": "node --env-file-if-exists=.env src/notify.js",
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/config.js && node --check src/commands.js && node --check src/structure.js && node --check src/bridge.js && node --check src/register.js && node --check src/admin.js && node --check src/notify.js"
+  },
+  "dependencies": {
+    "discord.js": "14.27.0",
+    "minecraft-server-util": "5.4.4"
+  }
+}

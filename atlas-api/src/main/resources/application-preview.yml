@@ -1,0 +1,12 @@
+# Free public development through the Netlify same-origin HTTPS proxy.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+atlas:
+  mail:
+    mode: ${ATLAS_MAIL_MODE:smtp}
+    web-url: https://atlas-cobblemon.netlify.app
+  cors:
+    allowed-origins: https://atlas-cobblemon.netlify.app
