@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Activate the prepared permanent tunnel only after account/DNS setup. No secrets printed."""
 from pathlib import Path
-import argparse, datetime, json, os, re, shutil, subprocess, time, urllib.request
+import argparse, datetime, json, os, re, shutil, subprocess, time
 from urllib.parse import urlsplit
 root=Path(__file__).resolve().parents[2];api=root/'atlas-api';runtime=api/'.runtime'
 parser=argparse.ArgumentParser()
@@ -35,9 +35,10 @@ subprocess.run(['systemctl','--user','enable','--now','atlas-api-cloudflare.serv
 # DNS/account configuration is external. Leave old tunnel intact on failed validation.
 for attempt in range(18):
  try:
-  with urllib.request.urlopen(site_url+'/api/v1/system',timeout=2) as response:data=json.load(response)
+  response=subprocess.run(['curl','--fail','--silent','--show-error','--max-time','5',site_url+'/api/v1/system'],capture_output=True,text=True,check=True)
+  data=json.loads(response.stdout)
   if data.get('application')=='atlas-api' and data.get('version')=='0.5.0':break
- except (OSError,ValueError):pass
+ except (OSError,ValueError,subprocess.CalledProcessError):pass
  time.sleep(1)
 else:raise SystemExit('Public routing is not ready. Private backup preserved; old tunnel remains active. Check DNS, Pages and the permanent tunnel route before retrying.')
 subprocess.run(['systemctl','--user','disable','--now','atlas-api-tunnel-sync.timer','atlas-api-tunnel.service'],check=True)
