@@ -15,7 +15,7 @@ public class CommerceController {
  private final IdentityService identity;private final OrderService orders;private final RateLimiter limits;
  public CommerceController(IdentityService identity,OrderService orders,RateLimiter limits){this.identity=identity;this.orders=orders;this.limits=limits;}
  private String request(HttpServletRequest r){return (String)r.getAttribute(RequestIdFilter.ATTRIBUTE);}
- private void limit(SessionIdentity p,String scope){limits.check(scope,p.id().toString(),10);}
+ private void limit(SessionIdentity p,String scope){limits.check(scope,p.id().toString(),scope.startsWith("LINK")?5:10);}
  private <T> ResponseEntity<T> ok(T body){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body);}
  @GetMapping("/users/me/minecraft-link") ResponseEntity<LinkStatus> status(@AuthenticationPrincipal SessionIdentity p){return ok(identity.status(p.id()));}
  @PostMapping("/users/me/minecraft-link-challenges") ResponseEntity<ChallengeCreated> create(@AuthenticationPrincipal SessionIdentity p,HttpServletRequest r){limit(p,"LINK_CREATE");return ok(identity.create(p.id(),request(r)));}

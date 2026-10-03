@@ -11,6 +11,9 @@ public class CommerceRepository {
  private final JdbcTemplate db;private final ObjectMapper json;
  public CommerceRepository(JdbcTemplate db,ObjectMapper json){this.db=db;this.json=json;}
  private Timestamp ts(Instant value){return Timestamp.from(value);}
+ public void lockCodes(){db.queryForObject("SELECT pg_advisory_xact_lock(638574620501::bigint)",Object.class);}
+ public void expireCodes(Instant now){db.update("UPDATE atlas_web.minecraft_challenges SET state='CANCELLED' WHERE state IN ('WAITING','PROVED') AND expires_at<=?",ts(now));}
+ public boolean codeAvailable(String hash,Instant now){return !Boolean.TRUE.equals(db.queryForObject("SELECT EXISTS(SELECT 1 FROM atlas_web.minecraft_challenges WHERE code_hash=? AND (state IN ('WAITING','PROVED') OR created_at>=?))",Boolean.class,hash,ts(now.minusSeconds(900))));}
  public void lockUser(UUID id){db.queryForObject("SELECT id FROM atlas_web.users WHERE id=? FOR UPDATE",UUID.class,id);}
  public void lockSubject(UUID id){db.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?,0))",Object.class,id.toString());}
  private LinkView link(ResultSet r,int n)throws SQLException{return new LinkView(r.getObject("id",UUID.class),r.getObject("subject",UUID.class),r.getLong("core_player_id"),r.getObject("minecraft_uuid",UUID.class),r.getString("nickname"),r.getString("server"),r.getTimestamp("linked_at").toInstant());}
@@ -20,8 +23,8 @@ public class CommerceRepository {
  private ChallengeView challenge(ResultSet r,int n)throws SQLException{return new ChallengeView(r.getObject("id",UUID.class),r.getString("state"),r.getTimestamp("expires_at").toInstant(),r.getObject("subject",UUID.class),r.getString("nickname"),r.getString("server"));}
  public void cancel(UUID user){db.update("UPDATE atlas_web.minecraft_challenges SET state='CANCELLED' WHERE user_id=? AND state IN ('WAITING','PROVED')",user);}
  public void create(UUID id,UUID user,String hash,Instant now,Instant expires){db.update("INSERT INTO atlas_web.minecraft_challenges(id,user_id,code_hash,created_at,expires_at,state) VALUES(?,?,?,?,?,'WAITING')",id,user,hash,ts(now),ts(expires));}
- public UUID owner(String hash){return db.query("SELECT user_id FROM atlas_web.minecraft_challenges WHERE code_hash=?",(r,n)->r.getObject(1,UUID.class),hash).stream().findFirst().orElse(null);}
- public Map<String,Object> lockedChallenge(String hash){return db.queryForMap("SELECT * FROM atlas_web.minecraft_challenges WHERE code_hash=? FOR UPDATE",hash);}
+ public UUID owner(String hash){return db.query("SELECT user_id FROM atlas_web.minecraft_challenges WHERE code_hash=? AND state='WAITING'",(r,n)->r.getObject(1,UUID.class),hash).stream().findFirst().orElse(null);}
+ public Map<String,Object> lockedChallenge(String hash){return db.queryForList("SELECT * FROM atlas_web.minecraft_challenges WHERE code_hash=? AND state='WAITING' FOR UPDATE",hash).stream().findFirst().orElse(null);}
  public void prove(UUID challenge,Proof proof){db.update("UPDATE atlas_web.minecraft_challenges SET state='PROVED',subject=?,core_player_id=?,minecraft_uuid=?,nickname=?,server=? WHERE id=?",proof.subject(),proof.corePlayerId(),proof.minecraftUuid(),proof.nickname(),proof.server(),challenge);}
  public LinkView confirm(UUID user,UUID challenge,Instant now){var id=UUID.randomUUID();db.update("INSERT INTO atlas_web.minecraft_links(id,user_id,subject,core_player_id,minecraft_uuid,nickname,server,linked_at) SELECT ?,user_id,subject,core_player_id,minecraft_uuid,nickname,server,? FROM atlas_web.minecraft_challenges WHERE id=? AND user_id=?",id,ts(now),challenge,user);db.update("UPDATE atlas_web.minecraft_challenges SET state='CONFIRMED' WHERE id=?",challenge);return current(user);}
  public void revoke(UUID user,Instant now){db.update("UPDATE atlas_web.minecraft_links SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL",ts(now),user);}

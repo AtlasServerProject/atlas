@@ -3,7 +3,7 @@
 import os,re,subprocess,shutil,secrets,datetime,signal,getpass,time,json,urllib.request
 from pathlib import Path
 root=Path(__file__).resolve().parents[2];api=root/'atlas-api';core=root/'atlas-core';server=Path('/opt/atlas/server/fabric')
-if not (api/'target/atlas-api-0.4.1.jar').is_file() or not (core/'build/libs/atlas-core-1.29.24.jar').is_file():raise SystemExit('Build and validate API/Core before installing.')
+if not (api/'target/atlas-api-0.4.2.jar').is_file() or not (core/'build/libs/atlas-core-1.29.25.jar').is_file():raise SystemExit('Build and validate API/Core before installing.')
 owner=subprocess.check_output(['systemctl','show','atlas','--property=User','--value'],text=True).strip()
 restart=subprocess.check_output(['systemctl','show','atlas','--property=Restart','--value'],text=True).strip()
 if owner!=getpass.getuser():raise SystemExit('Core belongs to another user; restart is required.')
@@ -27,21 +27,21 @@ subprocess.run(['psql','-X','-h','127.0.0.1','-p','5432','-U','atlas_app','-d','
 key=values.get('ATLAS_CORE_KEY') or secrets.token_urlsafe(32)
 if len(key)<43:raise SystemExit('Existing Core key is invalid; backups preserved.')
 config.write_text('api-url=http://127.0.0.1:8080\nkey='+key+'\n');config.chmod(0o600)
-release=api/'.runtime/releases/atlas-api-0.4.1.jar';shutil.copy2(api/'target/atlas-api-0.4.1.jar',release);release.chmod(0o600)
+release=api/'.runtime/releases/atlas-api-0.4.2.jar';shutil.copy2(api/'target/atlas-api-0.4.2.jar',release);release.chmod(0o600)
 lines=(api/'.env').read_text().splitlines()
-for field,value in {'ATLAS_CORE_KEY':key,'ATLAS_SALES_ENABLED':'false','ATLAS_API_JAR':'.runtime/releases/atlas-api-0.4.1.jar'}.items():
+for field,value in {'ATLAS_CORE_KEY':key,'ATLAS_SALES_ENABLED':'false','ATLAS_API_JAR':'.runtime/releases/atlas-api-0.4.2.jar'}.items():
  lines=[l for l in lines if not l.startswith(field+'=')];lines.append(field+'='+value)
 (api/'.env').write_text('\n'.join(lines)+'\n');(api/'.env').chmod(0o600)
 subprocess.run(['systemctl','--user','restart','atlas-api','atlas-api-preview','atlas-api-tunnel'],check=True)
 for attempt in range(60):
  try:
   with urllib.request.urlopen('http://127.0.0.1:8080/api/v1/system',timeout=2) as response: info=json.load(response)
-  if info.get('version')=='0.4.1' and info.get('schemaGeneration')==5: break
+  if info.get('version')=='0.4.2' and info.get('schemaGeneration')==6: break
  except (OSError,ValueError): pass
  time.sleep(1)
 else: raise SystemExit('API did not become ready. Core remains unchanged; restore the private api.env backup if needed.')
 # Atomic replacement; the only installed Core path is retained.
-staged=installed[0].with_suffix('.jar.next');shutil.copy2(core/'build/libs/atlas-core-1.29.24.jar',staged);staged.replace(installed[0])
+staged=installed[0].with_suffix('.jar.next');shutil.copy2(core/'build/libs/atlas-core-1.29.25.jar',staged);staged.replace(installed[0])
 # Java runs as this owner and handles SIGTERM through the Minecraft graceful shutdown hook.
 # The system service's existing Restart=always restarts it; no new privilege policy is introduced.
 pid=int(subprocess.check_output(['systemctl','show','atlas','--property=MainPID','--value'],text=True).strip())

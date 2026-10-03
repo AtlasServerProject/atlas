@@ -39,7 +39,7 @@ class FoundationIntegrationTest {
     @Test void servesMetadataThroughRuntimeRoleAndReturnsRequestId() throws Exception {
         var result = mvc.perform(get("/api/v1/system")).andExpect(status().isOk())
             .andExpect(jsonPath("$.stage").value("M4_IDENTITY_ORDERS"))
-            .andExpect(jsonPath("$.schemaGeneration").value(5))
+            .andExpect(jsonPath("$.schemaGeneration").value(6))
             .andExpect(jsonPath("$.serverTime").isNotEmpty())
             .andExpect(header().exists("X-Request-ID")).andReturn();
         assertThat(result.getResponse().getHeader("X-Request-ID")).matches("[a-f0-9-]{36}");
@@ -102,7 +102,7 @@ class FoundationIntegrationTest {
     @Test void migrationReentryIsIdempotentAndChecksumsValidate() {
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
     }
     // Test-only controller exercises actual Bean Validation/advice without inventing business routes.
     @RestController

@@ -1,6 +1,6 @@
 # Atlas API — M3 accounts, catalog and promotions
 
-Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.4.1`.
+Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.4.2`.
 
 M2 implements registration, login/logout, persisted JDBC sessions, email verification, password reset, current account and live USER/ADMIN authorization. Angular authentication uses the real API. M3 adds persistent catalog, administrative product/price changes and promotions. Sales remain disabled until payment and delivery milestones. No Mercado Pago credentials, Minecraft changes or game database access. See `../atlas-docs/M2-BACKEND.md` and its milestone OpenAPI for the complete account contract. See `../atlas-docs/M3-BACKEND.md` for catalog and promotion endpoints.
 
@@ -116,4 +116,6 @@ Commercial/API contract and VIP pause/resume decisions live in `atlas-docs/M0-BA
 
 Release 0.3.1 adds branded multipart HTML/text verification and recovery emails, a registration confirmation dialog with spam guidance and a styled verification success page. Token and session rules are unchanged.
 
-M4 (0.4.1) adds hashed Minecraft link challenges, trusted same-VM Core proofs, final web confirmation, password-protected unlink, owner-scoped orders and transactional idempotency. Checkout snapshots canonical site subject and server-recalculated pricing. Sales remain disabled by both the global switch and each offer. See `../atlas-docs/M4-BACKEND.md`. Run `python3 scripts/verify-local.py --core-tests --web-tests` to include real Core repository migration/merge checks on a separate disposable database.
+M4 (0.4.2) adds hashed Minecraft link challenges, trusted same-VM Core proofs, final web confirmation, password-protected unlink, owner-scoped orders and transactional idempotency. Checkout snapshots canonical site subject and server-recalculated pricing. Sales remain disabled by both the global switch and each offer. See `../atlas-docs/M4-BACKEND.md`. Run `python3 scripts/verify-local.py --core-tests --web-tests` to include real Core repository migration/merge checks on a separate disposable database.
+
+Release 0.4.2 changes Minecraft linking to six ASCII digits (leading zeroes preserved), five-minute expiry, keyed hashes and bounded proof attempts. V6 retires legacy pending challenges without touching confirmed links. Active code uniqueness and a fifteen-minute reuse cooldown are protected in the database transaction.
