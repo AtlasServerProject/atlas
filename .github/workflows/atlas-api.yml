@@ -33,9 +33,9 @@ jobs:
       - name: Upload versioned application and dependency inventory
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-api-0.3.0
+          name: atlas-api-0.3.1
           path: |
-            atlas-api/target/atlas-api-0.3.0.jar
+            atlas-api/target/atlas-api-0.3.1.jar
             atlas-api/target/dependencies.txt
   dependencies:
     if: github.event_name == 'pull_request'

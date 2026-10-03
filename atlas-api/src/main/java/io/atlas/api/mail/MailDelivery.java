@@ -5,7 +5,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 @Component
@@ -23,7 +23,10 @@ public class MailDelivery {
             if(!Files.exists(target)) Files.createFile(target,PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
             Files.writeString(target,"To: "+message.to()+"\nSubject: "+message.subject()+"\n\n"+message.text());
         } else {
-            var mail=new SimpleMailMessage();mail.setFrom(properties.from());mail.setTo(message.to());mail.setSubject(message.subject());mail.setText(message.text());smtp.getObject().send(mail);
+            var sender=smtp.getObject();var mail=sender.createMimeMessage();
+            var helper=new MimeMessageHelper(mail,true,"UTF-8");
+            helper.setFrom(properties.from(),"Atlas Cobblemon");helper.setTo(message.to());helper.setSubject(message.subject());
+            helper.setText(message.text(),MailTemplate.html(message));sender.send(mail);
         }
     }
 }

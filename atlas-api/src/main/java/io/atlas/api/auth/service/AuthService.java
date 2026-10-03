@@ -44,7 +44,9 @@ public class AuthService {
         tokens.invalidate(account.id(),purpose,now);tokens.create(account.id(),hash,purpose,now.plus(purpose.equals("VERIFY_EMAIL")?properties.verificationDuration():properties.resetDuration()));
         String route=purpose.equals("VERIFY_EMAIL")?"/verificar-email":"/redefinir-senha";
         String link=mail.webUrl().replaceAll("/$","")+route+"#token="+secret;
-        outbox.enqueue(new MailOutbox.Message(account.email(),purpose.equals("VERIFY_EMAIL")?"Confirme sua conta Atlas":"Redefina sua senha Atlas", "Olá, "+account.username()+".\n\nAbra este link para continuar:\n"+link+"\n\nSe você não solicitou esta ação, ignore esta mensagem."));
+        boolean verification=purpose.equals("VERIFY_EMAIL");
+        String introduction=verification?"Bem-vindo ao Atlas Cobblemon! Falta só confirmar seu email para deixar sua conta pronta.":"Recebemos seu pedido de recuperação de acesso. Use o link abaixo para escolher uma nova senha.";
+        outbox.enqueue(new MailOutbox.Message(account.email(),verification?"Confirme seu email — Atlas Cobblemon":"Redefina sua senha — Atlas Cobblemon", "Olá, "+account.username()+".\n\n"+introduction+"\n\n"+link+"\n\nEste link é pessoal e só pode ser usado uma vez. Se não funcionar, solicite um novo email pelo site.\n\nSe você não solicitou esta ação, ignore esta mensagem.\n\nAtlas Cobblemon · Seu próximo capítulo começa aqui."));
     }
     private UUID consume(String secret,String purpose) {
         String hash=codec.hash(secret);var owner=tokens.owner(hash,purpose).orElseThrow(this::invalidToken);accounts.lock(owner);

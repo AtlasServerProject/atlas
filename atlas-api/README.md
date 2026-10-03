@@ -1,6 +1,6 @@
 # Atlas API — M3 accounts, catalog and promotions
 
-Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.3.0`.
+Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.3.1`.
 
 M2 implements registration, login/logout, persisted JDBC sessions, email verification, password reset, current account and live USER/ADMIN authorization. Angular authentication uses the real API. M3 adds persistent catalog, administrative product/price changes and promotions. Sales remain disabled until payment and delivery milestones. No Mercado Pago credentials, Minecraft changes or game database access. See `../atlas-docs/M2-BACKEND.md` and its milestone OpenAPI for the complete account contract. See `../atlas-docs/M3-BACKEND.md` for catalog and promotion endpoints.
 
@@ -113,3 +113,5 @@ The VM local user service `atlas-api.service` runs native persistent development
 - [Spring Security CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
 
 Commercial/API contract and VIP pause/resume decisions live in `atlas-docs/M0-BACKEND.md` and `atlas-docs/api/openapi-m0.json`. Gateway confirmed: Mercado Pago Checkout Pro via Orders API, PIX/card; integration comes after the account/catalog/order milestones.
+
+Release 0.3.1 adds branded multipart HTML/text verification and recovery emails, a registration confirmation dialog with spam guidance and a styled verification success page. Token and session rules are unchanged.
