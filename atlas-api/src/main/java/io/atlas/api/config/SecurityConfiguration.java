@@ -31,7 +31,7 @@ public class SecurityConfiguration {
         return http
             .cors(cors -> {})
             .securityContext(context -> context.securityContextRepository(contexts))
-            .csrf(csrf -> csrf.csrfTokenRepository(tokens).ignoringRequestMatchers("/internal/v1/minecraft/proofs"))
+            .csrf(csrf -> csrf.csrfTokenRepository(tokens).ignoringRequestMatchers("/internal/v1/minecraft/proofs", "/api/v1/webhooks/mercadopago"))
             .addFilterAfter(accountFilter, SecurityContextHolderFilter.class)
             .logout(logout -> logout.disable())
             .requestCache(cache -> cache.disable())
@@ -41,7 +41,7 @@ public class SecurityConfiguration {
                     "/api/v1/auth/logout", "/api/v1/auth/verify-email", "/api/v1/auth/resend-verification",
                     "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/catalog").permitAll()
-                .requestMatchers("/internal/v1/minecraft/proofs").permitAll()
+                .requestMatchers("/internal/v1/minecraft/proofs", "/api/v1/webhooks/mercadopago").permitAll()
                 .requestMatchers("/api/v1/users/me", "/api/v1/users/me/**", "/api/v1/orders", "/api/v1/orders/**").authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/actuator/**").hasRole("OPERATIONS")

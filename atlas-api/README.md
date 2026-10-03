@@ -1,6 +1,6 @@
 # Atlas API — M3 accounts, catalog and promotions
 
-Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.4.2`.
+Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.5.0`.
 
 M2 implements registration, login/logout, persisted JDBC sessions, email verification, password reset, current account and live USER/ADMIN authorization. Angular authentication uses the real API. M3 adds persistent catalog, administrative product/price changes and promotions. Sales remain disabled until payment and delivery milestones. No Mercado Pago credentials, Minecraft changes or game database access. See `../atlas-docs/M2-BACKEND.md` and its milestone OpenAPI for the complete account contract. See `../atlas-docs/M3-BACKEND.md` for catalog and promotion endpoints.
 
@@ -119,3 +119,5 @@ Release 0.3.1 adds branded multipart HTML/text verification and recovery emails,
 M4 (0.4.2) adds hashed Minecraft link challenges, trusted same-VM Core proofs, final web confirmation, password-protected unlink, owner-scoped orders and transactional idempotency. Checkout snapshots canonical site subject and server-recalculated pricing. Sales remain disabled by both the global switch and each offer. See `../atlas-docs/M4-BACKEND.md`. Run `python3 scripts/verify-local.py --core-tests --web-tests` to include real Core repository migration/merge checks on a separate disposable database.
 
 Release 0.4.2 changes Minecraft linking to six ASCII digits (leading zeroes preserved), five-minute expiry, keyed hashes and bounded proof attempts. V6 retires legacy pending challenges without touching confirmed links. Active code uniqueness and a fifteen-minute reuse cooldown are protected in the database transaction.
+
+M5 (0.5.0, V7) adds hosted Mercado Pago preferences, a unique durable creation attempt per order, authenticated/deduplicated webhooks, leased payment jobs, reconciliation, compensations held for review and an atomic delivery outbox. External test credentials/homologation are pending. Both sales and payments remain disabled. See `../atlas-docs/M5-BACKEND.md` and `.env.example`. Install the verified API only with `scripts/deploy-m5-local.py`; M4 installation script is historical and targets its old artifact.

@@ -93,6 +93,13 @@ logging:
     format:
       console: logstash
 atlas:
+  payment:
+    enabled: ${ATLAS_PAYMENT_ENABLED:false}
+    mode: ${ATLAS_MP_MODE:test}
+    access-token: ${ATLAS_MP_ACCESS_TOKEN:}
+    webhook-secret: ${ATLAS_MP_WEBHOOK_SECRET:}
+    collector-id: ${ATLAS_MP_COLLECTOR_ID:}
+    notification-url: ${ATLAS_MP_NOTIFICATION_URL:}
   core:
     key: ${ATLAS_CORE_KEY:}
   commerce:
