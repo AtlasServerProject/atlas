@@ -101,7 +101,7 @@ test('estrutura é retomável, preserva existentes e não duplica', async () => 
   };
   await applyStructure(guild);
   const size = channels.size;
-  assert.equal(size, 16);
+  assert.equal(size, 17);
   assert.equal(roles.size, 2);
   assert.equal(await applyStructure(guild), 'A estrutura já existe.');
   assert.equal(channels.size, size);

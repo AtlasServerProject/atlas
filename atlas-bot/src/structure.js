@@ -1,7 +1,7 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 
 export const layout = [
-  { name: '📌 ATLAS • INFORMAÇÕES', aliases: ['ATLAS • INFORMAÇÕES'], channels: ['👋・boas-vindas', '📜・regras', '📣・avisos', '📥・como-jogar'], readOnly: true },
+  { name: '📌 ATLAS • INFORMAÇÕES', aliases: ['ATLAS • INFORMAÇÕES'], channels: ['👋・boas-vindas', '📜・regras', '📣・avisos', '📰・novidades', '📥・como-jogar'], readOnly: true },
   { name: '🌿 ATLAS • COMUNIDADE', aliases: ['Canais de Texto', 'ATLAS • COMUNIDADE'], channels: ['💬・geral', '❓・duvidas', '💡・sugestoes', '📸・aventuras', '🤝・trocas'], readOnly: false },
   { name: '🔊 ATLAS • VOZ', aliases: ['Canais de Voz'], channels: ['🌳・Praça Emerald', '🧭・Exploração', '⚔️・Batalhas'], voice: true, readOnly: false },
 ];
@@ -48,7 +48,7 @@ export async function applyStructure(guild) {
         topic: group.voice ? undefined : `Atlas Cobblemon • ${oldName.replaceAll('-', ' ')}`,
         permissionOverwrites: group.readOnly ? [
           { id: guild.id, deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.CreatePublicThreads, PermissionFlagsBits.CreatePrivateThreads, PermissionFlagsBits.SendMessagesInThreads] },
-          { id: guild.members.me.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+          { id: guild.members.me.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks] },
         ] : [] });
       created.push(name);
     }

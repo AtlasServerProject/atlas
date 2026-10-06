@@ -11,7 +11,7 @@
     "register": "node --env-file-if-exists=.env src/register.js",
     "notify": "node --env-file-if-exists=.env src/notify.js",
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/config.js && node --check src/commands.js && node --check src/structure.js && node --check src/bridge.js && node --check src/register.js && node --check src/admin.js && node --check src/notify.js"
+    "check": "node --check src/index.js && node --check src/config.js && node --check src/commands.js && node --check src/structure.js && node --check src/bridge.js && node --check src/register.js && node --check src/admin.js && node --check src/notify.js && node --check src/news.js && node --check src/news-channel.js && node --check src/welcome.js"
   },
   "dependencies": {
     "discord.js": "14.27.0",

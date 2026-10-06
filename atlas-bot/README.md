@@ -1,5 +1,83 @@
 # Atlas-bot
 
+## Diagnóstico e correção de boas-vindas
+
+As boas-vindas ficam habilitadas por padrão (`DISCORD_WELCOME_ENABLED=true`).
+Com `DISCORD_WELCOME_CHANNEL_ID` vazio, o bot procura um único canal de texto
+ou anúncios chamado `boas-vindas`, `bem-vindo` ou `bem-vindos`, ignorando
+emoji, separadores e acentos. Mais de um candidato exige configurar o ID.
+Um ID explícito incorreto nunca é substituído silenciosamente por outro canal.
+`DISCORD_WELCOME_ENABLED=false` desativa o recurso intencionalmente.
+
+O bot verifica o intent de membros mesmo sem ID de canal. Ative **Server Members
+Intent** em Developer Portal → aplicação Atlas-bot → Bot → Privileged Gateway
+Intents e reinicie o serviço. Sem isso, Discord não entrega as entradas de novos
+membros ao bot. O código não altera essa opção do painel por conta própria.
+
+Após instalar esta versão e registrar os comandos, o dono pode usar no canal privado:
+
+- `/boas-vindas`: verifica destino, intent e permissões, sem enviar mensagem.
+- `/boas-vindas corrigir:true`: ajusta somente as permissões do próprio bot no
+  canal escolhido: Ver canal, Enviar mensagens e Inserir links. A operação exige
+  que o bot possa administrar permissões; não altera acesso ou cargos dos membros.
+- `/boas-vindas testar:true`: envia uma mensagem de boas-vindas para a própria
+  conta do dono. Não envia para outros membros nem atribui cargos. Esse teste
+  confirma o envio, mas não substitui uma entrada real para testar o evento.
+
+O diagnóstico também aparece nos logs no início do serviço. Falhas de envio
+informam a permissão ausente ou código Discord, sem dados da requisição/token.
+Mensagens são enviadas a novos membros humanos na entrada no servidor; membros
+já presentes não recebem boas-vindas ao reiniciar o bot ou ficar online.
+Uma falha na atribuição do cargo Membro continua independente do envio da mensagem.
+
+## Novidades do site no Discord
+
+Integração preparada no código; criação do canal e ativação no Discord dependem
+da instalação desta versão no host do bot e da configuração local. Nenhuma
+credencial ou envio real faz parte dos testes.
+
+O Atlas Web exporta as mesmas notas exibidas em `/notices` para `/updates.json`
+ao iniciar ou compilar. Publique o build atualizado do site antes de configurar
+`ATLAS_NEWS_FEED_URL` com o endereço HTTPS desse arquivo. A fonte editorial
+continua sendo `atlas-web/src/app/pages/notices/patch-notes.ts`.
+
+Após atualizar o bot, execute `npm run register` usando seu arquivo de ambiente
+existente. No canal privado do dono:
+
+1. `/preparar-novidades` mostra a proposta sem alterar o servidor.
+2. `/preparar-novidades confirmar:true` cria ou reaproveita **📰・novidades**
+   na categoria **📌 ATLAS • INFORMAÇÕES**, com leitura e histórico para membros
+   e envio/embeds para o bot. Não cria cargos nem altera outros canais.
+3. Guarde o ID retornado em `DISCORD_NEWS_CHANNEL_ID` no ambiente protegido do
+   bot. A seleção vale imediatamente para a instância atual; depois de reiniciar,
+   é usada a variável de ambiente.
+4. `/publicar-novidade` mostra uma prévia privada da nota mais recente. A opção
+   `id` seleciona uma nota específica; `/publicar-novidade confirmar:true` publica.
+   `/novidades` permite aos membros consultar a nota mais recente do site.
+
+Para sincronização automática, configure explicitamente `ATLAS_NEWS_AUTO=true`
+e reinicie. O padrão é `false`. O bot consulta o feed a cada cinco minutos;
+o intervalo é ajustável em `ATLAS_NEWS_INTERVAL_SECONDS` (mínimo 60 segundos).
+A primeira consulta registra as notas existentes sem publicar todo o histórico.
+Use o comando do dono para publicar notas históricas desejadas. Consultas seguintes
+publicam novas notas ou reconciliam mudanças de conteúdo. Notas já publicadas são
+editadas na mesma mensagem. Sem menções a todos, cargos ou usuários.
+
+O histórico fica em `ATLAS_NEWS_STATE_FILE`, padrão `.runtime/news-state.json`.
+Preserve esse arquivo entre reinícios e deploys e execute uma única instância.
+Um mutex serializa comandos e sincronização. O envio registra intenção antes de
+chamar Discord; se a resposta se perder, o bot procura sua mensagem entre as
+últimas 100 pelo marcador da nota. Sem confirmação, para em vez de reenviar.
+Nesse caso, o operador precisa conferir o canal e reparar o estado, preservando
+o ID da mensagem realmente enviada. Mensagem excluída ou estado corrompido também
+exigem revisão; não há reset automático. Não excluir o histórico para tentar
+corrigir erros, pois isso perde a referência das mensagens.
+
+O bot precisa de View Channel, Send Messages, Embed Links e Read Message History
+no canal; a preparação também exige Manage Channels. Não necessita de intent
+para ler conversas dos membros. Alterações publicadas no site chegam na próxima
+consulta bem-sucedida, enquanto o bot estiver ativo.
+
 Base do bot oficial do Discord Atlas, em Node.js 24.17+ e discord.js. Usa comandos de barra e o intent `Guilds` e, para boas-vindas, `GuildMembers`; não precisa ler mensagens dos membros. A conexão usa Gateway e não exige porta pública.
 
 ## Funcionalidades
