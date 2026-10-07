@@ -24,6 +24,7 @@ order=str(uuid.UUID(state['order_id']))
 player=json.loads(core("SELECT row_to_json(p) FROM (SELECT id,uuid,username FROM players WHERE lower(username)='vfsomente') p"))
 assert player['username'].lower()=='vfsomente';player_id=int(player['id']);minecraft=str(uuid.UUID(player['uuid']))
 account=str(uuid.UUID(api(f"SELECT user_id FROM atlas_web.orders WHERE id='{order}'")))
+original_snapshot=api(f"SELECT snapshot FROM atlas_web.orders WHERE id='{order}'")
 backup=work/('identity-before-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'.json')
 backup.write_text(api(f"SELECT coalesce(json_agg(l),'[]'::json) FROM atlas_web.minecraft_links l WHERE user_id='{account}'"));backup.chmod(0o600)
 subject=str(uuid.uuid4())
@@ -34,5 +35,5 @@ if not existing:
  link=str(uuid.uuid4())
  api(f"BEGIN; UPDATE atlas_web.minecraft_links SET revoked_at=now() WHERE user_id='{account}' AND revoked_at IS NULL; INSERT INTO atlas_web.minecraft_links(id,user_id,subject,core_player_id,minecraft_uuid,nickname,server,linked_at) VALUES('{link}','{account}','{subject}',{player_id},'{minecraft}','VFSomente','emerald',now()); INSERT INTO atlas_web.identity_audit(user_id,action,subject,request_id,created_at) VALUES('{account}','DEV_SANDBOX_LINK','{subject}','manual-test-only',now()); COMMIT;")
 assert api(f"SELECT count(*) FROM atlas_web.minecraft_links WHERE user_id='{account}' AND revoked_at IS NULL AND subject='{subject}' AND core_player_id={player_id}")=='1'
-assert api(f"SELECT snapshot->'identity'->>'nickname' FROM atlas_web.orders WHERE id='{order}'")!='VFSomente'
+assert api(f"SELECT snapshot FROM atlas_web.orders WHERE id='{order}'")==original_snapshot
 print('PASS: sandbox account linked to VFSomente in isolated dev database. Existing paid order preserved. Production unchanged.')
