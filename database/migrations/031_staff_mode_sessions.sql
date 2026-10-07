@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS staff_mode_sessions (
+    player_uuid UUID PRIMARY KEY,
+    game_mode VARCHAR(16) NOT NULL CHECK (game_mode IN ('survival', 'creative', 'adventure', 'spectator')),
+    world TEXT NOT NULL,
+    x DOUBLE PRECISION NOT NULL,
+    y DOUBLE PRECISION NOT NULL,
+    z DOUBLE PRECISION NOT NULL,
+    yaw REAL NOT NULL,
+    pitch REAL NOT NULL,
+    may_fly BOOLEAN NOT NULL,
+    flying BOOLEAN NOT NULL,
+    invulnerable BOOLEAN NOT NULL,
+    instant_build BOOLEAN NOT NULL,
+    may_build BOOLEAN NOT NULL,
+    fly_speed REAL NOT NULL,
+    walk_speed REAL NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    restored_at TIMESTAMPTZ
+);

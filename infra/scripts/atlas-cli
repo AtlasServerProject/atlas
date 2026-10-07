@@ -34,11 +34,11 @@ case "$COMMAND" in
         ;;
 
     backup)
-        "$SCRIPT_DIR/backup.sh"
+        "$SCRIPT_DIR/backup.sh" "$@"
         ;;
 
     restore)
-        "$SCRIPT_DIR/restore.sh"
+        "$SCRIPT_DIR/restore.sh" "$@"
         ;;
 
     update)
@@ -46,6 +46,10 @@ case "$COMMAND" in
         ;;
     migrate)
         "$SCRIPT_DIR/migrate.sh"
+        ;;
+
+    backup-verify)
+        exec python3 "$SCRIPT_DIR/backup-manager.py" verify "$@"
         ;;
 
     start)
@@ -104,12 +108,96 @@ case "$COMMAND" in
         run_admin_command "$*"
         ;;
 
+    pregenerate-survival)
+        action="${1:-status}"
+        case "$action" in
+            start)
+                run_admin_command "chunky world atlas:survival_emerald"
+                run_admin_command "chunky shape square"
+                run_admin_command "chunky center 0 0"
+                run_admin_command "chunky radius 6000"
+                run_admin_command "chunky quiet 60"
+                run_admin_command "chunky start"
+                ;;
+            status)
+                run_admin_command "chunky progress"
+                ;;
+            pause)
+                run_admin_command "chunky pause"
+                ;;
+            continue|resume)
+                run_admin_command "chunky continue"
+                ;;
+            *)
+                echo "Uso: atlas-cli pregenerate-survival [status|start|pause|continue|resume]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    pregenerate-nether)
+        action="${1:-status}"
+        case "$action" in
+            start)
+                run_admin_command "chunky world minecraft:the_nether"
+                run_admin_command "chunky shape square"
+                run_admin_command "chunky center 0 0"
+                run_admin_command "chunky radius 6000"
+                run_admin_command "chunky quiet 60"
+                run_admin_command "chunky start"
+                ;;
+            status)
+                run_admin_command "chunky progress"
+                ;;
+            pause)
+                run_admin_command "chunky pause"
+                ;;
+            continue|resume)
+                run_admin_command "chunky continue"
+                ;;
+            *)
+                echo "Uso: atlas-cli pregenerate-nether [status|start|pause|continue|resume]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    pregenerate-end)
+        action="${1:-status}"
+        case "$action" in
+            start)
+                run_admin_command "chunky world minecraft:the_end"
+                run_admin_command "chunky shape square"
+                run_admin_command "chunky center 0 0"
+                run_admin_command "chunky radius 6000"
+                run_admin_command "chunky quiet 60"
+                run_admin_command "chunky start"
+                ;;
+            status)
+                run_admin_command "chunky progress"
+                ;;
+            pause)
+                run_admin_command "chunky pause"
+                ;;
+            continue|resume)
+                run_admin_command "chunky continue"
+                ;;
+            *)
+                echo "Uso: atlas-cli pregenerate-end [status|start|pause|continue|resume]"
+                exit 1
+                ;;
+        esac
+        ;;
+
     *)
         echo "Atlas CLI"
         echo
         echo "Uso:"
         echo "  atlas-cli install"
         echo "  atlas-cli doctor"
+        echo "  atlas-cli backup"
+        echo "  atlas-cli backup-verify <backup>"
+        echo "  atlas-cli restore <backup> --confirm [--target <pasta> --database <banco>]"
         echo "  atlas-cli start"
         echo "  atlas-cli stop"
         echo "  atlas-cli restart"
@@ -117,6 +205,9 @@ case "$COMMAND" in
         echo "  atlas-cli logs"
         echo "  atlas-cli console"
         echo "  atlas-cli exec <comando>"
+        echo "  atlas-cli pregenerate-survival [start|status|pause|continue]"
+        echo "  atlas-cli pregenerate-nether [start|status|pause|continue]"
+        echo "  atlas-cli pregenerate-end [start|status|pause|continue]"
         echo "  atlas-cli migrate"
         ;;
 esac

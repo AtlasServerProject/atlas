@@ -1,0 +1,17 @@
+[Unit]
+Description=Atlas Discord bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/somente/dev/atlas/atlas-bot
+EnvironmentFile=/home/somente/.config/atlas/discord-bot.env
+ExecStart=/home/somente/.local/bin/node src/index.js
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
