@@ -4,6 +4,8 @@ import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.util.*;
 public final class DeliveryModels {
+ public record MailOwner(@NotNull UUID subject,@Min(1) long corePlayerId,@Min(0) @Max(100000) int page){}
+ public record MailItem(UUID id,String productName,String plan,int days,String status,Instant purchasedAt,Instant activatedAt){}
  public record Claim(@Pattern(regexp="emerald") @NotNull String server){}
  public record Delivery(UUID id,UUID leaseToken,String server,String mode,UUID subject,long corePlayerId,String plan,int days){}
  public record Balance(@NotNull UUID subject,@Min(1) long corePlayerId,@Pattern(regexp="emerald") @NotNull String server,@Min(0) @Max(3153600000000L) long vip1Ms,@Min(0) @Max(3153600000000L) long vip2Ms,@Min(0) @Max(3153600000000L) long vip3Ms,@NotNull Instant checkpoint){}

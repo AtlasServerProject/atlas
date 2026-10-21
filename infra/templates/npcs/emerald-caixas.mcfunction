@@ -1,0 +1,2 @@
+# Load the NPC chunk before executing. Tobias skin pending: default appearance.
+execute in atlas:emerald unless entity @e[tag=atlas_npc_emerald_caixas] run summon easy_npc:humanoid_slim 915.5 71 3798.5 {Tags:["atlas_npc_emerald_caixas"],CustomName:"{\"text\": \"Caixas\", \"color\": \"gold\", \"bold\": true}",CustomNameVisible:1b,Invulnerable:1b,NoAI:1b,NoGravity:1b,Silent:1b,PersistenceRequired:1b,Rotation:[0f,0f],EntityAttribute:{IsInvulnerable:1b,NoGravity:1b,IsPushable:0b,PushEntities:0b,CanBeLeashed:0b,CanBeHitByProjectile:0b}}

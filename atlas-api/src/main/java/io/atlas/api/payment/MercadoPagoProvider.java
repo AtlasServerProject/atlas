@@ -30,9 +30,9 @@ public class MercadoPagoProvider implements PaymentProvider {
  String back=settings.webUrl.replaceAll("/$","")+"/minhas-compras";
  var payload=new LinkedHashMap<String,Object>();
  payload.put("items",List.of(Map.of("id",order.snapshot().slug(),"title",order.snapshot().productName(),"quantity",1,"currency_id","BRL","unit_price",BigDecimal.valueOf(order.totalCents(),2))));
- payload.put("external_reference",order.id().toString());payload.put("metadata",Map.of("atlas_attempt_id",attemptId));payload.put("back_urls",Map.of("success",back,"failure",back,"pending",back));payload.put("auto_return","approved");payload.put("notification_url",settings.notificationUrl);payload.put("expires",true);payload.put("expiration_date_from",order.createdAt().toString());payload.put("expiration_date_to",order.expiresAt().toString());
+ payload.put("external_reference",order.id().toString());payload.put("metadata",Map.of("atlas_attempt_id",attemptId));payload.put("back_urls",Map.of("success",back,"failure",back,"pending",back));payload.put("auto_return","approved");payload.put("notification_url",settings.notificationUrl);payload.put("expires",true);payload.put("expiration_date_from",order.createdAt().toString());payload.put("expiration_date_to",order.expiresAt().toString());payload.put("date_of_expiration",order.expiresAt().atOffset(ZoneOffset.ofHours(-3)).toString());
  payload.put("payment_methods",Map.of("excluded_payment_types",List.of(Map.of("id","ticket")),"installments",1));
- var result=call("/checkout/preferences",payload,attemptId);String id=result.path("id").asText();String url=result.path(settings.live()?"init_point":"sandbox_init_point").asText();
+ var result=call("/checkout/preferences",payload,attemptId);String id=result.path("id").asText();String url=result.path("init_point").asText();
  if(id.isBlank()||!safeUrl(url))throw new IllegalStateException("Invalid preference");return new Preference(id,url);
  }
  public static boolean safeUrl(String url){try{var uri=URI.create(url);return "https".equals(uri.getScheme())&&uri.getUserInfo()==null&&uri.getPort()==-1&&Set.of("www.mercadopago.com.br","sandbox.mercadopago.com.br").contains(uri.getHost());}catch(Exception e){return false;}}

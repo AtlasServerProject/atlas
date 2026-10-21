@@ -2,12 +2,15 @@
 """Local compiled SPA preview and fixed loopback API proxy. Production uses an HTTPS reverse proxy."""
 import http.client
 import os
+import re
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2] / 'atlas-web/dist/atlas-web/browser'
-ROUTES = {'/', '/how-to-play', '/store', '/notices', '/loja', '/login', '/cadastro', '/conta', '/minhas-compras', '/admin', '/recuperar-senha', '/verificar-email', '/redefinir-senha'}
+ROUTES = {'/', '/how-to-play', '/store', '/notices', '/loja', '/login', '/cadastro', '/conta', '/minhas-compras', '/admin', '/recuperar-senha', '/verificar-email', '/redefinir-senha', '/tickets', '/admin/tickets'}
+def spa_route(path):
+    return path.rstrip('/') in {r.rstrip('/') for r in ROUTES} or bool(re.fullmatch(r'/minhas-compras/[0-9a-fA-F-]{36}/comprovante/?', path))
 API_PORT = int(os.environ.get('ATLAS_PREVIEW_API_PORT', '8080'))
 PORT = int(os.environ.get('ATLAS_PREVIEW_PORT', '4200'))
 HOP = {'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers', 'transfer-encoding', 'upgrade', 'content-length'}
@@ -40,11 +43,11 @@ class Handler(SimpleHTTPRequestHandler):
         return True
     def do_GET(self):
         if self.proxy(): return
-        if urlsplit(self.path).path.rstrip('/') in {r.rstrip('/') for r in ROUTES}: self.path = '/index.html'
+        if spa_route(urlsplit(self.path).path): self.path = '/index.html'
         super().do_GET()
     def do_HEAD(self):
         if self.proxy(): return
-        if urlsplit(self.path).path.rstrip('/') in {r.rstrip('/') for r in ROUTES}: self.path = '/index.html'
+        if spa_route(urlsplit(self.path).path): self.path = '/index.html'
         super().do_HEAD()
     def do_POST(self):
         if not self.proxy(): self.send_error(405)

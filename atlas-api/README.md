@@ -2,7 +2,7 @@
 
 Java 21, Spring Boot 4.1.1, Spring MVC/Security/Validation/JDBC, PostgreSQL 18, Flyway, Actuator, Maven Wrapper 3.9.16. Versioned application: `0.5.0`.
 
-M2 implements registration, login/logout, persisted JDBC sessions, email verification, password reset, current account and live USER/ADMIN authorization. Angular authentication uses the real API. M3 adds persistent catalog, administrative product/price changes and promotions. Sales remain disabled until payment and delivery milestones. No Mercado Pago credentials, Minecraft changes or game database access. See `../atlas-docs/M2-BACKEND.md` and its milestone OpenAPI for the complete account contract. See `../atlas-docs/M3-BACKEND.md` for catalog and promotion endpoints.
+M2 implements registration, login/logout, persisted JDBC sessions, email verification, password reset, current account and live USER/ADMIN authorization. Angular authentication uses the real API. M3 adds persistent catalog, administrative product/price changes and promotions. Sales remain disabled until payment and delivery milestones. No Mercado Pago credentials, Minecraft changes or game database access. See `../atlas-docs/PAGAMENTOS.md` and its milestone OpenAPI for the complete account contract. See `../atlas-docs/PAGAMENTOS.md` for catalog and promotion endpoints.
 
 ## Run and verify without Docker (available on the Atlas VM)
 
@@ -112,12 +112,12 @@ The VM local user service `atlas-api.service` runs native persistent development
 - [Spring Boot Actuator health and endpoint exposure](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)
 - [Spring Security CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
 
-Commercial/API contract and VIP pause/resume decisions live in `atlas-docs/M0-BACKEND.md` and `atlas-docs/api/openapi-m0.json`. Gateway confirmed: Mercado Pago Checkout Pro via Orders API, PIX/card; integration comes after the account/catalog/order milestones.
+Commercial/API contract and VIP pause/resume decisions live in `atlas-docs/PAGAMENTOS.md` and `atlas-api/contracts/openapi-m0.json`. Gateway confirmed: Mercado Pago Checkout Pro via Orders API, PIX/card; integration comes after the account/catalog/order milestones.
 
 Release 0.3.1 adds branded multipart HTML/text verification and recovery emails, a registration confirmation dialog with spam guidance and a styled verification success page. Token and session rules are unchanged.
 
-M4 (0.4.2) adds hashed Minecraft link challenges, trusted same-VM Core proofs, final web confirmation, password-protected unlink, owner-scoped orders and transactional idempotency. Checkout snapshots canonical site subject and server-recalculated pricing. Sales remain disabled by both the global switch and each offer. See `../atlas-docs/M4-BACKEND.md`. Run `python3 scripts/verify-local.py --core-tests --web-tests` to include real Core repository migration/merge checks on a separate disposable database.
+M4 (0.4.2) adds hashed Minecraft link challenges, trusted same-VM Core proofs, final web confirmation, password-protected unlink, owner-scoped orders and transactional idempotency. Checkout snapshots canonical site subject and server-recalculated pricing. Sales remain disabled by both the global switch and each offer. See `../atlas-docs/PAGAMENTOS.md`. Run `python3 scripts/verify-local.py --core-tests --web-tests` to include real Core repository migration/merge checks on a separate disposable database.
 
 Release 0.4.2 changes Minecraft linking to six ASCII digits (leading zeroes preserved), five-minute expiry, keyed hashes and bounded proof attempts. V6 retires legacy pending challenges without touching confirmed links. Active code uniqueness and a fifteen-minute reuse cooldown are protected in the database transaction.
 
-M5 (0.5.0, V7) adds hosted Mercado Pago preferences, a unique durable creation attempt per order, authenticated/deduplicated webhooks, leased payment jobs, reconciliation, compensations held for review and an atomic delivery outbox. External test credentials/homologation are pending. Both sales and payments remain disabled. See `../atlas-docs/M5-BACKEND.md` and `.env.example`. Install the verified API only with `scripts/deploy-m5-local.py`; M4 installation script is historical and targets its old artifact.
+M5 (0.5.0, V7) adds hosted Mercado Pago preferences, a unique durable creation attempt per order, authenticated/deduplicated webhooks, leased payment jobs, reconciliation, compensations held for review and an atomic delivery outbox. External test credentials/homologation are pending. Both sales and payments remain disabled. See `../atlas-docs/PAGAMENTOS.md` and `.env.example`. Install the verified API only with `scripts/deploy-m5-local.py`; M4 installation script is historical and targets its old artifact.

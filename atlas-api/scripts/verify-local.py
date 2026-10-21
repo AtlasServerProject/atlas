@@ -3,6 +3,7 @@
 Default: tests, package and restart/failure smoke tests. --serve keeps the API running until Ctrl+C.
 """
 import argparse
+import xml.etree.ElementTree as ET
 from http.cookiejar import CookieJar
 import re
 import base64
@@ -85,7 +86,7 @@ def sql(text):
 def start_api():
     global api, api_log
     api_log = open(work / 'api.log', 'a')
-    api = subprocess.Popen(['java', '-jar', str(root / 'target/atlas-api-0.6.0.jar')],
+    api = subprocess.Popen(['java', '-jar', str(root / ('target/atlas-api-' + ET.parse(root/'pom.xml').getroot().find('{http://maven.apache.org/POM/4.0.0}version').text + '.jar'))],
                            env=env, cwd=root, stdout=api_log, stderr=subprocess.STDOUT)
 
 def stop_api():
@@ -123,12 +124,12 @@ try:
     pg('start')
     sql((root / 'infra/postgres/provision.sql').read_text())
     sql("CREATE TABLE public.core_sentinel (id INTEGER PRIMARY KEY); INSERT INTO public.core_sentinel VALUES (1);")
-    subprocess.run([str(root / 'mvnw'), '-B', '-ntp', 'verify'], cwd=root, env=env, check=True)
+    subprocess.run([str(root / 'mvnw'), '-B', '-ntp', 'clean', 'verify'], cwd=root, env=env, check=True)
     if args.core_tests:
         subprocess.run(['python3',str(root/'scripts/verify-core-identity.py')],env={**env,'ATLAS_CORE_TEST_ISOLATED':'yes'},check=True)
     start_api(); ready()
     status, first = http('/api/v1/system')
-    assert status == 200 and first['schemaGeneration'] == 8
+    assert status == 200 and first['schemaGeneration'] == 11
     assert http('/actuator/metrics')[0] == 401
     jar = CookieJar()
     browser = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
@@ -155,6 +156,9 @@ try:
             'ATLAS_TEST_URL':f'http://127.0.0.1:{web_port}', 'ATLAS_E2E_CORE_API_URL':f'http://127.0.0.1:{api_port}', 'ATLAS_E2E_MAIL_DIRECTORY':str(work/'mail')})
         fixture = work/'e2e-accounts.json'
         web_env['ATLAS_E2E_ACCOUNTS_FILE'] = str(fixture)
+        # Previous API tests may leave administrators in this disposable database.
+        # Reset only these test fixtures before verifying the last-admin browser fixture.
+        sql("UPDATE atlas_web.users SET role='USER' WHERE role='ADMIN';")
         accounts = {}
         for role in ['USER'] + ['ADMIN']*9:
             email = secrets.token_hex(12)+'@example.invalid'; password=secrets.token_urlsafe(24)

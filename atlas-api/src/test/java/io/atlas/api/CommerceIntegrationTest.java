@@ -53,4 +53,75 @@ class CommerceIntegrationTest {
  @Test void pendingCodesStayUniqueUnderConcurrentGeneration()throws Exception{var pool=Executors.newFixedThreadPool(2);var go=new CountDownLatch(1);try{var a=pool.submit(()->{go.await();return identity.create(user,"test");});var b=pool.submit(()->{go.await();return identity.create(other,"test");});go.countDown();var first=a.get(10,TimeUnit.SECONDS);var second=b.get(10,TimeUnit.SECONDS);assertThat(first.code()).matches("[0-9]{6}").isNotEqualTo(second.code());assertThat(second.code()).matches("[0-9]{6}");}finally{pool.shutdownNow();}}
  @Test void coreProofAllowsOnlyFiveAttemptsAndRejectsOldFormat()throws Exception{var c=identity.create(user,"limit-test");var b=new Browser();var legacy=new Proof(tokens.random(),subject,123,UUID.randomUUID(),"Test","emerald");var base=URI.create("http://127.0.0.1:"+port+"/internal/v1/minecraft/proofs");java.util.function.Function<Proof,HttpRequest> make=body->HttpRequest.newBuilder(base).header("X-Atlas-Key","isolated-test-key-never-used-outside-tests-0123456789").header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build();assertThat(b.client.send(make.apply(legacy),HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(422);var body=proof(c,subject);assertThat(b.client.send(make.apply(body),HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(204);for(int n=1;n<5;n++)assertThat(b.client.send(make.apply(body),HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(409);assertThat(b.client.send(make.apply(body),HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(429);}
  @Test void realHttpRequiresSessionCsrfAndPrivateCoreCredential()throws Exception{var b=new Browser();assertThat(b.get("orders").statusCode()).isEqualTo(401);assertThat(b.get("users/me/minecraft-link").statusCode()).isEqualTo(401);assertThat(b.post("/api/v1/auth/login",Map.of("email",user+"@example.invalid","password",password),true).statusCode()).isEqualTo(200);assertThat(b.post("/api/v1/users/me/minecraft-link-challenges",Map.of(),false).statusCode()).isEqualTo(403);var c=identity.create(user,"test");assertThat(b.post("/internal/v1/minecraft/proofs",proof(c,subject),false).statusCode()).isEqualTo(403);assertThat(b.post("/api/v1/users/me/minecraft-link-confirmations",new Confirmation(c.id(),subject),true).statusCode()).isEqualTo(409);var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/internal/v1/minecraft/proofs")).header("X-Atlas-Key","isolated-test-key-never-used-outside-tests-0123456789").header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(proof(c,subject)))).build();assertThat(b.client.send(request,HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(204);assertThat(b.post("/api/v1/users/me/minecraft-link-confirmations",new Confirmation(c.id(),subject),true).statusCode()).isEqualTo(200);}
+ @Test void receiptRequiresOwnershipAndVerifiedPaymentAndListsDuplicates() throws Exception {
+  link(user,subject); var order=orders.checkout(user,UUID.randomUUID().toString(),body(),"receipt-test");
+  var receipts=new OrderReceiptService(orders,new io.atlas.api.payment.PaymentRepository(db,json));
+  assertThatThrownBy(()->receipts.receipt(user,order.id())).isInstanceOf(ApiFailure.class);
+  db.update("INSERT INTO atlas_web.payment_attempts(id,order_id,mode,state,created_at,updated_at) VALUES(?,?,'test','CREATING',now(),now())",UUID.randomUUID(),order.id());
+  for(String id:List.of("91001","91002")) db.update("INSERT INTO atlas_web.payment_observations(payment_id,order_id,provider_status,changed_at,checked_at) VALUES(?,?,'approved',now(),now())",id,order.id());
+  db.update("INSERT INTO atlas_web.payment_reviews(payment_id,reason,created_at) VALUES('91002','DUPLICATE_PAYMENT',now())");
+  db.update("UPDATE atlas_web.orders SET payment_status='PAID' WHERE id=?",order.id());
+  assertThat(receipts.receipt(user,order.id()).payments()).hasSize(2).filteredOn(p->p.duplicate()).extracting(p->p.id()).containsExactly("91002");
+  assertThatThrownBy(()->receipts.receipt(other,order.id())).isInstanceOf(ApiFailure.class).hasMessage("Pedido não encontrado.");
+  var anonymous=new Browser(); assertThat(anonymous.get("orders/"+order.id()+"/receipt").statusCode()).isEqualTo(401);
+  var owner=new Browser(); owner.post("/api/v1/auth/login",Map.of("email",user+"@example.invalid","password",password),true);
+  var response=owner.get("orders/"+order.id()+"/receipt"); assertThat(response.statusCode()).isEqualTo(200);
+  assertThat(response.headers().firstValue("Cache-Control")).contains("no-store");
+  var stranger=new Browser(); stranger.post("/api/v1/auth/login",Map.of("email",other+"@example.invalid","password",password),true);
+  assertThat(stranger.get("orders/"+order.id()+"/receipt").statusCode()).isEqualTo(404);
+ }
+ @Test void supportOwnsTicketsAndSupportRoleCannotManagePrices() throws Exception {
+  link(user,subject);var order=orders.checkout(user,UUID.randomUUID().toString(),body(),"support-test");
+  var customer=new Browser();customer.post("/api/v1/auth/login",Map.of("email",user+"@example.invalid","password",password),true);
+  var created=customer.post("/api/v1/support/tickets",Map.of("orderId",order.id(),"title","Pagamento duplicado","body","Ajuda com minha compra"),true);
+  assertThat(created.statusCode()).isEqualTo(200);String ticket=json.readTree(created.body()).path("id").asString();
+  var again=customer.post("/api/v1/support/tickets",Map.of("orderId",order.id(),"title","Retry","body","Retry"),true);
+  assertThat(json.readTree(again.body()).path("id").asString()).isEqualTo(ticket);
+  var stranger=new Browser();stranger.post("/api/v1/auth/login",Map.of("email",other+"@example.invalid","password",password),true);
+  assertThat(stranger.get("support/tickets/"+ticket).statusCode()).isEqualTo(404);
+  assertThat(stranger.post("/api/v1/support/tickets",Map.of("orderId",order.id(),"title","Outro","body","Outro"),true).statusCode()).isEqualTo(404);
+  assertThat(stranger.get("admin/support/tickets").statusCode()).isEqualTo(403);
+  db.update("UPDATE atlas_web.users SET role='SUPPORT' WHERE id=?",other);
+  assertThat(stranger.get("admin/support/tickets").statusCode()).isEqualTo(200);
+  assertThat(stranger.get("admin/support/tickets/"+ticket).statusCode()).isEqualTo(200);
+  assertThat(stranger.get("admin/products").statusCode()).isEqualTo(403);
+  assertThat(stranger.get("admin/team").statusCode()).isEqualTo(403);
+  assertThat(stranger.post("/api/v1/admin/products",Map.of(),true).statusCode()).isEqualTo(403);
+  assertThat(stranger.post("/api/v1/admin/support/tickets/"+ticket+"/messages",Map.of("body","Vamos conferir o pagamento"),true).statusCode()).isEqualTo(204);
+  assertThat(json.readTree(customer.get("support/tickets/"+ticket).body()).path("ticket").path("status").asString()).isEqualTo("WAITING_CUSTOMER");
+  assertThat(stranger.post("/api/v1/admin/support/tickets/"+ticket+"/status",Map.of("status","RESOLVED"),true).statusCode()).isEqualTo(204);
+  assertThat(customer.post("/api/v1/support/tickets/"+ticket+"/messages",Map.of("body","Ainda preciso de ajuda"),true).statusCode()).isEqualTo(204);
+  var finalState=json.readTree(customer.get("support/tickets/"+ticket).body());
+  assertThat(finalState.path("ticket").path("status").asString()).isEqualTo("OPEN");
+  assertThat(finalState.path("messages").size()).isEqualTo(4);
+  assertThat(customer.post("/api/v1/support/tickets/"+ticket+"/messages",Map.of("body","sem csrf"),false).statusCode()).isEqualTo(403);
+  db.update("UPDATE atlas_web.users SET role='MODERATOR' WHERE id=?",other);
+  assertThat(stranger.get("admin/support/tickets").statusCode()).isEqualTo(200);
+  assertThat(stranger.post("/api/v1/admin/products",Map.of(),true).statusCode()).isEqualTo(403);
+  db.update("UPDATE atlas_web.users SET role='USER' WHERE id=?",other);
+  assertThat(stranger.get("admin/support/tickets/"+ticket).statusCode()).isEqualTo(403);
+  db.update("UPDATE atlas_web.users SET role='ADMIN' WHERE id=?",user);
+  db.update("UPDATE atlas_web.users SET role='MODERATOR' WHERE id=?",other);
+  assertThat(customer.get("admin/team").statusCode()).isEqualTo(200);
+  assertThat(customer.get("admin/team").body()).contains("MODERATOR",other.toString());
+  assertThat(stranger.get("admin/team").statusCode()).isEqualTo(403);
+ }
+ @Test void controlledPurchaseDoesNotOpenPublicSalesOrOtherProducts(){
+  link(user,subject);link(other,UUID.randomUUID());
+  var slug=catalog.product(product,false).slug();
+  var permit=new ControlledCheckout(user.toString(),slug,Instant.now().plusSeconds(60).toString(),Clock.systemUTC());
+  var closed=new OrderService(repo,catalog,auth,Clock.systemUTC(),tokens,json,false);
+  org.springframework.test.util.ReflectionTestUtils.setField(closed,"controlled",permit);
+  var view=new io.atlas.api.catalog.service.CatalogService(catalog,Clock.systemUTC(),json);
+  org.springframework.test.util.ReflectionTestUtils.setField(view,"controlled",permit);
+  db.update("UPDATE atlas_web.product_servers SET purchasable=FALSE WHERE product_id=?",product);
+  assertThat(view.catalog(false).products()).noneMatch(p->p.purchasable());
+  assertThat(view.catalog(false,other).products()).noneMatch(p->p.purchasable());
+  assertThat(view.catalog(false,user).products()).filteredOn(p->p.purchasable()).extracting(p->p.id()).containsExactly(product);
+  assertThatThrownBy(()->closed.checkout(other,UUID.randomUUID().toString(),body(),"controlled-test")).hasMessageContaining("fechadas");
+  var order=new org.springframework.transaction.support.TransactionTemplate(transactionManager).execute(tx->closed.checkout(user,UUID.randomUUID().toString(),body(),"controlled-test"));
+  assertThat(order.snapshot().subject()).isEqualTo(subject);
+  db.update("UPDATE atlas_web.products SET active=FALSE WHERE id=?",product);
+  assertThatThrownBy(()->closed.checkout(user,UUID.randomUUID().toString(),body(),"controlled-test")).hasMessageContaining("indisponível");
+ }
 }

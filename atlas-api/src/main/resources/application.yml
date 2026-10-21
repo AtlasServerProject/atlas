@@ -107,6 +107,9 @@ atlas:
     key: ${ATLAS_CORE_KEY:}
   commerce:
     sales-enabled: ${ATLAS_SALES_ENABLED:false}
+    controlled-account: ${ATLAS_CONTROLLED_CHECKOUT_ACCOUNT:}
+    controlled-product: ${ATLAS_CONTROLLED_CHECKOUT_PRODUCT:}
+    controlled-until: ${ATLAS_CONTROLLED_CHECKOUT_UNTIL:}
   auth:
     verification-duration: 24h
     reset-duration: 30m

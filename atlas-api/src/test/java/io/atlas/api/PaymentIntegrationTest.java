@@ -43,6 +43,18 @@ class PaymentIntegrationTest {
  int outbox(){return db.queryForObject("SELECT count(*) FROM atlas_web.delivery_outbox WHERE order_id=?",Integer.class,order);}
  @Test void checkoutIsPersistedAndIdempotentAndOwnerOnly(){var first=service.checkout(user,order);assertThat(first.state()).isEqualTo("READY");assertThat(service.checkout(user,order)).isEqualTo(first);verify(provider,times(1)).create(any(),any());assertThatThrownBy(()->service.checkout(UUID.randomUUID(),order)).isInstanceOf(ApiFailure.class);}
  @Test void timeoutDoesNotAutomaticallyCreateAnotherPreference(){when(provider.create(any(),any())).thenThrow(new IllegalStateException());assertThatThrownBy(()->service.checkout(user,order)).isInstanceOf(ApiFailure.class);assertThat(service.checkout(user,order).state()).isEqualTo("UNKNOWN");verify(provider,times(1)).create(any(),any());assertThat(outbox()).isZero();}
+ @Test void rejectedPendingAndCancelledPaymentsNeverEnterMailbox(){
+  service.checkout(user,order);
+  for(String state:List.of("rejected","pending","cancelled")){
+   deliver(payment(state,2500,"123456",false,Instant.now(),null));
+   assertThat(status()).isEqualTo("PENDING");
+   assertThat(outbox()).isZero();
+   assertThat(repo.order(order,user,false).deliveryStatus()).isEqualTo("WAITING");
+  }
+  // A later successful retry of the same preference must still deliver only once.
+  deliver(valid("approved"));deliver(valid("approved"));
+  assertThat(status()).isEqualTo("PAID");assertThat(outbox()).isEqualTo(1);
+ }
  @Test void approvedAndDuplicateEventsCreateExactlyOneObligation(){service.checkout(user,order);deliver(valid("approved"));deliver(valid("approved"));assertThat(status()).isEqualTo("PAID");assertThat(outbox()).isEqualTo(1);assertThat(repo.order(order,user,false).deliveryStatus()).isEqualTo("PROCESSING");}
  @Test void wrongAmountReceiverAndEnvironmentNeverDeliver(){service.checkout(user,order);for(var p:List.of(payment("approved",2400,"123456",false,Instant.now(),created),payment("approved",2500,"999",false,Instant.now(),created),payment("approved",2500,"123456",true,Instant.now(),created))){deliver(p);assertThat(status()).isEqualTo("PENDING");assertThat(outbox()).isZero();}}
  @Test void unknownReferenceAndPaymentWithoutAttemptNeverDeliver(){deliver(valid("approved"));assertThat(outbox()).isZero();service.checkout(user,order);var p=valid("approved");deliver(new PaymentProvider.Payment(p.id(),UUID.randomUUID().toString(),p.collector(),p.cents(),p.currency(),p.status(),p.live(),p.changedAt(),p.approvedAt(),0));assertThat(outbox()).isZero();}

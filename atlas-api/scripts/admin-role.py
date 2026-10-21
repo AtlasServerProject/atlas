@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--user-id',type=uuid.UUID,required=True)
-parser.add_argument('--role',choices=['USER','ADMIN'],required=True)
+parser.add_argument('--role',choices=['USER','SUPPORT','MODERATOR','ADMIN'],required=True)
 parser.add_argument('--actor',required=True)
 parser.add_argument('--reason',required=True)
 args=parser.parse_args()

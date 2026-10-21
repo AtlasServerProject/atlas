@@ -2,7 +2,7 @@
 """Private TLS transport for typed Core endpoints. Loopback only, no public DNS route."""
 from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
 from pathlib import Path
-import http.client,ssl,json
+import http.client,ssl,json,os
 runtime=Path(__file__).resolve().parents[2]/'atlas-api/.runtime'
 ALLOWED=('/internal/v1/deliveries/','/internal/v1/vip/statuses')
 class Handler(BaseHTTPRequestHandler):
@@ -19,13 +19,13 @@ class Handler(BaseHTTPRequestHandler):
   try:
    body=self.rfile.read(size)
    if len(body)!=size:self.send_error(400);return
-   conn=http.client.HTTPConnection('127.0.0.1',8080,timeout=10)
+   conn=http.client.HTTPConnection('127.0.0.1',int(os.environ.get('ATLAS_CORE_TLS_UPSTREAM_PORT','8080')),timeout=10)
    conn.request('POST',self.path,body,headers={'Content-Type':'application/json','X-Atlas-Key':self.headers.get('X-Atlas-Key','')})
    r=conn.getresponse();out=r.read(65537)
    if len(out)>65536:raise ValueError()
    self.send_response(r.status);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(out)));self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(out);conn.close()
   except (OSError,ValueError):self.send_error(503)
-server=ThreadingHTTPServer(('127.0.0.1',4202),Handler)
+server=ThreadingHTTPServer(('127.0.0.1',int(os.environ.get('ATLAS_CORE_TLS_PORT','4202'))),Handler)
 context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);context.minimum_version=ssl.TLSVersion.TLSv1_2
 context.load_cert_chain(runtime/'core-tls.crt',runtime/'core-tls.key');server.socket=context.wrap_socket(server.socket,server_side=True)
 server.serve_forever()

@@ -15,7 +15,7 @@ class MercadoPagoProviderTest {
  @BeforeEach void setup(){client=mock(HttpClient.class);provider=new MercadoPagoProvider(new PaymentSettings(true,"test","private-test-token","private-test-secret","123456","https://example.invalid","https://example.invalid/webhook"),json,client);}
  @SuppressWarnings("unchecked") void reply(String text)throws Exception{HttpResponse<InputStream> response=mock(HttpResponse.class);when(response.statusCode()).thenReturn(200);when(response.body()).thenAnswer(a->new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenReturn(response);}
  @Test void parseRealProviderFieldsPreservesCentsAndApprovalDate()throws Exception{reply("{\"id\":123,\"external_reference\":\"bce4c142-c68e-491c-a58c-e6ecac9a7d17\",\"collector_id\":123456,\"transaction_amount\":25.00,\"currency_id\":\"BRL\",\"status\":\"approved\",\"live_mode\":false,\"date_last_updated\":\"2026-10-03T08:00:01.000-03:00\",\"date_approved\":\"2026-10-03T08:00:00.000-03:00\",\"transaction_amount_refunded\":0}");var p=provider.payment("123");assertThat(p.cents()).isEqualTo(2500);assertThat(p.collector()).isEqualTo("123456");assertThat(p.approvedAt()).isEqualTo(Instant.parse("2026-10-03T11:00:00Z"));assertThat(p.live()).isFalse();var request=ArgumentCaptor.forClass(HttpRequest.class);verify(client).send(request.capture(),any(HttpResponse.BodyHandler.class));assertThat(request.getValue().uri().toString()).isEqualTo("https://api.mercadopago.com/v1/payments/123");assertThat(request.getValue().timeout()).contains(Duration.ofSeconds(10));}
- @Test void createsHostedSandboxPreferenceAndRejectsUnsafeRedirect()throws Exception{reply("{\"id\":\"pref-test\",\"sandbox_init_point\":\"https://sandbox.mercadopago.com.br/checkout/test\",\"init_point\":\"https://www.mercadopago.com.br/checkout/live\"}");var now=Instant.now();var s=new Snapshot(1,"VIP 1","vip-1","emerald",30,2500,null,1,1,UUID.randomUUID(),1,UUID.randomUUID(),"Player");var order=new OrderView(UUID.randomUUID(),s,2500,"BRL",1,now,now.plusSeconds(1800),"PENDING","WAITING");assertThat(provider.create(order,"attempt-test").url()).contains("sandbox.mercadopago.com.br");reply("{\"id\":\"pref-test\",\"sandbox_init_point\":\"https://evil.invalid/checkout\"}");assertThatThrownBy(()->provider.create(order,"attempt-test")).isInstanceOf(IllegalStateException.class);}
+ @Test void testCredentialsUseInitPointAndRejectUnsafeRedirect()throws Exception{reply("{\"id\":\"pref-test\",\"sandbox_init_point\":\"https://sandbox.mercadopago.com.br/checkout/test\",\"init_point\":\"https://www.mercadopago.com.br/checkout/live\"}");var now=Instant.now();var s=new Snapshot(1,"VIP 1","vip-1","emerald",30,2500,null,1,1,UUID.randomUUID(),1,UUID.randomUUID(),"Player");var order=new OrderView(UUID.randomUUID(),s,2500,"BRL",1,now,now.plusSeconds(1800),"PENDING","WAITING");assertThat(provider.create(order,"attempt-test").url()).isEqualTo("https://www.mercadopago.com.br/checkout/live");reply("{\"id\":\"pref-test\",\"init_point\":\"https://evil.invalid/checkout\"}");assertThatThrownBy(()->provider.create(order,"attempt-test")).isInstanceOf(IllegalStateException.class);}
  @Test void networkFailureDoesNotLeakAuthorizationOrResponse()throws Exception{when(client.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenThrow(new IOException("private-test-token"));assertThatThrownBy(()->provider.payment("123")).hasMessage("Provider unavailable").hasNoCause();}
  @Test void rejectsNonNumericPaymentPath(){assertThatThrownBy(()->provider.payment("../users/me")).isInstanceOf(IllegalArgumentException.class);verifyNoInteractions(client);}
 
@@ -30,5 +30,23 @@ class MercadoPagoProviderTest {
    assertThat(result.live()).isTrue();assertThat(result.verifiedTestCollector()).isEqualTo(verified);
    assertThat(result.matchesMode(false)).isEqualTo(verified);assertThat(result.matchesMode(true)).isEqualTo(!verified);
   }
+ }
+ @Test void pixAndCheckoutExpireAtTheOrderDeadline()throws Exception{
+  reply("{\"id\":\"pref\",\"init_point\":\"https://www.mercadopago.com.br/checkout/live\"}");
+  var now=Instant.parse("2026-10-11T20:00:00Z");var deadline=now.plusSeconds(1800);
+  var snapshot=new Snapshot(3,"VIP 3","vip-3","emerald",30,100,null,1,1,UUID.randomUUID(),3,UUID.randomUUID(),"Player");
+  provider.create(new OrderView(UUID.randomUUID(),snapshot,100,"BRL",1,now,deadline,"PENDING","WAITING"),"expiration-test");
+  var capture=ArgumentCaptor.forClass(HttpRequest.class);verify(client).send(capture.capture(),any(HttpResponse.BodyHandler.class));
+  var body=new java.io.ByteArrayOutputStream();
+  capture.getValue().bodyPublisher().orElseThrow().subscribe(new java.util.concurrent.Flow.Subscriber<java.nio.ByteBuffer>(){
+   public void onSubscribe(java.util.concurrent.Flow.Subscription subscription){subscription.request(Long.MAX_VALUE);}
+   public void onNext(java.nio.ByteBuffer buffer){var bytes=new byte[buffer.remaining()];buffer.get(bytes);body.writeBytes(bytes);}
+   public void onError(Throwable error){throw new AssertionError(error);}
+   public void onComplete(){}
+  });
+  var payload=json.readTree(body.toByteArray());
+  assertThat(OffsetDateTime.parse(payload.path("date_of_expiration").asText()).toInstant()).isEqualTo(deadline);
+  assertThat(Instant.parse(payload.path("expiration_date_to").asText())).isEqualTo(deadline);
+  assertThat(payload.path("expires").asBoolean()).isTrue();
  }
 }

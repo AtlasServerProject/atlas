@@ -12,8 +12,8 @@ public class CatalogController {
  private final CatalogService service;
  public CatalogController(CatalogService service){this.service=service;}
  private String request(HttpServletRequest r){return String.valueOf(r.getAttribute(io.atlas.api.shared.web.RequestIdFilter.ATTRIBUTE));}
- @GetMapping("/catalog") ResponseEntity<Catalog> catalog(){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.catalog(false));}
- @GetMapping("/admin/catalog") Catalog admin(){return service.catalog(true);}
+ @GetMapping("/catalog") ResponseEntity<Catalog> catalog(@AuthenticationPrincipal SessionIdentity user){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.catalog(false,user==null?null:user.id()));}
+ @GetMapping("/admin/catalog") Catalog admin(@AuthenticationPrincipal SessionIdentity user){return service.catalog(true,user.id());}
  @PostMapping("/admin/products") Product create(@Valid @RequestBody ProductInput p,@AuthenticationPrincipal SessionIdentity user,HttpServletRequest r){return service.create(p,user.id(),request(r));}
  @PatchMapping("/admin/products/{id}") Product update(@PathVariable long id,@Valid @RequestBody ProductInput p,@AuthenticationPrincipal SessionIdentity user,HttpServletRequest r){return service.update(id,p,user.id(),request(r));}
  @PatchMapping("/admin/products/{id}/price") Product price(@PathVariable long id,@Valid @RequestBody Price p,@AuthenticationPrincipal SessionIdentity user,HttpServletRequest r){return service.price(id,p,user.id(),request(r));}
