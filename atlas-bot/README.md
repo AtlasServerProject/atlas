@@ -203,3 +203,43 @@ STATUS está acima de Informações, com contadores Discord e Minecraft. Por dec
 Validações: 13 testes locais, consulta Minecraft real e bot conectado. Aceite em entrada real e interação dos comandos pelo dono permanece pendente. Não há conversa livre, sincronização de ranks Minecraft/Discord, atribuição retroativa ou eventos Minecraft conectados automaticamente. O serviço usa systemd do usuário e linger ainda não está habilitado; execução após encerrar todas as sessões depende da configuração do host.
 
 O código está em atlas-bot/ dentro do repositório principal atlas, não em um submódulo separado. Credenciais ficam exclusivamente em ~/.config/atlas/discord-bot.env, com modo 600.
+
+### Discloud (preparação)
+
+O perfil cloud é separado do serviço local. Execute `npm run check:cloud` para construir e verificar o bundle sem conectar outra instância ao Discord. `python3 scripts/prepare-discloud.py` gera um ZIP sem credenciais; `--private` prepara a implantação autenticada em `.runtime/discloud`, fora do Git, usando o arquivo privado existente. Não publique esse staging.
+
+O procedimento e as limitações do plano Free estão em `../atlas-docs/SITE-DISCORD.md`. Pare a instância local antes de ligar a nuvem e preserve o estado de novidades nas atualizações. A migração ainda depende de autenticação e confirmação do primeiro deploy remoto.
+
+## Tickets — funcionamento confirmado em 24/10/2026
+
+Fluxo em `src/tickets/`, IDs em `src/ticket-config.json`. Botão público abre
+um formulário; fila privada menciona SUP; aceite cria canal individual.
+`/ticketfinalizar resumo:<resultado>` preserva registro, exclui o canal e conta
+um atendimento para o staff que aceitou. MOD/ADM/DONO podem finalizar sem
+receber o crédito do responsável. SQLite persistente e recuperação idempotente
+a cada minuto; o painel é habilitado e o comando registrado no ClientReady.
+
+Pacote `~/downloads/Atlas-Bot-Atualizacao-Tickets.zip`: extrair pelo Files da
+Wispbyte substituindo apenas `build/atlas-bot.js`, depois reiniciar. Preservar
+`.env` e `.runtime`, inclusive `tickets.sqlite`, seus WAL e transcrições privadas.
+Em 24/10/2026, o usuário confirmou teste real e funcionamento correto dos tickets.
+Confirmação informada pelo usuário, sem nova execução de testes remotos pelo agente.
+Não iniciar instância local junto com o bot da nuvem.
+
+`npm test`: 44 testes aprovados. `npm run check:cloud`: bundle e runtime sem
+conexão aprovados, 78 MiB RSS. Não inclui aplicação automática das tabelas de
+punição nem comandos de console remoto.
+
+## Ranking da Staff — funcionamento confirmado em 24/10/2026
+
+`/rankstaff [pagina]` consulta os pontos de tickets concluídos, dez atendentes
+por página, com empates na mesma posição e resposta efêmera. Permitido nos
+canais de comandos configurados em `src/ticket-config.json`; não expõe dados
+de atendimento. Crédito fica com quem assumiu. Migration SQLite v2 conserva
+os pontos do v1 e adiciona índice.
+
+Enviar `~/downloads/Atlas-Bot-Atualizacao-Ranking-Staff.zip` à Wispbyte, extrair
+substituindo `build/atlas-bot.js` e reiniciar. Preservar `.env` e toda `.runtime`.
+Registro do comando automático no início. Usuário confirmou conclusão e teste
+em 24/10/2026; registro dos comandos conferido via API.
+47 testes aprovados; cloud runtime sem conexão 77 MiB RSS.

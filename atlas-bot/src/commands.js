@@ -1,3 +1,4 @@
+import {ticketCommand,staffRankingCommand} from './tickets/ui.js';
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, GatewayIntentBits } from 'discord.js';
 import { preview, applyStructure } from './structure.js';
 import { ownerCommand, isOwnerContext, administer } from './admin.js';
@@ -31,7 +32,7 @@ export const commands = [
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption(o => o.setName('texto').setDescription('Conteúdo do aviso, sem notificações em massa.').setRequired(true).setMaxLength(1800)),
 ].map(c => c.toJSON());
-commands.push(ownerCommand);
+commands.push(ownerCommand, ticketCommand, staffRankingCommand);
 
 export async function publish(client, settings, content) {
   if (!settings.channelId) throw new Error('Canal de avisos não configurado.');

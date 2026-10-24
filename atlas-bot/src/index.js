@@ -1,5 +1,9 @@
+import {createTickets} from './tickets/service.js';
 import { Client, Events, GatewayIntentBits, REST, Routes, ApplicationFlags } from 'discord.js';
 import { config } from './config.js';
+import { cloudClientOptions } from './cloud-profile.js';
+import { addSuggestionVotes } from './suggestions.js';
+import { startActivityLog } from './activity-log.js';
 import { createHandler, publish } from './commands.js';
 import { createBridge } from './bridge.js';
 import { assignMemberRole } from './member-role.js';
@@ -12,7 +16,7 @@ import { createNews, startNews } from './news.js';
 
 let settings;
 try { settings = config(); } catch (error) { console.error(error.message); process.exit(1); }
-const intents = [GatewayIntentBits.Guilds];
+const intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildModeration];
 if (settings.welcomeEnabled || settings.memberRoleId) {
   try {
     const application = await new REST().setToken(settings.token).get(Routes.currentApplication());
@@ -22,11 +26,21 @@ if (settings.welcomeEnabled || settings.memberRoleId) {
     } else console.error('Boas-vindas pendentes: ative Server Members Intent no Developer Portal e reinicie o bot.');
   } catch { console.error('Falha ao verificar o intent de membros.'); process.exit(1); }
 }
-const client = new Client({ intents, allowedMentions: { parse: [] } });
+try {
+  const app = await new REST().setToken(settings.token).get(Routes.currentApplication());
+  if (app.flags & (ApplicationFlags.GatewayMessageContent | ApplicationFlags.GatewayMessageContentLimited)) intents.push(GatewayIntentBits.MessageContent);
+  else console.error('Logs: ative Message Content Intent para registrar o conteúdo das mensagens.');
+} catch { console.error('Logs: não foi possível verificar Message Content Intent.'); }
+const client = new Client({ ...cloudClientOptions(), intents, allowedMentions: { parse: [] } });
 client.on(Events.GuildMemberAdd, member => {
   assignMemberRole(member, settings).catch(() => console.error('Falha ao atribuir Membro. Verifique cargo e hierarquia.'));
   welcomeMember(member, settings).catch(error => console.error(`Boas-vindas: ${error.message}`));
 });
+client.on(Events.MessageCreate, message => {
+  addSuggestionVotes(message, settings.guildId).catch(() => console.error('Sugestões: falha ao adicionar votos. Confira as permissões de adicionar reações e ler histórico.'));
+});
+const stopActivityLog = startActivityLog(client, settings);
+const tickets = createTickets(client, settings);
 const minecraft = createMinecraftStatus(settings);
 let stopMinecraft;
 let stopStatusChannels;
@@ -34,7 +48,7 @@ let stopNews;
 const news = createNews(client, settings);
 let bridge;
 client.on(Events.InteractionCreate, interaction => {
-  createInteraction(interaction).catch(() => console.error('Falha ao responder à interação.'));
+  (async () => { if (!await tickets.handle(interaction)) await createInteraction(interaction); })().catch(() => console.error('Falha ao responder à interação.'));
 });
 const createInteraction = createHandler(client, settings, minecraft, news);
 client.on(Events.Error, () => console.error('Erro na conexão com o Discord.'));
@@ -43,6 +57,7 @@ client.once(Events.ClientReady, () => {
     console.error('Instale o bot no servidor configurado.'); client.destroy(); process.exitCode = 1; return;
   }
   console.log('Atlas-bot conectado.');
+  tickets.start().catch(() => console.error('Tickets: falha ao iniciar. Confira canais e permissões.'));
   const guild = client.guilds.cache.get(settings.guildId);
   if (settings.welcomeEnabled) {
     diagnoseWelcome(guild, settings, client.options.intents.has(GatewayIntentBits.GuildMembers))
@@ -58,5 +73,5 @@ client.once(Events.ClientReady, () => {
     bridge.listen(settings.bridgePort, '127.0.0.1', () => console.log('Integração Minecraft disponível apenas em localhost.'));
   }
 });
-for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { stopMinecraft?.(); stopStatusChannels?.(); stopNews?.(); bridge?.close(); client.destroy(); });
+for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { tickets.stop(); stopActivityLog(); stopMinecraft?.(); stopStatusChannels?.(); stopNews?.(); bridge?.close(); client.destroy(); });
 client.login(settings.token).catch(() => { console.error('Falha ao conectar. Verifique o token e a rede.'); process.exitCode = 1; client.destroy(); });
