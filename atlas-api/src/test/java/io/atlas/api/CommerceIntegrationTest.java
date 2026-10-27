@@ -28,7 +28,7 @@ class CommerceIntegrationTest {
  @Autowired io.atlas.api.mail.MailCipher cipher;
  @LocalServerPort int port;
  UUID user,other,subject;String password;long product;
- @BeforeEach void seed(){user=UUID.randomUUID();other=UUID.randomUUID();subject=UUID.randomUUID();password=UUID.randomUUID().toString();for(var id:List.of(user,other))db.update("INSERT INTO atlas_web.users(id,username,email,password_hash,email_verified) VALUES(?,?,?,?,TRUE)",id,"Commerce test",id+"@example.invalid",passwords.encode(password));product=db.queryForObject("INSERT INTO atlas_web.products(slug,name,description,category,duration_days) VALUES(?,'VIP Test','Test','VIPs',30) RETURNING id",Long.class,"m4-"+user);db.update("INSERT INTO atlas_web.product_servers(product_id,server,price_cents,purchasable) VALUES(?,'emerald',2500,TRUE)",product);}
+ @BeforeEach void seed(){user=UUID.randomUUID();other=UUID.randomUUID();subject=UUID.randomUUID();password=UUID.randomUUID().toString();for(var id:List.of(user,other))TestDatabase.adminSql("INSERT INTO atlas_web.users(id,username,email,password_hash,email_verified) VALUES(?,?,?,?,TRUE)",id,"Commerce test",id+"@example.invalid",passwords.encode(password));product=db.queryForObject("INSERT INTO atlas_web.products(slug,name,description,category,duration_days) VALUES(?,'VIP Test','Test','VIPs',30) RETURNING id",Long.class,"m4-"+user);db.update("INSERT INTO atlas_web.product_servers(product_id,server,price_cents,purchasable) VALUES(?,'emerald',2500,TRUE)",product);}
  @AfterEach void release(){db.update("UPDATE atlas_web.products SET active=FALSE WHERE id=?",product);db.update("UPDATE atlas_web.product_servers SET purchasable=FALSE WHERE product_id=?",product);}
  Proof proof(ChallengeCreated c,UUID player){return new Proof(c.code(),player,123,UUID.randomUUID(),"MinecraftTest","emerald");}
  LinkView link(UUID account,UUID player){var c=identity.create(account,"test");identity.prove(proof(c,player),"test");return identity.confirm(account,new Confirmation(c.id(),player),"test");}
@@ -81,7 +81,7 @@ class CommerceIntegrationTest {
   assertThat(stranger.get("support/tickets/"+ticket).statusCode()).isEqualTo(404);
   assertThat(stranger.post("/api/v1/support/tickets",Map.of("orderId",order.id(),"title","Outro","body","Outro"),true).statusCode()).isEqualTo(404);
   assertThat(stranger.get("admin/support/tickets").statusCode()).isEqualTo(403);
-  db.update("UPDATE atlas_web.users SET role='SUPPORT' WHERE id=?",other);
+  TestDatabase.adminSql("UPDATE atlas_web.users SET role='SUPPORT' WHERE id=?",other);
   assertThat(stranger.get("admin/support/tickets").statusCode()).isEqualTo(200);
   assertThat(stranger.get("admin/support/tickets/"+ticket).statusCode()).isEqualTo(200);
   assertThat(stranger.get("admin/products").statusCode()).isEqualTo(403);
@@ -95,13 +95,13 @@ class CommerceIntegrationTest {
   assertThat(finalState.path("ticket").path("status").asString()).isEqualTo("OPEN");
   assertThat(finalState.path("messages").size()).isEqualTo(4);
   assertThat(customer.post("/api/v1/support/tickets/"+ticket+"/messages",Map.of("body","sem csrf"),false).statusCode()).isEqualTo(403);
-  db.update("UPDATE atlas_web.users SET role='MODERATOR' WHERE id=?",other);
+  TestDatabase.adminSql("UPDATE atlas_web.users SET role='MODERATOR' WHERE id=?",other);
   assertThat(stranger.get("admin/support/tickets").statusCode()).isEqualTo(200);
   assertThat(stranger.post("/api/v1/admin/products",Map.of(),true).statusCode()).isEqualTo(403);
-  db.update("UPDATE atlas_web.users SET role='USER' WHERE id=?",other);
+  TestDatabase.adminSql("UPDATE atlas_web.users SET role='USER' WHERE id=?",other);
   assertThat(stranger.get("admin/support/tickets/"+ticket).statusCode()).isEqualTo(403);
-  db.update("UPDATE atlas_web.users SET role='ADMIN' WHERE id=?",user);
-  db.update("UPDATE atlas_web.users SET role='MODERATOR' WHERE id=?",other);
+  TestDatabase.adminSql("UPDATE atlas_web.users SET role='ADMIN' WHERE id=?",user);
+  TestDatabase.adminSql("UPDATE atlas_web.users SET role='MODERATOR' WHERE id=?",other);
   assertThat(customer.get("admin/team").statusCode()).isEqualTo(200);
   assertThat(customer.get("admin/team").body()).contains("MODERATOR",other.toString());
   assertThat(stranger.get("admin/team").statusCode()).isEqualTo(403);

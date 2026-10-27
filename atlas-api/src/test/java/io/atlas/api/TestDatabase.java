@@ -53,6 +53,12 @@ final class TestDatabase {
         registry.add("spring.flyway.user", () -> "atlas_api_migrator");
         registry.add("spring.flyway.password", () -> MIGRATION_PASSWORD);
     }
+    static int adminSql(String sql,Object... values) {
+        try(var connection=admin();var statement=connection.prepareStatement(sql)) {
+            for(int i=0;i<values.length;i++) statement.setObject(i+1,values[i]);
+            return statement.executeUpdate();
+        } catch(Exception exception) { throw new IllegalStateException("Fixture SQL failed",exception); }
+    }
     static Connection admin() throws Exception { return DriverManager.getConnection(URL, "atlas_api_bootstrap", ADMIN_PASSWORD); }
     static Connection runtime() throws Exception { return DriverManager.getConnection(URL, "atlas_api_runtime", RUNTIME_PASSWORD); }
     private static String required(String name) {

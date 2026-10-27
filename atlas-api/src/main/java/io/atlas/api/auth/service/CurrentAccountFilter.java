@@ -17,14 +17,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class CurrentAccountFilter extends OncePerRequestFilter {
+    private final MfaService mfa;
     private final AccountRepository accounts;private final AuthProperties properties;private final Clock clock;private final ApiErrorWriter errors;
-    public CurrentAccountFilter(AccountRepository accounts,AuthProperties properties,Clock clock,ApiErrorWriter errors) {this.accounts=accounts;this.properties=properties;this.clock=clock;this.errors=errors;}
+    public CurrentAccountFilter(AccountRepository accounts,AuthProperties properties,Clock clock,ApiErrorWriter errors,MfaService mfa) {this.mfa=mfa;this.accounts=accounts;this.properties=properties;this.clock=clock;this.errors=errors;}
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         var authentication=SecurityContextHolder.getContext().getAuthentication();
         if(authentication!=null && authentication.getPrincipal() instanceof SessionIdentity identity) {
             try {
                 var account=accounts.id(identity.id());
-                if(account.isEmpty() || account.get().authVersion()!=identity.authVersion() || !clock.instant().isBefore(identity.authenticatedAt().plus(properties.absoluteSessionDuration()))) {
+                if(account.isEmpty() || account.get().authVersion()!=identity.authVersion() || (mfa.required(account.get()) && identity.mfaVerifiedAt()==null) || !clock.instant().isBefore(identity.authenticatedAt().plus(properties.absoluteSessionDuration()))) {
                     SecurityContextHolder.clearContext();var session=request.getSession(false);if(session!=null) session.invalidate();
                 } else {
                     // Query current role on every request: revocation is effective in existing sessions.

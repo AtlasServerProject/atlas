@@ -12,7 +12,7 @@ public class AccountRepository {
     private final JdbcClient jdbc;
     public AccountRepository(JdbcClient jdbc) { this.jdbc=jdbc; }
     private Account map(ResultSet r, int row) throws SQLException {
-        return new Account(r.getObject("id",UUID.class),r.getString("username"),r.getString("email"),r.getString("password_hash"),r.getString("role"),r.getBoolean("email_verified"),r.getLong("auth_version"),r.getTimestamp("created_at").toInstant());
+        return new Account(r.getObject("id",UUID.class),r.getString("username"),r.getString("email"),r.getString("password_hash"),r.getString("role"),r.getBoolean("email_verified"),r.getLong("auth_version"),r.getTimestamp("created_at").toInstant(),r.getBoolean("mfa_enabled"));
     }
     public Optional<Account> email(String email) { return jdbc.sql("SELECT * FROM atlas_web.users WHERE email=:email").param("email",email).query(this::map).optional(); }
     public Optional<Account> id(UUID id) { return jdbc.sql("SELECT * FROM atlas_web.users WHERE id=:id").param("id",id).query(this::map).optional(); }

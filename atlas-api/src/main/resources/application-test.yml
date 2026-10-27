@@ -4,6 +4,8 @@ server:
       cookie:
         secure: false
 atlas:
+  auth:
+    require-staff-mfa: false
   mail:
     mode: local
     web-url: ${ATLAS_WEB_URL:http://localhost:4200}

@@ -1,0 +1,45 @@
+package io.atlas.api;
+import io.atlas.api.auth.model.SessionIdentity;import io.atlas.api.auth.service.*;import io.atlas.api.shared.error.ApiFailure;
+import java.net.*;import java.net.http.*;import java.util.*;import java.time.*;
+import org.junit.jupiter.api.*;import org.springframework.beans.factory.annotation.Autowired;import org.springframework.boot.test.context.SpringBootTest;import org.springframework.boot.test.web.server.LocalServerPort;import org.springframework.test.context.*;import org.springframework.test.context.bean.override.mockito.MockitoBean;import org.springframework.jdbc.core.JdbcTemplate;import org.springframework.security.crypto.password.PasswordEncoder;import org.springframework.http.HttpStatus;import tools.jackson.databind.ObjectMapper;
+import static org.assertj.core.api.Assertions.*;import static org.mockito.Mockito.*;import static org.mockito.ArgumentMatchers.*;
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"atlas.google.enabled=true","atlas.google.client-id=synthetic-google.apps.googleusercontent.com","atlas.auth.require-staff-mfa=true"})
+@ActiveProfiles("test")
+class GoogleAuthIntegrationTest {
+ @DynamicPropertySource static void database(DynamicPropertyRegistry r){TestDatabase.properties(r);}
+ @LocalServerPort int port;@Autowired JdbcTemplate db;@Autowired PasswordEncoder encoder;@Autowired ObjectMapper json;@Autowired TokenCodec codec;
+ @Autowired @SuppressWarnings("rawtypes") org.springframework.session.SessionRepository sessions;
+ @MockitoBean GoogleTokenVerifier verifier;@Autowired GoogleIdentityService google;
+ UUID id;String email,password,subject;
+ @BeforeEach void fixture(){id=UUID.randomUUID();email=id+"@gmail.com";password=UUID.randomUUID().toString();subject="subject-"+id;db.update("DELETE FROM atlas_web.auth_rate_limits");when(verifier.verify(anyString(),anyString())).thenReturn(new GoogleTokenVerifier.Identity(subject,email,"Google Trainer"));}
+ class Browser {
+  final CookieManager cookies=new CookieManager(null,CookiePolicy.ACCEPT_ALL);final HttpClient client=HttpClient.newBuilder().cookieHandler(cookies).build();
+  HttpResponse<String> get(String path)throws Exception{return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/"+path)).GET().build(),HttpResponse.BodyHandlers.ofString());}
+  HttpResponse<String> post(String path,Map<String,?> body)throws Exception{var csrf=json.readTree(get("auth/csrf").body());return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/"+path)).header("Content-Type","application/json").header(csrf.get("headerName").asString(),csrf.get("token").asString()).POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build(),HttpResponse.BodyHandlers.ofString());}
+  HttpResponse<String> start(boolean link)throws Exception{return post("auth/google/challenge",Map.of("link",link));}
+  HttpResponse<String> finish()throws Exception{return post("auth/google/complete",Map.of("credential","synthetic-token-no-external-request"));}
+  void loginLocal()throws Exception{assertThat(post("auth/login",Map.of("email",email,"password",password)).statusCode()).isEqualTo(200);}
+  String session(){return cookies.getCookieStore().getCookies().stream().filter(c->c.getName().equals("ATLAS_SESSION")).findFirst().orElseThrow().getValue();}
+ }
+ void localUser(String role){TestDatabase.adminSql("INSERT INTO atlas_web.users(id,username,email,password_hash,role,email_verified) VALUES(?,'Existing Atlas',?,?,?,TRUE)",id,email,encoder.encode(password),role);}
+ @Test void newGoogleAccountIsVerifiedUserAndChallengeIsSingleUse()throws Exception{
+  var b=new Browser();assertThat(b.get("auth/google/provider").body()).contains("\"enabled\":true").doesNotContain("secret");String before=json.readTree(b.start(false).body()).get("nonce").asString();String session=b.session();
+  var result=b.finish();assertThat(result.statusCode()).withFailMessage(result.body()).isEqualTo(200);assertThat(result.body()).contains("\"role\":\"USER\"","\"emailVerified\":true").doesNotContain("passwordHash",subject);assertThat(b.session()).isNotEqualTo(session);assertThat(b.get("users/me").statusCode()).isEqualTo(200);
+  assertThat(db.queryForObject("SELECT count(*) FROM atlas_web.google_login_challenges WHERE nonce_hash=?",Integer.class,codec.hash(before))).isZero();assertThat(b.finish().statusCode()).isEqualTo(401);verify(verifier,times(1)).verify(anyString(),eq(before));
+ }
+ @Test void existingEmailIsNotAutomaticallyLinkedOrLoggedIn()throws Exception{localUser("ADMIN");var b=new Browser();b.start(false);var result=b.finish();assertThat(result.statusCode()).isEqualTo(409);assertThat(result.body()).contains("GOOGLE_ACCOUNT_EXISTS");assertThat(b.get("users/me").statusCode()).isEqualTo(401);assertThat(db.queryForObject("SELECT count(*) FROM atlas_web.external_identities WHERE user_id=?",Integer.class,id)).isZero();}
+ @Test void explicitLinkPreservesExistingIdentityAndAllowsLaterGoogleLogin()throws Exception{
+  localUser("USER");var b=new Browser();b.loginLocal();assertThat(b.start(true).statusCode()).isEqualTo(200);assertThat(b.finish().statusCode()).isEqualTo(204);assertThat(b.get("auth/google/provider").body()).contains("\"linked\":true");b.post("auth/logout",Map.of());assertThat(b.start(false).statusCode()).isEqualTo(200);assertThat(b.finish().body()).contains(id.toString());assertThat(b.get("users/me").body()).contains(id.toString());
+ }
+ @Test void GoogleLoginDoesNotBypassStaffMfa()throws Exception{localUser("ADMIN");db.update("INSERT INTO atlas_web.external_identities(provider,subject,user_id) VALUES('GOOGLE',?,?)",subject,id);var b=new Browser();b.start(false);assertThat(b.finish().body()).contains("\"mfaRequired\":true","\"setupRequired\":true");assertThat(b.get("users/me").statusCode()).isEqualTo(401);assertThat(b.get("admin/catalog").statusCode()).isEqualTo(401);}
+ @Test void invalidCredentialCannotBeRetriedWithoutNewChallenge()throws Exception{
+  when(verifier.verify(anyString(),anyString())).thenThrow(new ApiFailure(HttpStatus.UNAUTHORIZED,"INVALID_GOOGLE_CREDENTIAL","Invalid synthetic identity"));var b=new Browser();b.start(false);assertThat(b.finish().statusCode()).isEqualTo(401);assertThat(b.finish().body()).contains("GOOGLE_CHALLENGE_EXPIRED");assertThat(b.get("users/me").statusCode()).isEqualTo(401);verify(verifier,times(1)).verify(anyString(),anyString());
+ }
+ @Test void challengeIsBoundToBrowserAndExpiry()throws Exception{var b=new Browser();var other=new Browser();String nonce=json.readTree(b.start(false).body()).get("nonce").asString();assertThat(other.finish().statusCode()).isEqualTo(401);TestDatabase.adminSql("UPDATE atlas_web.google_login_challenges SET expires_at=NOW()-INTERVAL '1 second' WHERE nonce_hash=?",codec.hash(nonce));assertThat(b.finish().statusCode()).isEqualTo(401);verifyNoInteractions(verifier);}
+ @Test void linkingRequiresLoginSameEmailAndRecentProof()throws Exception{
+  var b=new Browser();assertThat(b.start(true).statusCode()).isEqualTo(401);localUser("USER");b.loginLocal();when(verifier.verify(anyString(),anyString())).thenReturn(new GoogleTokenVerifier.Identity(subject,"other@gmail.com","Other"));b.start(true);assertThat(b.finish().body()).contains("GOOGLE_EMAIL_MISMATCH");
+  String sid=new String(Base64.getDecoder().decode(b.session()),java.nio.charset.StandardCharsets.UTF_8);org.springframework.session.Session session=sessions.findById(sid);var context=(org.springframework.security.core.context.SecurityContext)session.getAttribute("SPRING_SECURITY_CONTEXT");var identity=(SessionIdentity)context.getAuthentication().getPrincipal();var stale=new SessionIdentity(identity.id(),identity.authVersion(),identity.authenticatedAt(),identity.mfaVerifiedAt(),Instant.now().minusSeconds(301));context.setAuthentication(org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(stale,null,context.getAuthentication().getAuthorities()));session.setAttribute("SPRING_SECURITY_CONTEXT",context);sessions.save(session);var result=b.start(true);assertThat(result.statusCode()).isEqualTo(403);assertThat(result.body()).contains("REAUTHENTICATION_REQUIRED");
+ }
+ @Test void staleProofCannotLinkAfterPasswordVersionChangesUnderAccountLock(){localUser("USER");db.update("UPDATE atlas_web.users SET auth_version=auth_version+1 WHERE id=?",id);assertThatThrownBy(()->google.link(id,1,new GoogleTokenVerifier.Identity(subject,email,"Google Trainer"))).hasMessageContaining("Confirme novamente");assertThat(db.queryForObject("SELECT count(*) FROM atlas_web.external_identities WHERE user_id=?",Integer.class,id)).isZero();}
+ @Test void googleEndpointsStillRequireNativeCsrf()throws Exception{var client=HttpClient.newHttpClient();for(String path:List.of("challenge","complete")){var response=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/auth/google/"+path)).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString("{}")).build(),HttpResponse.BodyHandlers.ofString());assertThat(response.statusCode()).isEqualTo(403);}verifyNoInteractions(verifier);}
+}

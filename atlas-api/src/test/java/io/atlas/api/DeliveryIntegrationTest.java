@@ -22,7 +22,7 @@ class DeliveryIntegrationTest {
  @org.springframework.boot.test.web.server.LocalServerPort int port;
  UUID user,order,subject,id;Instant created;
  @BeforeEach void seed(){user=UUID.randomUUID();order=UUID.randomUUID();subject=UUID.randomUUID();id=UUID.randomUUID();created=Instant.now().minusSeconds(5);UUID link=UUID.randomUUID();
- db.update("INSERT INTO atlas_web.users(id,username,email,password_hash,email_verified) VALUES(?,'Delivery test',?,'unused',TRUE)",user,user+"@example.invalid");
+ TestDatabase.adminSql("INSERT INTO atlas_web.users(id,username,email,password_hash,email_verified) VALUES(?,'Delivery test',?,'unused',TRUE)",user,user+"@example.invalid");
  db.update("INSERT INTO atlas_web.minecraft_links(id,user_id,subject,core_player_id,minecraft_uuid,nickname,server,linked_at) VALUES(?,?,?,123,?,'DeliveryTest','emerald',?)",link,user,subject,UUID.randomUUID(),Timestamp.from(created));
  long product=db.queryForObject("SELECT id FROM atlas_web.products ORDER BY id LIMIT 1",Long.class);var snap=new Snapshot(product,"VIP 1","vip-1","emerald",30,2500,null,1,1,subject,123,UUID.randomUUID(),"DeliveryTest");
  db.update("INSERT INTO atlas_web.orders(id,user_id,link_id,product_id,idempotency_key,request_hash,snapshot,total_cents,currency,quantity,created_at,expires_at,payment_status,delivery_status) VALUES(?,?,?,?,?,? ,?::jsonb,2500,'BRL',1,?,?,'PAID','PROCESSING')",order,user,link,product,UUID.randomUUID().toString(),"a".repeat(64),json.writeValueAsString(snap),Timestamp.from(created),Timestamp.from(created.plusSeconds(1800)));

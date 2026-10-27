@@ -7,6 +7,8 @@ import signal
 import subprocess
 
 root = Path(__file__).resolve().parents[1]
+if (root/'.runtime/isolated-api').exists():
+    raise SystemExit('API runs as isolated system service; use systemctl status atlas-api.service.')
 local = root / '.env'
 if not local.is_file():
     subprocess.run(['python3', str(root/'scripts/init-local-env.py')], check=True)

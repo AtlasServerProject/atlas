@@ -2,6 +2,7 @@ package io.atlas.api.config;
 
 import io.atlas.api.shared.error.ApiErrorWriter;
 import io.atlas.api.auth.service.CurrentAccountFilter;
+import io.atlas.api.auth.service.SensitiveOperationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -26,22 +27,23 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfiguration {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ApiErrorWriter errors, CurrentAccountFilter accountFilter, SecurityContextRepository contexts, CsrfTokenRepository tokens) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ApiErrorWriter errors, CurrentAccountFilter accountFilter, SecurityContextRepository contexts, CsrfTokenRepository tokens, SensitiveOperationFilter sensitive) throws Exception {
         // Unimplemented commerce routes stay closed; ADMIN checks are enforced by the backend.
         return http
             .cors(cors -> {})
             .securityContext(context -> context.securityContextRepository(contexts))
-            .csrf(csrf -> csrf.csrfTokenRepository(tokens).ignoringRequestMatchers("/internal/v1/minecraft/proofs", "/internal/v1/deliveries/**", "/internal/v1/vip/statuses", "/api/v1/webhooks/mercadopago"))
+            .csrf(csrf -> csrf.csrfTokenRepository(tokens).ignoringRequestMatchers("/internal/v1/minecraft/password-recovery/**", "/internal/v1/minecraft/proofs", "/internal/v1/deliveries/**", "/internal/v1/vip/statuses", "/api/v1/webhooks/mercadopago"))
             .addFilterAfter(accountFilter, SecurityContextHolderFilter.class)
+            .addFilterAfter(sensitive, CurrentAccountFilter.class)
             .logout(logout -> logout.disable())
             .requestCache(cache -> cache.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness",
                     "/api/v1/system", "/api/v1/auth/csrf", "/api/v1/auth/register", "/api/v1/auth/login",
-                    "/api/v1/auth/logout", "/api/v1/auth/verify-email", "/api/v1/auth/resend-verification",
+                    "/api/v1/auth/google/provider", "/api/v1/auth/google/challenge", "/api/v1/auth/google/complete", "/api/v1/auth/logout", "/api/v1/auth/mfa/setup", "/api/v1/auth/mfa/verify", "/api/v1/auth/reauthenticate", "/api/v1/auth/verify-email", "/api/v1/auth/resend-verification",
                     "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/catalog").permitAll()
-                .requestMatchers("/internal/v1/minecraft/proofs", "/internal/v1/deliveries/**", "/internal/v1/vip/statuses", "/api/v1/webhooks/mercadopago").permitAll()
+                .requestMatchers("/internal/v1/minecraft/password-recovery/**", "/internal/v1/minecraft/proofs", "/internal/v1/deliveries/**", "/internal/v1/vip/statuses", "/api/v1/webhooks/mercadopago").permitAll()
                 .requestMatchers("/api/v1/users/me", "/api/v1/users/me/**", "/api/v1/orders", "/api/v1/orders/**", "/api/v1/support/**").authenticated()
                 .requestMatchers("/api/v1/admin/support/**").hasAnyRole("ADMIN", "SUPPORT", "MODERATOR")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
@@ -55,6 +57,9 @@ public class SecurityConfiguration {
     @Bean SecurityContextRepository securityContextRepository() { return new HttpSessionSecurityContextRepository(); }
     @Bean CsrfTokenRepository csrfTokenRepository() { return new HttpSessionCsrfTokenRepository(); }
     @Bean FilterRegistrationBean<CurrentAccountFilter> accountFilterRegistration(CurrentAccountFilter filter) {
+        var registration = new FilterRegistrationBean<>(filter); registration.setEnabled(false); return registration;
+    }
+    @Bean FilterRegistrationBean<SensitiveOperationFilter> sensitiveRegistration(SensitiveOperationFilter filter) {
         var registration = new FilterRegistrationBean<>(filter); registration.setEnabled(false); return registration;
     }
     @Bean

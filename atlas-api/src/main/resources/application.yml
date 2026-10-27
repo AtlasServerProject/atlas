@@ -93,6 +93,12 @@ logging:
     format:
       console: logstash
 atlas:
+  google:
+    enabled: ${ATLAS_GOOGLE_ENABLED:false}
+    client-id: ${ATLAS_GOOGLE_CLIENT_ID:}
+  proxy:
+    hmac-key: ${ATLAS_PROXY_HMAC_KEY:}
+    required: ${ATLAS_PROXY_REQUIRED:false}
   delivery:
     enabled: ${ATLAS_DELIVERY_ENABLED:false}
     mode: ${ATLAS_DELIVERY_MODE:production}
@@ -111,6 +117,7 @@ atlas:
     controlled-product: ${ATLAS_CONTROLLED_CHECKOUT_PRODUCT:}
     controlled-until: ${ATLAS_CONTROLLED_CHECKOUT_UNTIL:}
   auth:
+    require-staff-mfa: ${ATLAS_REQUIRE_STAFF_MFA:true}
     verification-duration: 24h
     reset-duration: 30m
     absolute-session-duration: 24h
