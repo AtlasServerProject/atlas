@@ -43,12 +43,14 @@ def main():
                 entry=zipfile.ZipInfo(name,(2026,10,12,0,0,0));entry.compress_type=zipfile.ZIP_DEFLATED;out.writestr(entry,data if isinstance(data,bytes) else json.dumps(data,ensure_ascii=False,separators=(',',':')).encode())
             for name in sorted(names):
                 if name.endswith('/') or name in {'pack.mcmeta','pack.png','CREDITS.txt'}: continue
+                if name.startswith(('assets/cobblemon/bedrock/','assets/minecraft/shaders/')): continue
                 if name.startswith('/') or '..' in Path(name).parts: raise ValueError('Unsafe source path')
                 write(name,source.read(name))
             for extra_path in args.textures:
                 with zipfile.ZipFile(extra_path) as extra:
                     for name in sorted(extra.namelist()):
                         if name.endswith('/') or name in {'pack.mcmeta','pack.png','CREDITS.txt'}: continue
+                        if name.startswith(('assets/cobblemon/bedrock/','assets/minecraft/shaders/')): continue
                         if name.startswith('/') or '..' in Path(name).parts or '\\' in name: raise ValueError('Unsafe texture path')
                         if name.startswith('assets/atlas_gts/') or name in {'assets/minecraft/models/item/paper.json','assets/minecraft/models/item/generated_paper.json'}: raise ValueError('Texture pack conflicts with reserved GTS models')
                         if name in out.namelist():

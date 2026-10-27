@@ -1,0 +1,264 @@
+{
+  "name": "Atlas Cobblemon",
+  "version": "1.8.2-beta.1",
+  "minecraft": "1.21.1",
+  "fabric": "0.18.0",
+  "mods": [
+    {
+      "file": "CobbleDollars-fabric-2.0.0+Beta-5.1+1.21.1.jar",
+      "id": "cobbledollars",
+      "version": "2.0.0+Beta-5.1+1.21.1",
+      "sha1": "48a2a30fb22e088ca9357fc95bdb4247ddc80b17",
+      "projectID": 859232,
+      "fileID": 6604561
+    },
+    {
+      "file": "CobbleFurnies-fabric-1.0.jar",
+      "id": "cobblefurnies",
+      "version": "1.0",
+      "sha1": "b174451734d3a424fa239612a5814572f76f77db",
+      "projectID": 1188698,
+      "fileID": 7302040
+    },
+    {
+      "file": "Cobblemon-fabric-1.8.2+1.21.1.jar",
+      "id": "cobblemon",
+      "version": "1.8.2+1.21.1",
+      "sha1": "1a8ec812b2e7b392ac60801c910d3128d0bbb432",
+      "projectID": 687131,
+      "fileID": 9124652
+    },
+    {
+      "file": "CobbleverseBadges-1.3.jar",
+      "id": "cobbleversebadges",
+      "version": "1.3",
+      "sha1": "8e213de6013b6a58485ba8ddfcff5c91b3beb41d",
+      "projectID": 1258911,
+      "fileID": 7251451
+    },
+    {
+      "file": "Cobbreeding-fabric-2.2.0.jar",
+      "id": "cobbreeding",
+      "version": "2.2.0",
+      "sha1": "c6ac6614e3d833665634e9e4dfedc71293cfa757",
+      "source": "https://modrinth.com/mod/cobbreeding/version/DcOPx56X",
+      "modrinthVersion": "DcOPx56X"
+    },
+    {
+      "file": "ForgeConfigAPIPort-v21.1.6-1.21.1-Fabric.jar",
+      "id": "forgeconfigapiport",
+      "version": "21.1.6",
+      "sha1": "18bf1f21cd2db6dcd4e42db85eae54e2a49a48ee",
+      "projectID": 547434,
+      "fileID": 7213608
+    },
+    {
+      "file": "Only Bottle Caps-1.3.0.jar",
+      "id": "obc",
+      "version": "1.3.0",
+      "sha1": "23ef87de0db4ec6914b67ad96d72c204874dc613",
+      "projectID": 1299655,
+      "fileID": 7253785
+    },
+    {
+      "file": "accessories-fabric-1.1.0-beta.53+1.21.1.jar",
+      "id": "accessories",
+      "version": "1.1.0-beta.53+1.21.1",
+      "sha1": "fa0b11de088893bb14aff945d0e8efdee165457b",
+      "projectID": 938917,
+      "fileID": 7583323
+    },
+    {
+      "file": "architectury-13.0.8-fabric.jar",
+      "id": "architectury",
+      "version": "13.0.8",
+      "sha1": "e71346a43c563e5784580dd096338acfb45f49d4",
+      "projectID": 419699,
+      "fileID": 5786326
+    },
+    {
+      "file": "athena-fabric-1.21.1-4.0.6.jar",
+      "id": "athena",
+      "version": "4.0.6",
+      "sha1": "92534d85cad33ab1fee598068443c685f4bb06e0",
+      "projectID": 841890,
+      "fileID": 8061949
+    },
+    {
+      "file": "cloth-config-15.0.140-fabric.jar",
+      "id": "cloth-config",
+      "version": "15.0.140",
+      "sha1": "5d82342a2df53fd6df712bfdd583a811572918a4",
+      "projectID": 348521,
+      "fileID": 5729125
+    },
+    {
+      "file": "cobblecuisine-2.0.1-1.7-rc1.jar",
+      "id": "cobblecuisine",
+      "version": "2.0.1",
+      "sha1": "31cf544fe61bb9c21fa8dafe5c03a428049a0f37",
+      "projectID": 1254643,
+      "fileID": 7265785
+    },
+    {
+      "file": "cobblemon-additions-4.1.6.jar",
+      "id": "cobblemon-additions",
+      "version": "4.1.6",
+      "sha1": "293c0fd6354114cd45d2dd8e4e771d48b1d89200",
+      "source": "https://modrinth.com/mod/cobblemon-additions/version/degN5DK4",
+      "modrinthVersion": "degN5DK4"
+    },
+    {
+      "file": "cobblemonraiddens-fabric-0.13.4+1.21.1.jar",
+      "id": "cobblemonraiddens",
+      "version": "0.13.4+1.21.1",
+      "sha1": "5c012fb7cfe59f04bffb8a237f4bd4ed103ddae3",
+      "projectID": 1349231,
+      "fileID": 9253290
+    },
+    {
+      "file": "cobblenav-fabric-2.4.2.jar",
+      "id": "cobblenav",
+      "version": "2.4.2",
+      "sha1": "3cc7b24e9a62c82191de5473764283333b1b4d76",
+      "projectID": 976014,
+      "fileID": 9156011
+    },
+    {
+      "file": "easy_npc-fabric-1.21.1-6.0.21.jar",
+      "id": "easy_npc",
+      "version": "6.0.21",
+      "sha1": "da48e05c54c9952d927cb6e8ad670b3281f6c692",
+      "projectID": 1308987,
+      "fileID": 7190825
+    },
+    {
+      "file": "fabric-api-0.116.12+1.21.1.jar",
+      "id": "fabric-api",
+      "version": "0.116.12+1.21.1",
+      "sha1": "90cd4212da24365fae24c0090234b053094b218b",
+      "projectID": 306612,
+      "fileID": 8073321
+    },
+    {
+      "file": "fabric-language-kotlin-1.13.10+kotlin.2.3.20.jar",
+      "id": "fabric-language-kotlin",
+      "version": "1.13.10+kotlin.2.3.20",
+      "sha1": "9873294abf498f509453d37b0a5ba019f4570ffb",
+      "projectID": 308769,
+      "fileID": 7815918
+    },
+    {
+      "file": "ferritecore-7.0.3-fabric.jar",
+      "id": "ferritecore",
+      "version": "7.0.3",
+      "sha1": "a8a6a34fcda177da2828cedef44e0e538cf78aad",
+      "projectID": 459857,
+      "fileID": 7524152
+    },
+    {
+      "file": "geckolib-fabric-1.21.1-4.9.2.jar",
+      "id": "geckolib",
+      "version": "4.9.2",
+      "sha1": "b95b1d631baeada54c6773ca8f6ede40d57fea46",
+      "projectID": 388172,
+      "fileID": 8350058
+    },
+    {
+      "file": "krypton-0.2.8.jar",
+      "id": "krypton",
+      "version": "0.2.8",
+      "sha1": "73e792eb5f120787becda4b87b6ff18b26caea50",
+      "projectID": 428912,
+      "fileID": 5460550
+    },
+    {
+      "file": "lithium-fabric-0.15.3+mc1.21.1.jar",
+      "id": "lithium",
+      "version": "0.15.3+mc1.21.1",
+      "sha1": "c4a1c2b6de9915ac77ae46a005509d4acf09535d",
+      "projectID": 360438,
+      "fileID": 7740401
+    },
+    {
+      "file": "mega_showdown-fabric-1.3.1+1.8.2+1.21.1-release.jar",
+      "id": "mega_showdown",
+      "version": "1.3.1+1.8.2+1.21.1-release",
+      "sha1": "fbb113c49ce448853b1dd28a0c3665608c330434",
+      "projectID": 1189523,
+      "fileID": 9170927
+    },
+    {
+      "file": "modernfix-fabric-5.25.1+mc1.21.1.jar",
+      "id": "modernfix",
+      "version": "5.25.1+mc1.21.1",
+      "sha1": "4ab39e9c736e7204146792c545ec5b29fc0a3872",
+      "projectID": 790626,
+      "fileID": 7200210
+    },
+    {
+      "file": "owo-lib-0.13.0-alpha.15+1.21.jar",
+      "id": "owo",
+      "version": "0.13.0-alpha.15+1.21",
+      "sha1": "5042f3b15df7cdbb058436bb105aedf826f39d3c",
+      "projectID": 532610,
+      "fileID": 8009224
+    },
+    {
+      "file": "packetfixer-3.3.1-1.20.5-1.21.X-merged.jar",
+      "id": "packetfixer",
+      "version": "3.3.1",
+      "sha1": "a8bb6e25807682e72c23bf4065f3cd5f6373ece3",
+      "projectID": 689467,
+      "fileID": 7221528
+    },
+    {
+      "file": "pokeblocks-1.4.0-1.21.1.jar",
+      "id": "pokeblocks",
+      "version": "1.4.0-1.21.1",
+      "sha1": "74a6bb7102596b326d07f64281ee80aca0eedaa6",
+      "projectID": 1078431,
+      "fileID": 6376530
+    },
+    {
+      "file": "rctapi-fabric-1.21.1-0.16.2-beta.jar",
+      "id": "rctapi",
+      "version": "0.16.2-beta",
+      "sha1": "3514532fea28e2e1160894428302eb1000af8459",
+      "projectID": 1152792,
+      "fileID": 9149488
+    },
+    {
+      "file": "supermartijn642configlib-1.1.8-fabric-mc1.21.jar",
+      "id": "supermartijn642configlib",
+      "version": "1.1.8",
+      "sha1": "8427e42f1db8ea7b4b6c21cc94bfcfa398f0ff63",
+      "projectID": 438332,
+      "fileID": 5546988
+    },
+    {
+      "file": "supermartijn642corelib-1.1.21-fabric-mc1.21.jar",
+      "id": "supermartijn642corelib",
+      "version": "1.1.21",
+      "sha1": "0091085edb9435f6eefc2ff562fcc8cffbc05981",
+      "projectID": 454372,
+      "fileID": 7783365
+    },
+    {
+      "file": "tmcraft-1.4.19+1.8.2.jar",
+      "id": "tmcraft",
+      "version": "1.4.19+1.8.2",
+      "sha1": "9883919ed031ce0c2ffed62095825f174f23befd",
+      "source": "https://modrinth.com/mod/tmcraft/version/cIXTptDr",
+      "modrinthVersion": "cIXTptDr"
+    },
+    {
+      "file": "zamega-fabric-1.8.2+1.8.2.jar",
+      "id": "zamega",
+      "version": "1.8.2+1.8.2",
+      "sha1": "5f359593982f1f393169fdc7bb35d9a34f41756a",
+      "projectID": 1452045,
+      "fileID": 9153740
+    }
+  ]
+}

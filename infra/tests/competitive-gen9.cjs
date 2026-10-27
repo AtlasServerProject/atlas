@@ -51,3 +51,26 @@ for(const tier of Object.keys(manifest.formats)){
 }
 console.log('CompetitiveGen9 PASS:',checks,'checks: legal/illegal sets, tier bans, species, Monotype, sleep, OHKO, evasion, held item, ability/move legality, EV/IV, AG distinctions, native packed team, Dynamax and runtime Sleep/Terastal clauses');
 const corrupted=structuredClone(manifest);corrupted.hashes['config/formats.js']='invalid';assert.throws(()=>load(engine,corrupted),/motor mudou/);console.log('CompetitiveGen9 PASS: mismatched engine snapshot fails closed');
+
+// Cobblemon 1.8.2 RequestInstruction ignores teamPreview. Ranked battles must
+// request moves immediately, without the manual preview choices used above.
+for (const tier of Object.keys(manifest.formats)) {
+ const team = () => [mon()];
+ const old = new Battle({format:{mod:'gen9',gameType:'singles',gen:9,ruleset:[manifest.formats[tier],'Dynamax Clause']}});
+ old.setPlayer('p1',{name:'A',team:team()});old.setPlayer('p2',{name:'B',team:team()});
+ assert.equal(old.requestState,'teampreview','reproduces the stalled native integration: '+tier);old.destroy();
+ const live = new Battle({format:{mod:'cobblemon',gameType:'singles',gen:9,ruleset:[manifest.formats[tier],'Dynamax Clause','!Team Preview']}});
+ live.setPlayer('p1',{name:'A',team:team()});live.setPlayer('p2',{name:'B',team:team()});
+ assert.equal(live.requestState,'move',tier);
+ for (const side of [live.p1,live.p2]) {
+  assert(!side.activeRequest.teamPreview);
+  assert.equal(side.activeRequest.active[0].moves[0].id,'thunderbolt');
+  assert(side.activeRequest.active[0].moves[0].pp>0);
+ }
+ assert(live.ruleTable.has('dynamaxclause'));
+ if(tier==='MONOTYPE')assert.equal(live.p1.active[0].canTerastallize,null);
+ live.makeChoices('move 1','move 1');
+ assert.equal(live.turn,2,'both players can finish the first turn: '+tier);
+ live.destroy();
+}
+console.log('CompetitiveGen9 PASS: all five live Cobblemon formats request moves immediately and complete turn one; previous preview deadlock reproduced. Bag Clause is intentionally stripped by native BattleFormat.toFormatJSON.');

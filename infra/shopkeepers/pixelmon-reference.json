@@ -1,0 +1,16 @@
+{
+  "version": "9.4.2",
+  "channel": "beta",
+  "stable": "9.4.1",
+  "source": "https://reforged.gg/en",
+  "download": "https://cdn.modrinth.com/data/59ZceYlU/versions/l63weWf0/Pixelmon-1.21.1-9.4.2-universal.jar",
+  "sha1": "274797d381962ae5acec85548ab13028223bcb57",
+  "bytes": 401077926,
+  "extracted_npc_shop_files": 941,
+  "inspected_classes": [
+    "ShopItem",
+    "ShopTransactionPacket",
+    "OpenShopInteractionResult"
+  ],
+  "note": "Local study only. No Pixelmon code, assets or dependency included in Atlas."
+}

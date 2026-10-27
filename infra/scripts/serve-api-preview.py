@@ -13,6 +13,7 @@ spec.loader.exec_module(preview)
 
 PACK_ROOT = Path(__file__).resolve().parents[2] / 'infra/resourcepacks'
 class Handler(preview.Handler):
+    trusted_cloudflare = True
     def resource_pack(self):
         match = re.fullmatch(r'/minecraft/resourcepacks/((?:atlas-gts-e19|atlas-textures)-[0-9a-f]{16}\.zip)', urlsplit(self.path).path)
         if not match: return False
@@ -32,4 +33,5 @@ class Handler(preview.Handler):
         if not self.resource_pack() and not self.proxy(): self.send_error(404)
     do_HEAD = do_GET
 
-ThreadingHTTPServer(('127.0.0.1', 4201), Handler).serve_forever()
+if __name__ == '__main__':
+    preview.BoundedHTTPServer(('127.0.0.1', 4201), Handler).serve_forever()
