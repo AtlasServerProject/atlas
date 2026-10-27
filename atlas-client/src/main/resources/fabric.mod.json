@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "atlas-interface",
+  "version": "${version}",
+  "name": "Atlas Interface",
+  "description": "Loja e identidade visual do modpack Atlas Cobblemon.",
+  "authors": [
+    "Atlas Cobblemon"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "io.atlas.client.AtlasClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.3",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "mixins": [
+    "atlas-interface.mixins.json"
+  ]
+}
