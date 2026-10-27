@@ -31,6 +31,8 @@ export class TicketStore {
   beginClose(id,summary,actor){return this.db.prepare("UPDATE tickets SET status='CLOSING',close_summary=?,closed_by=? WHERE id=? AND status='ACTIVE'").run(summary,actor,id).changes===1;}
   transcript(id,path){this.db.prepare("UPDATE tickets SET transcript=? WHERE id=? AND status='CLOSING'").run(path,id);}
   finish(id){return this.db.prepare("UPDATE tickets SET status='CLOSED',closed=? WHERE id=? AND status='CLOSING' AND transcript IS NOT NULL").run(Date.now(),id).changes===1;}
+  expiredContent(cutoff){return this.db.prepare("SELECT id,transcript FROM tickets WHERE status='CLOSED' AND closed<? AND (transcript IS NOT NULL OR reason!='' OR close_summary!='')").all(cutoff);}
+  expireContent(id,cutoff){return this.db.prepare("UPDATE tickets SET transcript=NULL,reason='',close_summary='' WHERE id=? AND status='CLOSED' AND closed<?").run(id,cutoff).changes===1;}
   total(user){return this.db.prepare("SELECT count(*) AS count FROM tickets WHERE assignee=? AND status='CLOSED'").get(user).count;}
   ranking(page=1){
     if(!Number.isInteger(page)||page<1||page>100000)throw new Error('Página inválida.');

@@ -1,11 +1,12 @@
 import {ChannelType,MessageFlags} from 'discord.js';
 import {mkdirSync,writeFileSync,appendFileSync,renameSync,existsSync,openSync,fsyncSync,closeSync} from 'node:fs';
+import {expireTicketContent} from './retention.js';
 import {TicketStore} from './store.js';
 import {panel,queueCard,channelPermissions,emptyMentions,ticketCommand,staffRankingCommand,rankingCard} from './ui.js';
 import ticketConfig from '../ticket-config.json' with {type:'json'};
 
 export function createTickets(client,settings,options={}) {
- const cfg=options.config||ticketConfig,store=options.store||new TicketStore(),running=new Set();let timer;
+ const cfg=options.config||ticketConfig,store=options.store||new TicketStore(),running=new Set();let timer,lastRetention=0;
  const enabled=cfg.guildId===settings.guildId;
  const staff=m=>[cfg.roles.support,cfg.roles.mod,cfg.roles.admin,cfg.roles.owner].some(r=>m.roles.cache.has(r));
  const senior=m=>[cfg.roles.mod,cfg.roles.admin,cfg.roles.owner].some(r=>m.roles.cache.has(r));
@@ -121,7 +122,8 @@ export function createTickets(client,settings,options={}) {
    else if(t.status==='CLOSING')await complete(t);
    else if(t.status==='CLOSED'||t.status==='ACTIVE')await refresh(t);
   }catch{console.error(`Tickets: recuperação pendente para #${t.id}.`);}}finally{reconciling=false;}}
- async function start(){if(!enabled)return;await (await guild()).commands.create(ticketCommand);await (await guild()).commands.create(staffRankingCommand);const ch=await getChannel(cfg.publicChannelId);await ch.messages.edit(cfg.panelId,panel(false));await reconcile();timer=setInterval(()=>reconcile().catch(()=>console.error('Tickets: falha na recuperação.')),60000);timer.unref();console.log('Tickets habilitados.');}
+ function retain(){if(Date.now()-lastRetention<3600000)return;const days=Number(process.env.ATLAS_TICKET_RETENTION_DAYS||90);const count=expireTicketContent(store,{directory:options.archiveDir||'.runtime/ticket-transcripts',days});lastRetention=Date.now();if(count)console.log(`Tickets: conteúdo local expirado em ${count} atendimento(s) concluído(s).`);}
+ async function start(){if(!enabled)return;await (await guild()).commands.create(ticketCommand);await (await guild()).commands.create(staffRankingCommand);const ch=await getChannel(cfg.publicChannelId);await ch.messages.edit(cfg.panelId,panel(false));await reconcile();retain();timer=setInterval(()=>{try{retain();}catch{console.error('Tickets: retenção requer revisão administrativa.');}return reconcile().catch(()=>console.error('Tickets: falha na recuperação.'));},60000);timer.unref();console.log('Tickets habilitados.');}
  function stop(){clearInterval(timer);store.close();}
  return {handle,start,stop,reconcile};
 }
