@@ -1,0 +1,11 @@
+{
+  "microsoftClientId": null,
+  "releasePublicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEASKDfWWuo6YlQ6YvyqKZVIaHdFbKPFkVOYdDUtLjQMLM=\n-----END PUBLIC KEY-----\n",
+  "downloadOrigins": [
+    "https://cdn.modrinth.com",
+    "https://edge.forgecdn.net",
+    "https://mediafilez.forgecdn.net",
+    "https://media.forgecdn.net"
+  ],
+  "bundledFiles": ["atlas-interface-1.1.0.jar", "atlas-interface-1.1.1.jar"]
+}
