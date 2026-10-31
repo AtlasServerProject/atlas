@@ -20,7 +20,8 @@ Chegada ao sul, sobre o emblema de Poké Bola, olhando para o norte (yaw 180): p
 ## Pontos de integração
 
 - Raid: o pedestal central tem quartzo cinzelado em `x63 y19 z63`; a toca de raid fixa fica em `x63 y20 z63`.
-- Safari e SafariVip: área de spawn é o terreno dentro da sebe (raio ~56 a partir de `x63 z63`). No SafariVip os quadrantes são noroeste campo florido, nordeste lago, sudoeste morros, sudeste taiga nevada.
+- Safari: área de spawn é o terreno dentro da sebe (raio ~56 a partir de `x63 z63`).
+- SafariVip: cada zona 16×16 recebe seu bioma pelo `/fillbiome`; zonas listadas em `warps.json` (`biome_cells`).
 
 
 ## SafariVip — 64 biomas
