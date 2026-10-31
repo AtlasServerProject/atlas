@@ -241,6 +241,158 @@ def hedge(b, surface, radius, kind='azalea'):
             for dy in (1, 2): b.set(x, y + dy, z, leaves)
 
 # ---------------------------------------------------------------- the four builds
+# ---- VIP: Shopping VIP (department store in the north-west garden) and EV corrals (east side)
+SHOP_X0, SHOP_X1, SHOP_Z0, SHOP_Z1, SHOP_FLOOR = 21, 43, 32, 52, 5   # outer walls; storey height
+SHOP_FLOORS = [('vip_bolas', 'Bolas e tampinhas', 'cyan'), ('vip_mints', 'Mints', 'lime'),
+               ('vip_formas', 'Formas e relíquias', 'purple'), ('vip_mega', 'Megapedras e cristais Z', 'orange')]
+GLYPHS = {'V': ['1.1', '1.1', '1.1', '1.1', '.1.'], 'I': ['111', '.1.', '.1.', '.1.', '111'], 'P': ['11.', '1.1', '11.', '1..', '1..']}
+
+def stairs(facing):
+    return f'minecraft:quartz_stairs[facing={facing},half=bottom,shape=straight,waterlogged=false]'
+
+def vip_shopping(b):
+    """Four storeys and a roof terrace; switchback stairs on the north side, one VIP counter per floor."""
+    x0, x1, z0, z1, h = SHOP_X0, SHOP_X1, SHOP_Z0, SHOP_Z1, SHOP_FLOOR
+    top = SURFACE + h * len(SHOP_FLOORS)
+    for z in range(z0 - 2, z1 + 3):   # clear the garden area and give the store a quartz forecourt
+        for x in range(x0 - 2, x1 + 3):
+            for y in range(SURFACE - 3, SURFACE): b.set(x, y, z, 'minecraft:stone')
+            b.set(x, SURFACE, z, 'minecraft:smooth_quartz'); clear_above(b, x, SURFACE + 1, z, top - SURFACE + 8)
+    for z in range(40, 45):   # walkway from the avenue to the entrance
+        for x in range(x1 + 1, 59):
+            b.set(x, SURFACE, z, 'minecraft:cyan_concrete' if z in (40, 44) else 'minecraft:smooth_quartz'); clear_above(b, x, SURFACE + 1, z, 6)
+    floors = []
+    for i, (shop, title, colour) in enumerate(SHOP_FLOORS):
+        base = SURFACE + i * h
+        for z in range(z0, z1 + 1):
+            for x in range(x0, x1 + 1):
+                wall = x in (x0, x1) or z in (z0, z1)
+                corner = x in (x0, x1) and z in (z0, z1)
+                b.set(x, base, z, 'minecraft:smooth_quartz' if wall else 'minecraft:polished_diorite' if (x + z) % 2 else 'minecraft:smooth_quartz')
+                for dy in range(1, h):
+                    if corner: blk = 'minecraft:quartz_pillar[axis=y]'
+                    elif wall:
+                        along = z if x in (x0, x1) else x
+                        blk = 'minecraft:cyan_stained_glass' if 2 <= dy <= 3 and along % 3 else 'minecraft:quartz_bricks'
+                        if dy == h - 1: blk = 'minecraft:cyan_concrete'
+                    else: blk = 'minecraft:air'
+                    b.set(x, base + dy, z, blk)
+        for z in range(z0 + 3, z1 - 2):   # coloured aisle carpet
+            b.set(x0 + 11, base + 1, z, f'minecraft:{colour}_carpet'); b.set(x0 + 12, base + 1, z, f'minecraft:{colour}_carpet')
+        for x in range(x0 + 2, x0 + 6):   # counter on the south side, clerk behind it
+            b.set(x, base + 1, z1 - 4, 'minecraft:dark_oak_planks'); b.set(x, base + 2, z1 - 4, 'minecraft:smooth_quartz_slab[type=bottom,waterlogged=false]')
+        b.set(x0 + 6, base + 1, z1 - 4, 'minecraft:dark_oak_planks'); b.set(x0 + 6, base + 1, z1 - 3, 'minecraft:dark_oak_planks')
+        b.set(x0 + 3, base + 1, z1 - 2, 'minecraft:barrel[facing=up,open=false]'); b.set(x0 + 5, base + 1, z1 - 2, 'minecraft:barrel[facing=up,open=false]')
+        floors.append({'floor': i + 1, 'shop': shop, 'title': title, 'npc_tag': f'atlas_npc_vip_store_{i + 1}',
+                       'npc': {'x': x0 + 4, 'y': base + 1, 'z': z1 - 3, 'yaw': 180}})
+        for z in range(z0 + 6, z1 - 5, 4):   # display islands: glass cases on quartz, flowers between
+            for x in (x0 + 15, x0 + 18):
+                b.set(x, base + 1, z, 'minecraft:quartz_block'); b.set(x, base + 2, z, 'minecraft:glass')
+            b.set(x0 + 8, base + 1, z, 'minecraft:flower_pot')
+        for z in range(z0 + 2, z1 - 1, 4):   # shelves along the west wall
+            for dy in (1, 2): b.set(x0 + 1, base + dy, z, 'minecraft:chiseled_bookshelf[facing=east,slot_0_occupied=false,slot_1_occupied=false,slot_2_occupied=false,slot_3_occupied=false,slot_4_occupied=false,slot_5_occupied=false]')
+        for z in range(z0 + 3, z1 - 1, 5):   # ceiling lights
+            for x in range(x0 + 4, x1 - 2, 6): b.set(x, base + h, z, 'minecraft:sea_lantern')
+    # Switchback stairs along the north wall: even floors climb east, odd floors climb west; the top step is flush
+    # with the next floor and the two steps below it open the floor above, guarded by a glass rail.
+    for i in range(len(SHOP_FLOORS)):
+        base = SURFACE + i * h
+        xs = list(range(x0 + 2, x0 + 2 + h)) if i % 2 == 0 else list(range(x0 + 14, x0 + 14 - h, -1))
+        for k, x in enumerate(xs):
+            for z in (z0 + 1, z0 + 2):
+                b.set(x, base + 1 + k, z, stairs('east' if i % 2 == 0 else 'west'))
+                for y in (base + 2 + k, base + 3 + k):
+                    if y <= base + h: b.set(x, y, z, 'minecraft:air')
+            if k < h - 1: b.set(x, base + h + 1, z0 + 3, 'minecraft:glass')
+    # Ground floor entrance on the east facade with an awning; roof terrace with parapet, planters and the VIP sign.
+    for z in range(40, 45):
+        for dy in range(1, 4): b.set(x1, SURFACE + dy, z, 'minecraft:air')
+        b.set(x1 + 1, SURFACE + 4, z, 'minecraft:cyan_concrete')
+    b.set(x1 + 1, SURFACE + 1, 39, 'minecraft:quartz_pillar[axis=y]'); b.set(x1 + 1, SURFACE + 1, 45, 'minecraft:quartz_pillar[axis=y]')
+    last = len(SHOP_FLOORS) - 1
+    opening = {(x0 + 14 - k if last % 2 else x0 + 2 + k, z) for k in (h - 3, h - 2) for z in (z0 + 1, z0 + 2)}
+    for z in range(z0, z1 + 1):
+        for x in range(x0, x1 + 1):
+            edge = x in (x0, x1) or z in (z0, z1)
+            if (x, z) in opening or b.get(x, top, z).startswith('minecraft:quartz_stairs') or b.get(x, top, z) == 'minecraft:sea_lantern': continue
+            b.set(x, top, z, 'minecraft:gold_block' if edge else 'minecraft:smooth_quartz')
+            if edge: b.set(x, top + 1, z, 'minecraft:quartz_slab[type=bottom,waterlogged=false]')
+    for x, z in ((x0 + 6, z0 + 8), (x0 + 6, z1 - 6), (x1 - 6, z0 + 8), (x1 - 6, z1 - 6)):
+        b.box(x - 1, top + 1, z - 1, x + 1, top + 1, z + 1, 'minecraft:moss_block'); tree(b, x, top + 2, z, 'cherry', 4)
+    for k, ch in enumerate('VIP'):   # gold letters on the east facade above the entrance
+        for row, line in enumerate(GLYPHS[ch]):
+            for col, bit in enumerate(line):
+                if bit == '1': b.set(x1 + 1, top - 3 - row + 6, 38 + k * 4 + col, 'minecraft:gold_block')
+    return floors
+
+STAT_COLOURS = [('hp', 'HP', 'red'), ('attack', 'Ataque', 'orange'), ('defence', 'Defesa', 'yellow'),
+                ('special_attack', 'Ataque Especial', 'blue'), ('special_defence', 'Defesa Especial', 'lime'), ('speed', 'Velocidade', 'pink')]
+EV_HUB, EV_RING, EV_R = (100, 63), 14, 5
+# Best single-stat EV yielders (3 points, non-legendary) from the installed Cobblemon species data, sized for the domes.
+EV_SPECIES = {
+    'hp': ['blissey', 'wigglytuff', 'clefable', 'azumarill', 'nidoqueen', 'lickilicky'],
+    'attack': ['machamp', 'conkeldurr', 'garchomp', 'haxorus', 'krookodile', 'staraptor', 'luxray', 'gallade'],
+    'defence': ['golem', 'aggron', 'corviknight', 'poliwrath', 'chesnaught', 'klinklang'],
+    'special_attack': ['alakazam', 'gengar', 'gardevoir', 'chandelure', 'magnezone', 'reuniclus', 'roserade'],
+    'special_defence': ['florges', 'goodra', 'gothitelle', 'bellossom', 'politoed', 'ludicolo', 'blastoise', 'tinkaton'],
+    'speed': ['crobat', 'pidgeot', 'raichu', 'talonflame', 'sceptile', 'jumpluff', 'greninja', 'cinderace'],
+}
+
+def corral_config(corrals, world, ox, oy, oz):
+    """Config for the Atlas Core EV corral module, absolute coordinates for the VIP pasted at (ox, oy, oz)."""
+    return {'enabled': True, 'world': world, 'maxPerCorral': 4, 'respawnSeconds': 20, 'minLevel': 30, 'maxLevel': 50,
+            'activationRange': 48,
+            'corrals': [{'stat': c['stat'], 'title': c['title'], 'x': ox + c['x'], 'y': oy + c['y'], 'z': oz + c['z'],
+                         'spawnRadius': 3.0, 'keepRadius': c['radius'] - 0.5, 'species': EV_SPECIES[c['stat']]} for c in corrals]}
+
+def ev_corrals(b, surf):
+    """Six glass domes around a hub east of the plaza, one per stat, door facing the hub."""
+    hx, hz = EV_HUB
+    for x in range(84, hx):   # corridor from the plaza
+        for z in range(61, 66):
+            b.set(x, SURFACE, z, 'minecraft:cyan_concrete' if z in (61, 65) else 'minecraft:smooth_quartz'); clear_above(b, x, SURFACE + 1, z, 6)
+    b.disc(hx, SURFACE, hz, 8.5, 'minecraft:smooth_quartz'); b.disc(hx, SURFACE, hz, 8.5, 'minecraft:cyan_concrete', inner=7.5)
+    for z in range(hz - 9, hz + 10):
+        for x in range(hx - 9, hx + 10):
+            if math.hypot(x - hx, z - hz) <= 8.5: clear_above(b, x, SURFACE + 1, z, 8)
+    out = []
+    for k, (stat, title, colour) in enumerate(STAT_COLOURS):
+        a = math.radians(210 - 60 * k)   # first dome north-west of the hub, then clockwise
+        cx, cz = round(hx + EV_RING * math.cos(a)), round(hz - EV_RING * math.sin(a))
+        b.set(hx + round(2 * math.cos(a)), SURFACE + 1, hz - round(2 * math.sin(a)), f'minecraft:{colour}_concrete')   # hub totem
+        b.set(hx + round(2 * math.cos(a)), SURFACE + 2, hz - round(2 * math.sin(a)), f'minecraft:{colour}_stained_glass')
+        for z in range(cz - EV_R - 2, cz + EV_R + 3):
+            for x in range(cx - EV_R - 2, cx + EV_R + 3):
+                d = math.hypot(x - cx, z - cz)
+                if d > EV_R + 0.6: continue
+                for y in range(SURFACE - 4, SURFACE): b.set(x, y, z, 'minecraft:stone')   # foundation, also near the island edge
+                b.set(x, SURFACE, z, f'minecraft:{colour}_concrete' if d > EV_R - 0.4 else 'minecraft:grass_block')
+                for dy in range(1, 9):
+                    shell = ((x - cx) / (EV_R + 0.5)) ** 2 + ((z - cz) / (EV_R + 0.5)) ** 2 + (dy / 7.5) ** 2
+                    inner = ((x - cx) / (EV_R - 0.6)) ** 2 + ((z - cz) / (EV_R - 0.6)) ** 2 + (dy / 6.4) ** 2
+                    if shell <= 1 and inner > 1: b.set(x, SURFACE + dy, z, f'minecraft:{colour}_stained_glass' if dy <= 2 else 'minecraft:glass')
+                    elif shell <= 1: b.set(x, SURFACE + dy, z, 'minecraft:air')
+        b.set(cx, SURFACE + 7, cz, 'minecraft:sea_lantern')
+        for dx, dz in ((-2, -1), (2, 1), (1, -2)): b.set(cx + dx, SURFACE + 1, cz + dz, 'minecraft:short_grass')
+        # Door towards the hub; a short path joins it to the hub ring.
+        ux, uz = (hx - cx) / EV_RING, (hz - cz) / EV_RING
+        dxd, dzd = round(cx + ux * EV_R), round(cz + uz * EV_R)
+        facing = ('east' if ux > 0 else 'west') if abs(ux) >= abs(uz) else ('south' if uz > 0 else 'north')
+        b.set(dxd, SURFACE + 1, dzd, f'minecraft:oak_door[facing={facing},half=lower,hinge=left,open=false,powered=false]')
+        b.set(dxd, SURFACE + 2, dzd, f'minecraft:oak_door[facing={facing},half=upper,hinge=left,open=false,powered=false]')
+        b.set(dxd, SURFACE, dzd, 'minecraft:smooth_quartz')
+        for t in range(1, 4):
+            px, pz = round(cx + ux * (EV_R + t)), round(cz + uz * (EV_R + t))
+            b.set(px, SURFACE, pz, 'minecraft:smooth_quartz'); clear_above(b, px, SURFACE + 1, pz, 4)
+        out.append({'stat': stat, 'title': title, 'colour': colour, 'x': cx, 'y': SURFACE + 1, 'z': cz, 'radius': EV_R,
+                    'door': {'x': dxd, 'y': SURFACE + 1, 'z': dzd}})
+    b.set(hx, SURFACE + 1, hz, 'minecraft:quartz_pillar[axis=y]'); b.set(hx, SURFACE + 2, hz, 'minecraft:quartz_pillar[axis=y]'); b.set(hx, SURFACE + 3, hz, 'minecraft:sea_lantern')
+    return out
+
+def clear_above(b, x, y, z, height=12):
+    for dy in range(height): b.set(x, y + dy, z, 'minecraft:air')
+
+
 def build_vip():
     b = Build('VIP', 1001); surf = island(b, 61)
     arrival(b)
@@ -276,23 +428,16 @@ def build_vip():
     b.set(63, SURFACE + 9 + r, 22, 'minecraft:sea_lantern'); b.set(63, SURFACE + 10 + r, 22, 'minecraft:end_rod[facing=up]')
     for x in (55, 72):
         for z in (16, 29): b.set(x, SURFACE + 1, z, 'minecraft:dark_oak_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]' if x == 55 else 'minecraft:dark_oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]')
-    # Four gardens: hedged beds, birch trees and benches along the avenue.
-    for gx, gz in ((32, 42), (95, 42), (32, 86), (95, 86)):
-        for z in range(gz - 9, gz + 10):
-            for x in range(gx - 11, gx + 12):
-                if (x, z) not in surf: continue
-                edge = abs(x - gx) == 11 or abs(z - gz) == 9
-                if edge and not (abs(x - gx) <= 1 or abs(z - gz) <= 1):
-                    b.set(x, SURFACE + 1, z, 'minecraft:azalea_leaves[distance=1,persistent=true,waterlogged=false]')
-                elif not edge: plants(b, x, SURFACE + 1, z, ['allium', 'azure_bluet', 'cornflower', 'oxeye_daisy', 'lily_of_the_valley'])
-        tree(b, gx, SURFACE + 1, gz, 'birch', 6)
     for z in range(42, 104, 12):
         b.set(58, SURFACE + 1, z, 'minecraft:dark_oak_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]')
         b.set(69, SURFACE + 1, z, 'minecraft:dark_oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]')
     for (x, z), y in surf.items():
         if b.get(x, y + 1, z) == 'minecraft:air' and b.get(x, y, z) == 'minecraft:grass_block' and b.rng.random() < 0.18:
             plants(b, x, y + 1, z, ['dandelion', 'poppy'])
-    b.notes = {'pavilion': {'x': 63, 'y': SURFACE + 1, 'z': 22}, 'fountain': {'x': 63, 'y': SURFACE + 1, 'z': 63}}
+    floors = vip_shopping(b)
+    corrals = ev_corrals(b, surf)
+    b.notes = {'pavilion': {'x': 63, 'y': SURFACE + 1, 'z': 22}, 'fountain': {'x': 63, 'y': SURFACE + 1, 'z': 63},
+               'shopping_vip': floors, 'ev_corrals': corrals}
     return b
 
 def build_raid():
@@ -596,9 +741,6 @@ def top_block(biome, y, wet, steep, m, x, z, rng):
 
 def ground(b, surf, x, z):
     return x, surf[(x, z)] + 1, z
-
-def clear_above(b, x, y, z, height=12):
-    for dy in range(height): b.set(x, y + dy, z, 'minecraft:air')
 
 # ---- centre: Atlas Pokémon Center under a glass dome
 def plaza_and_center(b, blocked):
@@ -1091,7 +1233,11 @@ def region_inventory(b, biome, columns, caves):
     return {'biome': 'minecraft:' + biome, 'blocks': sorted(blocks), 'water': water, 'lava': lava, 'open_sky': open_sky, 'covered': covered}
 
 # ---------------------------------------------------------------- preview
-COLORS = [('yellow_wool', (240, 200, 40)), ('black_wool', (25, 25, 30)), ('red_wool', (190, 40, 40)), ('brown_wool', (110, 70, 40)),
+COLORS = [('red_stained_glass', (220, 80, 80)), ('orange_stained_glass', (240, 150, 60)), ('yellow_stained_glass', (240, 220, 80)),
+          ('blue_stained_glass', (70, 100, 220)), ('lime_stained_glass', (130, 220, 80)), ('pink_stained_glass', (240, 150, 190)),
+          ('red_concrete', (160, 35, 35)), ('orange_concrete', (225, 100, 0)), ('yellow_concrete', (240, 175, 20)), ('blue_concrete', (45, 47, 145)),
+          ('lime_concrete', (95, 170, 25)), ('pink_concrete', (215, 100, 145)), ('minecraft:glass', (205, 232, 240)),
+          ('yellow_wool', (240, 200, 40)), ('black_wool', (25, 25, 30)), ('red_wool', (190, 40, 40)), ('brown_wool', (110, 70, 40)),
           ('white_wool', (235, 235, 235)), ('cyan_wool', (22, 150, 160)), ('white_terracotta', (210, 180, 160)), ('cyan_terracotta', (70, 90, 98)),
           ('light_blue_stained_glass', (120, 190, 230)), ('pink_petals', (240, 170, 200)), ('dark_oak_leaves', (40, 90, 35)),
           ('red_mushroom_block', (180, 40, 40)), ('brown_mushroom_block', (140, 105, 80)), ('melon', (110, 160, 50)), ('sugar_cane', (120, 190, 90)),
@@ -1169,6 +1315,8 @@ def biome_commands(cells, ox, oy, oz):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument('out')
     parser.add_argument('--safarivip-origin', nargs=3, type=int, metavar=('X', 'Y', 'Z'), help='also write absolute /fillbiome commands')
+    parser.add_argument('--vip-origin', nargs=3, type=int, metavar=('X', 'Y', 'Z'), help='also write atlas-ev-corrals.json for Atlas Core')
+    parser.add_argument('--vip-world', default='minecraft:overworld', help='dimension where the VIP warp is pasted')
     args = parser.parse_args()
     out = pathlib.Path(args.out); out.mkdir(parents=True, exist_ok=True); summary = {}
     for build in (build_vip, build_raid, build_safari, build_safari_vip):
@@ -1179,6 +1327,8 @@ def main():
         summary[b.name] = {'file': f'atlas-warp-{b.name.lower()}.litematic', 'size': [b.size, HEIGHT, b.size],
                            'arrival': b.arrival, 'palette': len(b.palette), 'blocks': sum(1 for v in b.cells if v), 'notes': b.notes}
         summary[b.name]['water_leaks'] = water_leaks(b)
+        if b.name == 'VIP' and args.vip_origin:
+            (out / 'atlas-ev-corrals.json').write_text(json.dumps(corral_config(b.notes['ev_corrals'], args.vip_world, *args.vip_origin), indent=1, ensure_ascii=False) + '\n')
         if b.name == 'SafariVip':
             (out / 'safarivip-zones.json').write_text(json.dumps(b.zones, indent=1) + '\n')
             (out / 'safarivip-biomes.json').write_text(json.dumps(b.biome_boxes, indent=1) + '\n')

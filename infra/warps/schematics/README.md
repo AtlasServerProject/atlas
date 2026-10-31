@@ -4,7 +4,7 @@ Geradas por `infra/world-tools/warp-schematics.py` (Python puro, sementes fixas)
 
 | Arquivo | Conteúdo |
 |---|---|
-| `atlas-warp-vip.litematic` | Avenida iluminada, praça com fonte, pavilhão com cúpula de vidro ciano e friso dourado, quatro jardins com bétulas, bancos |
+| `atlas-warp-vip.litematic` | Avenida iluminada, praça com fonte, pavilhão com cúpula de vidro ciano e friso dourado, Shopping VIP de quatro andares com terraço (noroeste) e seis currais de EV em redomas de vidro (leste) |
 | `atlas-warp-raid.litematic` | Arena circular com anéis ciano, arquibancadas, muralha com quatro portões, pilares iluminados, cristais de ametista e pedestal central |
 | `atlas-warp-safari.litematic` | Relevo natural, lago, árvores, capim alto e flores, sebe na borda, posto de guarda-parque e torre de observação |
 | `atlas-warp-safarivip.litematic` | Ilha redonda no mar com 24 biomas principais do overworld em setores orgânicos, montanha nevada com duas cavernas, rio, Centro Pokémon Atlas em cúpula de vidro no centro, estátuas de Pikachu, Snorlax e Poké Ball, píer de chegada |
@@ -23,6 +23,32 @@ Chegada ao sul, sobre o emblema de Poké Bola, olhando para o norte (yaw 180): p
 - Safari: área de spawn é o terreno dentro da sebe (raio ~56 a partir de `x63 z63`).
 - SafariVip: cada coluna 4×4 recebe seu bioma pelo `/fillbiome`; caixas em `safarivip-biomes.json`.
 
+
+## VIP: Shopping VIP e currais de EV
+
+O jardim noroeste, o mais próximo da cúpula, virou o **Shopping VIP**: uma loja de departamentos de quatro andares em quartzo e vidro ciano, com o letreiro VIP dourado na fachada leste, escadas em zigue-zague no lado norte e um terraço com cerejeiras no topo. Cada andar tem um balcão no lado sul, com o lugar do lojista atrás. Os outros três jardins saíram.
+
+| Andar | Loja | Tag do NPC (Easy NPC) | Lugar do lojista (relativo) |
+|---|---|---|---|
+| 1º | Bolas e tampinhas | `atlas_npc_vip_store_1` | `x25 y17 z49` |
+| 2º | Mints | `atlas_npc_vip_store_2` | `x25 y22 z49` |
+| 3º | Formas e relíquias | `atlas_npc_vip_store_3` | `x25 y27 z49` |
+| 4º | Megapedras e cristais Z | `atlas_npc_vip_store_4` | `x25 y32 z49` |
+
+Os lojistas vendem os itens que as lojas comuns bloqueiam por serem VIP (Master Ball, Park Ball, tampinhas, mints, placas, memórias, drives, orbes, megapedras, cristais Z, braceletes e anéis). Só VIP 1 ou superior compra, em qualquer mundo, e não há revenda para a loja. Atlas Core `1.40.5+evvip.1`.
+
+No lado leste, ligado à praça por um corredor, ficam os **currais de EV**: seis redomas de vidro em volta de um pátio, cada uma com a cor do seu atributo e a porta voltada para o pátio.
+
+| Curral | Cor | Centro (relativo) |
+|---|---|---|
+| HP | red | `x88 y17 z70` |
+| Ataque | orange | `x88 y17 z56` |
+| Defesa | yellow | `x100 y17 z49` |
+| Ataque Especial | blue | `x112 y17 z56` |
+| Defesa Especial | lime | `x112 y17 z70` |
+| Velocidade | pink | `x100 y17 z77` |
+
+Dentro de cada redoma, o módulo Currais de EV do Atlas Core mantém até 4 Pokémon selvagens **incapturáveis** (nível 30 a 50), escolhidos entre os que rendem 3 EVs daquele atributo e nada mais. A lista vem dos dados de espécie do Cobblemon instalado, sem lendários. Derrotados voltam em 20 s se houver jogador a até 48 blocos; os que saem são devolvidos; outros selvagens que surgirem dentro da redoma são removidos. A configuração com coordenadas absolutas sai de `python3 infra/world-tools/warp-schematics.py <saída> --vip-origin X Y Z --vip-world <dimensão>` (`atlas-ev-corrals.json`), e vai para `config/atlas/ev-corrals.json` no servidor; depois, `/currais recarregar`.
 
 ## SafariVip: ilha dos biomas
 
@@ -47,4 +73,4 @@ Cobertura calculada por `infra/world-tools/spawn-coverage.py --zones safarivip-z
 
 Detalhes que existem por causa de regras específicas: concreto só no Centro Pokémon (o preset "wild" bloqueia spawns a até 4 blocos de concreto; as estátuas são de lã e terracota); para-raios, bolo e PC na praça; árvore saccharine e bolo na Meadow; frutas do Cobblemon na Birch Forest; abóboras em Plains e Taiga; lago de pesca na Dark Forest; kelp e algas no oceano, corais no warm_ocean; coqueiros na Beach; ruína e cobblestone na Jungle; ruína de tijolos e minérios (inclusive diamante) na Dripstone Caves; poça, argila e glow berries na Lush Caves; sem lanternas perto da neve.
 
-Acesso VIP, spawns próprios do Safari e a toca de raid rotativa ainda não foram implementados.
+Acesso VIP às warps, spawns próprios do Safari e a toca de raid rotativa ainda não foram implementados.
