@@ -1,0 +1,17 @@
+{
+  "version": "1.40.5+lobby.2",
+  "baseSha256": "76a9f6f94098a0592a640a8e50bf97a635301488cb03709621afb1d9f4aa6d71",
+  "sha256": "ca532a1c0bd0af8b894f678957a153bef9fde892724918e04ed1dd4636ff38dc",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/commands/RandomTeleportCommand.class",
+    "io/atlas/mixin/ProfessionBlockPlacementMixin.class",
+    "io/atlas/modules/lobby/listener/LobbyProtectionListener.class"
+  ],
+  "prefixes": [
+    "io/atlas/modules/lobby/listener/LobbyProtectionListener",
+    "io/atlas/mixin/ProfessionBlockPlacementMixin",
+    "io/atlas/commands/RandomTeleportCommand"
+  ],
+  "worldIdsUnchanged": true
+}

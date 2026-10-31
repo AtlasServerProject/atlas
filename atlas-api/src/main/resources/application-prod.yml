@@ -1,0 +1,6 @@
+# Bind only behind the configured HTTPS reverse proxy. Never expose management metrics publicly.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

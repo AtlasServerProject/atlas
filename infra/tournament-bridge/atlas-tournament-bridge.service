@@ -1,0 +1,12 @@
+[Unit]
+Description=Atlas Minecraft tournament registration and Challonge bridge
+After=network-online.target
+[Service]
+WorkingDirectory=/home/somente/dev/atlas/infra/tournament-bridge
+ExecStart=/home/somente/.local/share/atlas-moderation-relay/bin/python /home/somente/dev/atlas/infra/tournament-bridge/main.py
+Restart=on-failure
+RestartSec=20
+UMask=0077
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target

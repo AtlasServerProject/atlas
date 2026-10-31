@@ -1,0 +1,13 @@
+{
+  "version": "1.40.5+hall.1",
+  "baseSha256": "eab561b2c04531aede087bf082cfd57294d2c686d4613c426ef1c3c224b359b4",
+  "sha256": "76a9f6f94098a0592a640a8e50bf97a635301488cb03709621afb1d9f4aa6d71",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/modules/lobby/service/LobbyNpcService.class"
+  ],
+  "prefixes": [
+    "io/atlas/modules/lobby/service/LobbyNpcService"
+  ],
+  "worldIdsUnchanged": true
+}

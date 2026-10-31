@@ -1,0 +1,13 @@
+[Unit]
+Description=Atlas private HTTPS transport for Core deliveries
+After=atlas-api.service
+Requires=atlas-api.service
+[Service]
+WorkingDirectory=%h/dev/atlas
+ExecStart=/usr/bin/python3 %h/dev/atlas/infra/scripts/serve-core-tls.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+UMask=0077
+[Install]
+WantedBy=default.target

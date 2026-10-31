@@ -1,0 +1,6 @@
+# Credentials and origins come from the environment; no production fallback.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

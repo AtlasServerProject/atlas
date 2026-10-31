@@ -1,0 +1,5 @@
+ALTER TABLE pokedex_rewards DROP CONSTRAINT pokedex_rewards_route_milestone_check;
+ALTER TABLE pokedex_rewards ADD CONSTRAINT pokedex_rewards_route_milestone_check CHECK((route='main' AND milestone BETWEEN 10 AND 100 AND milestone%10=0) OR (route IN ('normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy','gen1','gen2','gen3','gen4','gen5','gen6','gen7','gen8','gen9') AND milestone IN (10,25,50,75,100)));
+ALTER TABLE pokedex_type_progress DROP CONSTRAINT pokedex_type_progress_type_check;
+ALTER TABLE pokedex_type_progress ADD CONSTRAINT pokedex_type_progress_type_check CHECK(type IN ('normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy','gen1','gen2','gen3','gen4','gen5','gen6','gen7','gen8','gen9'));
+ALTER TABLE pokedex_type_progress ADD CONSTRAINT pokedex_generation_no_type_title CHECK(NOT selected OR type NOT LIKE 'gen%');

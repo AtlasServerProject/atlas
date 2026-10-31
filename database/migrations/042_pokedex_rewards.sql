@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS pokedex_rewards (
+ id UUID PRIMARY KEY, uuid UUID NOT NULL, milestone INTEGER NOT NULL CHECK(milestone BETWEEN 10 AND 100 AND milestone%10=0),
+ part INTEGER NOT NULL CHECK(part>=0),kind TEXT NOT NULL CHECK(kind IN ('ITEM','MINT','SHINY','LEGENDARY','LEGENDARY_CHOICE')),
+ value TEXT NOT NULL,amount INTEGER NOT NULL CHECK(amount BETWEEN 1 AND 64),
+ state TEXT NOT NULL CHECK(state IN ('AVAILABLE','CHOICE','PENDING','READY','DELIVERING','DELIVERED','REVIEW')),
+ payload JSONB, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),delivered_at TIMESTAMPTZ,
+ UNIQUE(uuid,milestone,part)
+);
+CREATE INDEX IF NOT EXISTS pokedex_reward_queue ON pokedex_rewards(created_at) WHERE state IN ('PENDING','READY','DELIVERING');

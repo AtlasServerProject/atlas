@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-23",
+  "status": "reference-only",
+  "automaticMinecraftEnforcement": false,
+  "bracketProvider": "Challonge",
+  "battlePlatform": "Minecraft/Cobblemon",
+  "baseline": "Sword/Shield Gen 8; not National Dex or BDSP",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/config/formats.ts",
+      "sha256": "bae366653b9e42662878e8535a65ead60248f81db9111495c9860d1a4ed35a4e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/mods/gen8/rulesets.ts",
+      "sha256": "5213b6337f7c1814fdb09cc64f099468c4c54c32f1196e96aebe29d5e5c73ecf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/rulesets.ts",
+      "sha256": "b22a8840859f18db87bdb29b422bafe4904f956222dba9aadbb1022e8c2e6a2a"
+    }
+  ],
+  "notes": [
+    "Rules and banlists are direct upstream entries, not expanded validation tables. Inherited rules and tier membership must be resolved with the Gen 8 Showdown validator.",
+    "AG remains subject to Gen 8 legality; it does not permit later-generation Pokémon or mechanics.",
+    "Cobblemon and addon compatibility must be validated before opening registration."
+  ],
+  "formats": [
+    {
+      "id": "gen8ou",
+      "name": "[Gen 8] OU",
+      "shortName": "OU",
+      "generation": 8,
+      "mod": "gen8",
+      "gameType": "singles",
+      "summaryPtBr": "Formato competitivo com as restrições de OU.",
+      "directRuleset": [
+        "Standard",
+        "Dynamax Clause"
+      ],
+      "directBanlist": [
+        "Uber",
+        "AG",
+        "Arena Trap",
+        "Moody",
+        "Power Construct",
+        "Sand Veil",
+        "Shadow Tag",
+        "Snow Cloak",
+        "King's Rock",
+        "Baton Pass"
+      ],
+      "dynamaxAllowed": false
+    },
+    {
+      "id": "gen8uu",
+      "name": "[Gen 8] UU",
+      "shortName": "UU",
+      "generation": 8,
+      "mod": "gen8",
+      "gameType": "singles",
+      "summaryPtBr": "Herda OU e restringe também OU, UUBL e Light Clay.",
+      "directRuleset": [
+        "[Gen 8] OU"
+      ],
+      "directBanlist": [
+        "OU",
+        "UUBL",
+        "Light Clay"
+      ],
+      "dynamaxAllowed": false
+    },
+    {
+      "id": "gen8monotype",
+      "name": "[Gen 8] Monotype",
+      "shortName": "Monotype",
+      "generation": 8,
+      "mod": "gen8",
+      "gameType": "singles",
+      "summaryPtBr": "Todos os Pokémon da equipe compartilham pelo menos um tipo, com banimentos próprios.",
+      "directRuleset": [
+        "Same Type Clause",
+        "Standard",
+        "Evasion Abilities Clause",
+        "Dynamax Clause"
+      ],
+      "directBanlist": [
+        "Blaziken",
+        "Calyrex-Ice",
+        "Calyrex-Shadow",
+        "Dialga",
+        "Dracovish",
+        "Eternatus",
+        "Genesect",
+        "Giratina",
+        "Giratina-Origin",
+        "Groudon",
+        "Ho-Oh",
+        "Kartana",
+        "Kyogre",
+        "Kyurem-Black",
+        "Kyurem-White",
+        "Landorus-Incarnate",
+        "Lugia",
+        "Lunala",
+        "Magearna",
+        "Marshadow",
+        "Mewtwo",
+        "Naganadel",
+        "Necrozma-Dawn-Wings",
+        "Necrozma-Dusk-Mane",
+        "Palkia",
+        "Pheromosa",
+        "Rayquaza",
+        "Reshiram",
+        "Solgaleo",
+        "Urshifu-Single-Strike",
+        "Xerneas",
+        "Yveltal",
+        "Zacian",
+        "Zacian-Crowned",
+        "Zamazenta",
+        "Zamazenta-Crowned",
+        "Zekrom",
+        "Zygarde-50%",
+        "Moody",
+        "Power Construct",
+        "Shadow Tag",
+        "Damp Rock",
+        "Focus Band",
+        "King's Rock",
+        "Quick Claw",
+        "Smooth Rock",
+        "Terrain Extender",
+        "Baton Pass"
+      ],
+      "dynamaxAllowed": false
+    },
+    {
+      "id": "gen8ubers",
+      "name": "[Gen 8] Ubers",
+      "shortName": "Ubers",
+      "generation": 8,
+      "mod": "gen8",
+      "gameType": "singles",
+      "summaryPtBr": "Permite mais Pokémon poderosos, mantendo as restrições próprias de Ubers.",
+      "directRuleset": [
+        "Standard",
+        "Dynamax Clause"
+      ],
+      "directBanlist": [
+        "AG",
+        "Shadow Tag",
+        "Baton Pass"
+      ],
+      "dynamaxAllowed": false
+    },
+    {
+      "id": "gen8anythinggoes",
+      "name": "[Gen 8] Anything Goes",
+      "shortName": "AG",
+      "generation": 8,
+      "mod": "gen8",
+      "gameType": "singles",
+      "summaryPtBr": "Menos restrições competitivas, mantendo legalidade e regras básicas de Gen 8.",
+      "directRuleset": [
+        "Standard AG"
+      ],
+      "directBanlist": [],
+      "dynamaxAllowed": true
+    }
+  ]
+}

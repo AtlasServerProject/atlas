@@ -1,0 +1,14 @@
+package io.atlas.api.auth.service;
+import io.atlas.api.auth.repository.MinecraftRecoveryRepository;import io.atlas.api.auth.repository.RecoveryEmailRepository;import io.atlas.api.mail.*;import java.time.*;import java.util.*;import java.security.*;import java.nio.charset.StandardCharsets;
+import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;
+@Service public class MinecraftRecoveryService {
+ private final RecoveryEmailRepository emails;private final MinecraftRecoveryRepository repo;private final MailCipher cipher;private final MailOutbox outbox;private final Clock clock;private final SecureRandom random=new SecureRandom();
+ public MinecraftRecoveryService(MinecraftRecoveryRepository repo,MailCipher cipher,MailOutbox outbox,Clock clock,RecoveryEmailRepository emails){this.emails=emails;this.repo=repo;this.cipher=cipher;this.outbox=outbox;this.clock=clock;}
+ private String hash(UUID player,String code){return cipher.digest("minecraft-password-recovery:"+player+":"+code);}
+ @Transactional public void request(UUID player){var explicit=emails.email(player);var target=repo.recipient(player);if(explicit.isEmpty()&&target.isEmpty())return;var recipient=target.orElse(null);String destination=explicit.orElseGet(()->recipient.email());String code=String.format(java.util.Locale.ROOT,"%08d",random.nextInt(100_000_000));repo.save(player,explicit.isPresent()?null:recipient.link(),destination,hash(player,code),clock.instant().plusSeconds(600));outbox.enqueue(new MailOutbox.Message(destination,"Recupere sua senha do Minecraft — Atlas Cobblemon","Recebemos um pedido para redefinir a senha do seu jogador Minecraft vinculado ao Atlas.\n\nCódigo: "+code+"\n\nO código vale por 10 minutos e pode ser usado uma vez. Dentro do Minecraft, use /recuperarsenha confirmar <codigo> <novaSenha> <confirmacao>.\n\nNão compartilhe este código. Se não pediu a recuperação, ignore este email. Nenhuma senha foi alterada. A senha do site é independente.\n\nAtlas Cobblemon"));}
+ @Transactional public boolean verify(UUID player,String code){
+  // Same locking order as request; revoked/unverified links cannot authorize a reset.
+  var explicit=emails.email(player);var recipient=repo.recipient(player);if(explicit.isEmpty()&&recipient.isEmpty())return false;var optional=repo.lock(player);if(optional.isEmpty())return false;var c=optional.get();if(c.consumed()||c.attempts()>=5||!clock.instant().isBefore(c.expires())||(c.link()==null?!explicit.filter(x->x.equals(c.email())).isPresent():recipient.isEmpty()||!recipient.get().link().equals(c.link())||!recipient.get().email().equals(c.email())))return false;
+  boolean valid=MessageDigest.isEqual(c.hash().getBytes(StandardCharsets.US_ASCII),hash(player,code).getBytes(StandardCharsets.US_ASCII));repo.attempt(player,valid);return valid;
+ }
+}

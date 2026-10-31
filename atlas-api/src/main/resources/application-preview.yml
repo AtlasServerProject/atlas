@@ -1,0 +1,12 @@
+# HTTPS public site behind the same-origin Cloudflare gateway.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+atlas:
+  mail:
+    mode: ${ATLAS_MAIL_MODE:smtp}
+    web-url: ${ATLAS_WEB_URL:https://www.atlascobblemon.com.br}
+  cors:
+    allowed-origins: ${ATLAS_ALLOWED_ORIGINS:https://www.atlascobblemon.com.br,https://atlascobblemon.com.br}

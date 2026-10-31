@@ -1,0 +1,871 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Atlas API — M3 Catálogo e Promoções",
+    "version": "0.3.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "ATLAS_SESSION"
+      }
+    },
+    "schemas": {
+      "ProductInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "category": {
+            "enum": [
+              "VIPs",
+              "Chaves",
+              "Pacotes",
+              "Cosméticos"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "server": {
+            "enum": [
+              "emerald"
+            ]
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "description",
+          "category",
+          "active",
+          "server",
+          "priceCents",
+          "revision"
+        ]
+      },
+      "Price": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "priceCents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "priceCents",
+          "revision"
+        ]
+      },
+      "Offer": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "active",
+          "revision"
+        ]
+      },
+      "PromotionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "server": {
+            "enum": [
+              "emerald"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "finalCents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "discountBasisPoints": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "productRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "productId",
+          "server",
+          "name",
+          "startsAt",
+          "endsAt",
+          "revision",
+          "productRevision"
+        ]
+      },
+      "Transition": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "CANCELLED",
+              "FINISHED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "status",
+          "revision"
+        ]
+      },
+      "Product": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "server": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "finalCents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "promotionId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "purchasable": {
+            "const": false
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "durationDays": {
+            "type": ["integer", "null"], "enum": [30, null]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "category",
+          "priceCents",
+          "finalCents",
+          "purchasable",
+          "revision"
+        ]
+      },
+      "Promotion": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "productId": {
+            "type": "integer"
+          },
+          "server": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "originalCents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "finalCents": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "discountBasisPoints": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "enum": [
+              "SCHEDULED",
+              "ACTIVE",
+              "FINISHED",
+              "CANCELLED"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "finalCents",
+          "startsAt",
+          "endsAt",
+          "status",
+          "revision"
+        ]
+      },
+      "Catalog": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "promotions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Promotion"
+            }
+          }
+        },
+        "required": [
+          "serverTime",
+          "revision",
+          "products",
+          "promotions"
+        ]
+      }
+    }
+  },
+  "paths": {
+    "/catalog": {
+      "get": {
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/catalog": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Catalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/products": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/products/{id}": {
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/products/{id}/price": {
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Price"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/products/{id}/offer": {
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Offer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/promotions": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Promotion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/promotions/{id}": {
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Promotion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/promotions/{id}/status": {
+      "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Promotion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Oferta inválida"
+          },
+          "401": {
+            "description": "Sessão necessária"
+          },
+          "403": {
+            "description": "ADMIN/CSRF exigido"
+          },
+          "404": {
+            "description": "Recurso inexistente"
+          },
+          "409": {
+            "description": "Revisão, slug ou intervalo em conflito"
+          },
+          "422": {
+            "description": "Validação de campos"
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-TOKEN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Transition"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

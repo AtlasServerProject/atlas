@@ -1,0 +1,268 @@
+{
+  "VIP": {
+    "file": "atlas-warp-vip.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 67,
+    "blocks": 94593,
+    "notes": {
+      "pavilion": {
+        "x": 63,
+        "y": 17,
+        "z": 22
+      },
+      "fountain": {
+        "x": 63,
+        "y": 17,
+        "z": 63
+      },
+      "shopping_vip": [
+        {
+          "floor": 1,
+          "shop": "vip_bolas",
+          "title": "Bolas e tampinhas",
+          "npc_tag": "atlas_npc_vip_store_1",
+          "npc": {
+            "x": 25,
+            "y": 17,
+            "z": 49,
+            "yaw": 180
+          }
+        },
+        {
+          "floor": 2,
+          "shop": "vip_mints",
+          "title": "Mints",
+          "npc_tag": "atlas_npc_vip_store_2",
+          "npc": {
+            "x": 25,
+            "y": 22,
+            "z": 49,
+            "yaw": 180
+          }
+        },
+        {
+          "floor": 3,
+          "shop": "vip_formas",
+          "title": "Formas e relíquias",
+          "npc_tag": "atlas_npc_vip_store_3",
+          "npc": {
+            "x": 25,
+            "y": 27,
+            "z": 49,
+            "yaw": 180
+          }
+        },
+        {
+          "floor": 4,
+          "shop": "vip_mega",
+          "title": "Megapedras e cristais Z",
+          "npc_tag": "atlas_npc_vip_store_4",
+          "npc": {
+            "x": 25,
+            "y": 32,
+            "z": 49,
+            "yaw": 180
+          }
+        }
+      ],
+      "ev_corrals": [
+        {
+          "stat": "hp",
+          "title": "HP",
+          "colour": "red",
+          "x": 88,
+          "y": 17,
+          "z": 70,
+          "radius": 5,
+          "door": {
+            "x": 92,
+            "y": 17,
+            "z": 68
+          }
+        },
+        {
+          "stat": "attack",
+          "title": "Ataque",
+          "colour": "orange",
+          "x": 88,
+          "y": 17,
+          "z": 56,
+          "radius": 5,
+          "door": {
+            "x": 92,
+            "y": 17,
+            "z": 58
+          }
+        },
+        {
+          "stat": "defence",
+          "title": "Defesa",
+          "colour": "yellow",
+          "x": 100,
+          "y": 17,
+          "z": 49,
+          "radius": 5,
+          "door": {
+            "x": 100,
+            "y": 17,
+            "z": 54
+          }
+        },
+        {
+          "stat": "special_attack",
+          "title": "Ataque Especial",
+          "colour": "blue",
+          "x": 112,
+          "y": 17,
+          "z": 56,
+          "radius": 5,
+          "door": {
+            "x": 108,
+            "y": 17,
+            "z": 58
+          }
+        },
+        {
+          "stat": "special_defence",
+          "title": "Defesa Especial",
+          "colour": "lime",
+          "x": 112,
+          "y": 17,
+          "z": 70,
+          "radius": 5,
+          "door": {
+            "x": 108,
+            "y": 17,
+            "z": 68
+          }
+        },
+        {
+          "stat": "speed",
+          "title": "Velocidade",
+          "colour": "pink",
+          "x": 100,
+          "y": 17,
+          "z": 77,
+          "radius": 5,
+          "door": {
+            "x": 100,
+            "y": 17,
+            "z": 72
+          }
+        }
+      ]
+    },
+    "water_leaks": 0
+  },
+  "Raid": {
+    "file": "atlas-warp-raid.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 23,
+    "blocks": 102955,
+    "notes": {
+      "raid_den": {
+        "x": 63,
+        "y": 20,
+        "z": 63
+      }
+    },
+    "water_leaks": 0
+  },
+  "Safari": {
+    "file": "atlas-warp-safari.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 39,
+    "blocks": 107427,
+    "notes": {
+      "spawn_area": "terreno dentro da sebe (raio 56 a partir do centro x63 z63)",
+      "ranger_station": {
+        "x": 77,
+        "y": 17,
+        "z": 93
+      }
+    },
+    "water_leaks": 0
+  },
+  "SafariVip": {
+    "file": "atlas-warp-safarivip.litematic",
+    "size": [
+      192,
+      56,
+      192
+    ],
+    "arrival": {
+      "x": 96,
+      "y": 17,
+      "z": 168,
+      "yaw": 180
+    },
+    "palette": 134,
+    "blocks": 331031,
+    "notes": {
+      "paste_hint": "origem com X e Z múltiplos de 4 e Y=45: superfície em Y=61, Pokémon em Y=62",
+      "plaza": {
+        "x": 96,
+        "y": 17,
+        "z": 96
+      },
+      "biomes": [
+        "badlands",
+        "beach",
+        "birch_forest",
+        "cherry_grove",
+        "dark_forest",
+        "desert",
+        "dripstone_caves",
+        "flower_forest",
+        "forest",
+        "ice_spikes",
+        "jagged_peaks",
+        "jungle",
+        "lush_caves",
+        "meadow",
+        "ocean",
+        "plains",
+        "river",
+        "savanna",
+        "snowy_plains",
+        "snowy_taiga",
+        "stony_peaks",
+        "swamp",
+        "taiga",
+        "warm_ocean"
+      ],
+      "fillbiome_boxes": 287
+    },
+    "water_leaks": 0
+  }
+}

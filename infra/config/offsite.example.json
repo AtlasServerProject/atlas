@@ -1,0 +1,7 @@
+{
+  "backup_path": "/opt/atlas/server/backups/snapshots",
+  "env_file": "/etc/atlas/offsite.env",
+  "password_file": "/etc/atlas/offsite.restic-password",
+  "cache_dir": "/var/cache/atlas-offsite",
+  "keep_last": 1
+}

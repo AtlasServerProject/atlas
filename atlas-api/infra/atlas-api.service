@@ -1,0 +1,24 @@
+# Template only. Install after creating the dedicated user, deployment directory and protected env file.
+[Unit]
+Description=Atlas API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=atlas-api
+Group=atlas-api
+WorkingDirectory=/opt/atlas-api
+EnvironmentFile=/etc/atlas-api/atlas-api.env
+ExecStart=/usr/bin/java -Xms128m -Xmx512m -jar /opt/atlas-api/atlas-api.jar
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

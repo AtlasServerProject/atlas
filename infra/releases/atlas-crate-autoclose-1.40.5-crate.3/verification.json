@@ -1,0 +1,14 @@
+{
+  "version": "1.40.5+crate.3",
+  "baseSha256": "fb3090d621eb3a0f935bda100edac73c6174489f6f8e4872508ff19939802504",
+  "sha256": "5ba389f5a03c90040771c77e339c6d1033925ea883275818feb36f288d02b65a",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/modules/crates/menu/CrateMenu.class",
+    "io/atlas/modules/crates/service/CrateService$Saved.class",
+    "io/atlas/modules/crates/service/CrateService.class",
+    "io/atlas/modules/crates/service/CrateSpinTimeline.class"
+  ],
+  "unchangedOutsideCrates": true,
+  "timelineOutcomesTested": 20100
+}

@@ -1,0 +1,18 @@
+{
+  "version": "1.40.5+jobs.1",
+  "baseSha256": "e03416ebbcc647ba6673658bf3b55561efcd1bfad8b808e9c1b0255db5f8dc72",
+  "sha256": "f4e06b078dcbb144885696ca42b253b18e1855b48772cce75b3f649b1030a0f4",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/modules/engagement/model/EngagementPlan$Prize.class",
+    "io/atlas/modules/engagement/model/EngagementPlan.class",
+    "io/atlas/modules/engagement/repository/EngagementRepository.class",
+    "io/atlas/modules/engagement/service/EngagementService.class"
+  ],
+  "prefixes": [
+    "io/atlas/modules/engagement/model/EngagementPlan",
+    "io/atlas/modules/engagement/repository/EngagementRepository",
+    "io/atlas/modules/engagement/service/EngagementService"
+  ],
+  "worldIdsUnchanged": true
+}

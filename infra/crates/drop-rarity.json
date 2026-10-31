@@ -1,0 +1,15 @@
+{
+  "weights": {"easy": 8, "intermediate": 4, "hard": 2, "very_hard": 1},
+  "shinyMultiplier": 0.5,
+  "generations": {
+    "1": {"articuno":"easy","mew":"very_hard","mewtwo":"hard","moltres":"easy","zapdos":"intermediate"},
+    "2": {"entei":"intermediate","hooh":"hard","lugia":"hard","raikou":"intermediate","suicune":"intermediate"},
+    "3": {"deoxys":"hard","groudon":"very_hard","kyogre":"very_hard","latias":"intermediate","latios":"intermediate","rayquaza":"very_hard","regice":"easy","regirock":"easy","registeel":"easy"},
+    "4": {"arceus":"very_hard","azelf":"easy","cresselia":"intermediate","darkrai":"very_hard","dialga":"hard","giratina":"very_hard","heatran":"intermediate","mesprit":"easy","palkia":"hard","regigigas":"easy","shaymin":"intermediate","uxie":"easy"},
+    "5": {"cobalion":"easy","genesect":"easy","keldeo":"easy","kyurem":"very_hard","landorus":"very_hard","meloetta":"easy","reshiram":"very_hard","terrakion":"easy","thundurus":"intermediate","tornadus":"intermediate","victini":"easy","virizion":"easy","zekrom":"very_hard"},
+    "6": {"diancie":"easy","hoopa":"easy","volcanion":"intermediate","xerneas":"very_hard","yveltal":"very_hard","zygarde":"very_hard"},
+    "7": {"cosmog":"very_hard","lunala":"hard","magearna":"very_hard","marshadow":"very_hard","melmetal":"hard","meltan":"intermediate","necrozma":"very_hard","silvally":"intermediate","solgaleo":"hard","tapubulu":"easy","tapufini":"intermediate","tapukoko":"very_hard","tapulele":"very_hard","typenull":"easy","zeraora":"very_hard"},
+    "8": {"calyrex":"very_hard","enamorus":"hard","eternatus":"very_hard","glastrier":"intermediate","kubfu":"very_hard","regidrago":"intermediate","regieleki":"intermediate","spectrier":"very_hard","urshifu":"hard","zacian":"very_hard","zamazenta":"hard","zarude":"intermediate"},
+    "9": {"chiyu":"very_hard","chienpao":"very_hard","fezandipiti":"intermediate","koraidon":"very_hard","miraidon":"very_hard","munkidori":"intermediate","ogerpon":"very_hard","okidogi":"intermediate","terapagos":"very_hard","tinglu":"intermediate","wochien":"intermediate"}
+  }
+}

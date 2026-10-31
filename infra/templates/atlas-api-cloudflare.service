@@ -1,0 +1,15 @@
+[Unit]
+Description=Atlas permanent Cloudflare API tunnel
+After=atlas-api-preview.service
+Requires=atlas-api-preview.service
+ConditionFileNotEmpty=%h/dev/atlas/atlas-api/.runtime/cloudflare-tunnel.token
+
+[Service]
+ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate run --token-file %h/dev/atlas/atlas-api/.runtime/cloudflare-tunnel.token
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=default.target

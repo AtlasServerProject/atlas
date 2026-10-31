@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh Netlify API proxy when free tunnel changes
+After=atlas-api-tunnel.service
+Wants=atlas-api.service atlas-api-preview.service atlas-api-tunnel.service
+[Service]
+Type=oneshot
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=%h/dev/atlas
+ExecStart=/usr/bin/python3 %h/dev/atlas/infra/scripts/sync-api-tunnel.py
+TimeoutStartSec=180
+NoNewPrivileges=true
+UMask=0077

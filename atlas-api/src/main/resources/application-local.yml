@@ -1,0 +1,12 @@
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+atlas:
+  mail:
+    mode: local
+    web-url: ${ATLAS_WEB_URL:http://localhost:4200}
+    local-directory: ${ATLAS_LOCAL_MAIL_DIRECTORY:.runtime/mail}
+  cors:
+    allowed-origins: http://localhost:4200,http://127.0.0.1:4200

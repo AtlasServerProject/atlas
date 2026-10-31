@@ -1,0 +1,132 @@
+[
+  {
+    "identifier": "generation_1",
+    "source": "generation-1-cartoon.png",
+    "sourceSha256": "ac0fa5eec5bc65cd428a32dcb901d0c6e10ea7af54944914be4f6de7667b9c40",
+    "outputSha256": "9c119e78a83b219d6b1e28d79db1ec6a306ef58ab543babb436239233cc737f8",
+    "dimensions": [
+      714,
+      1469
+    ],
+    "removedPixels": 1256764,
+    "removedPercent": 79.9,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_2",
+    "source": "generation-2-thematic.png",
+    "sourceSha256": "6000fff998648bee0de61d2bbda3ea67998d17ce3d937519dffe5e7fc50f53ac",
+    "outputSha256": "c4235229190e9e20c3faf9c4aa448923f7a5c0c22968497fed61d6dcd7a3a7f5",
+    "dimensions": [
+      689,
+      1484
+    ],
+    "removedPixels": 1190226,
+    "removedPercent": 75.67,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_3",
+    "source": "johto-hoenn-cartoon.png",
+    "sourceSha256": "db6be462f248f4fce03e1cc81846d3377fe1d9eec916cd9003f36b256030ffa6",
+    "outputSha256": "ea005a7abcc763254656b5ded80d1a519071f45406cf4f10bb46caaa57e3cc65",
+    "dimensions": [
+      429,
+      1052
+    ],
+    "removedPixels": 632870,
+    "removedPercent": 80.49,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_4",
+    "source": "generation-4-arceus-cartoon.png",
+    "sourceSha256": "9f5b0c7f8a0902b92d4dc0b50d7752c6644e1fd4b81a3bfa4fc79b0420d5b4d6",
+    "outputSha256": "76d272ec159f5a08c15d19881a3f61da985a7a8158742526b4ad112b637780fe",
+    "dimensions": [
+      889,
+      1507
+    ],
+    "removedPixels": 1174700,
+    "removedPercent": 74.69,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_5",
+    "source": "generation-5-cartoon.png",
+    "sourceSha256": "a3a475c08e14c3d7b12bb4cb96ab97410a320f68d64ec670a4e23896a4e17720",
+    "outputSha256": "01db1c46dfda687d35ae09cfe79a52d9dbbfb19457ee0e5da49a4ea74aa052ec",
+    "dimensions": [
+      868,
+      1527
+    ],
+    "removedPixels": 1188177,
+    "removedPercent": 75.54,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_6",
+    "source": "generation-6-cartoon.png",
+    "sourceSha256": "a1f9efee02407b694258bdd5a6a2ca690cd80142fd75e02c0b73d75aad42e475",
+    "outputSha256": "3978c85e65e45321b8b051fc91bf8cfcf463401e0cdd651f0dc10ca8def6a0be",
+    "dimensions": [
+      859,
+      1498
+    ],
+    "removedPixels": 1178533,
+    "removedPercent": 74.93,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_7",
+    "source": "generation-7-cartoon.png",
+    "sourceSha256": "d0fc7800f5062cc7e5665837755603124868ce948edf6fef5155993c7b326912",
+    "outputSha256": "2c0f9e19a85709ab51fa6607d286bfca07272c802ed42d8fa8f682b635b3340e",
+    "dimensions": [
+      956,
+      1492
+    ],
+    "removedPixels": 1165199,
+    "removedPercent": 74.08,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_8",
+    "source": "generation-8-cartoon.png",
+    "sourceSha256": "bd2c0f0db1120ec6424142256e10e5609a1d2f0b26addaa9609fcd7e4751135d",
+    "outputSha256": "04f2f86290fe873fa4b55705afbaa4239615dfdfe39ced9998914943d3671041",
+    "dimensions": [
+      927,
+      1488
+    ],
+    "removedPixels": 1147156,
+    "removedPercent": 72.93,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "generation_9",
+    "source": "generation-9-cartoon.png",
+    "sourceSha256": "da9932976b830abe7b89b81d7e3080e3ce4c82a793c653da3f9b531cb2ae99cc",
+    "outputSha256": "4f9f7c40382d72660e91c878dab0319298cf911f35ce6cd5a57629b383e3e5b4",
+    "dimensions": [
+      880,
+      1509
+    ],
+    "removedPixels": 1133079,
+    "removedPercent": 72.04,
+    "originalRgbPreserved": true
+  },
+  {
+    "identifier": "legendary_monthly",
+    "source": "monthly-cartoon.png",
+    "sourceSha256": "4d3312d0a18af7d0a700bdbbb907536b4a7df71381d2e64bf928a34a850f3b36",
+    "outputSha256": "a01bb1e68e9ec5d765f6783bdc7c076d96261909f34cf01444029a0a13ae9f8c",
+    "dimensions": [
+      586,
+      1465
+    ],
+    "removedPixels": 1311141,
+    "removedPercent": 83.36,
+    "originalRgbPreserved": true
+  }
+]

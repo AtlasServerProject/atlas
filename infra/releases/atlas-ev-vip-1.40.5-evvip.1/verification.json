@@ -1,0 +1,32 @@
+{
+  "version": "1.40.5+evvip.1",
+  "baseSha256": "ea3c88a2c44e06e0b3da904ec1871397580a41211f843fec64d15085c30a8379",
+  "sha256": "951d826d25c97a83ccc3f519b54cd0aacef051edf131f7d8ea89fcdc0ae33925",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/AtlasMod.class",
+    "io/atlas/bootstrap/AtlasBootstrap.class",
+    "io/atlas/modules/shopkeeper/model/ShopRestrictions.class",
+    "io/atlas/modules/shopkeeper/repository/ShopkeeperRepository.class",
+    "io/atlas/modules/shopkeeper/service/ShopCatalogue.class",
+    "io/atlas/modules/shopkeeper/service/ShopkeeperService.class",
+    "io/atlas/commands/EvCorralCommand.class",
+    "io/atlas/modules/evcorral/EvCorralModule.class",
+    "io/atlas/modules/evcorral/config/EvCorralConfig$Corral.class",
+    "io/atlas/modules/evcorral/config/EvCorralConfig.class",
+    "io/atlas/modules/evcorral/service/EvCorralService.class"
+  ],
+  "prefixes": [
+    "io/atlas/AtlasMod",
+    "io/atlas/bootstrap/AtlasBootstrap",
+    "io/atlas/commands/EvCorralCommand",
+    "io/atlas/modules/evcorral/EvCorralModule",
+    "io/atlas/modules/evcorral/config/EvCorralConfig",
+    "io/atlas/modules/evcorral/service/EvCorralService",
+    "io/atlas/modules/shopkeeper/model/ShopRestrictions",
+    "io/atlas/modules/shopkeeper/repository/ShopkeeperRepository",
+    "io/atlas/modules/shopkeeper/service/ShopCatalogue",
+    "io/atlas/modules/shopkeeper/service/ShopkeeperService"
+  ],
+  "worldIdsUnchanged": true
+}

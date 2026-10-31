@@ -1,0 +1,10 @@
+package io.atlas.api.auth.service;
+import io.atlas.api.auth.repository.RecoveryEmailRepository;import io.atlas.api.mail.*;import java.time.*;import java.util.*;import java.security.*;import java.nio.charset.StandardCharsets;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;
+@Service public class RecoveryEmailService {
+ private final RecoveryEmailRepository repo;private final MailCipher cipher;private final MailOutbox outbox;private final Clock clock;private final SecureRandom random=new SecureRandom();
+ public RecoveryEmailService(RecoveryEmailRepository repo,MailCipher cipher,MailOutbox outbox,Clock clock){this.repo=repo;this.cipher=cipher;this.outbox=outbox;this.clock=clock;}
+ private String hash(UUID player,String code){return cipher.digest("minecraft-email-confirm:"+player+":"+code);}
+ public boolean configured(UUID player){return repo.email(player).isPresent();}
+ @Transactional public void request(UUID player,String input){String email=input.strip().toLowerCase(Locale.ROOT);String code=String.format(Locale.ROOT,"%08d",random.nextInt(100_000_000));repo.pending(player,email,hash(player,code),clock.instant().plusSeconds(600));outbox.enqueue(new MailOutbox.Message(email,"Confirme seu email de recuperação Minecraft — Atlas","Você solicitou cadastrar este email para recuperar sua conta do Minecraft Atlas.\n\nCódigo: "+code+"\n\nDentro do Minecraft, use /email confirmar <codigo>. Válido por 10 minutos e uma utilização.\n\nNão compartilhe o código. Sem confirmação, o email não será alterado. Se não solicitou, ignore.\n\nAtlas Cobblemon"));}
+ @Transactional public boolean confirm(UUID player,String code){var e=repo.lock(player);if(e.isEmpty())return false;var x=e.get();if(x.pending()==null||x.hash()==null||x.expires()==null||!clock.instant().isBefore(x.expires())||x.attempts()>=5)return false;repo.attempt(player);if(!MessageDigest.isEqual(x.hash().getBytes(StandardCharsets.US_ASCII),hash(player,code).getBytes(StandardCharsets.US_ASCII)))return false;repo.confirm(player);repo.invalidateReset(player);return true;}
+}

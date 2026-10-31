@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS auth_recovery_audit (
+ id BIGSERIAL PRIMARY KEY,
+ player_uuid UUID NOT NULL,
+ action VARCHAR(40) NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

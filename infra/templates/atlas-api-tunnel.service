@@ -1,0 +1,12 @@
+[Unit]
+Description=Atlas free HTTPS development tunnel
+After=atlas-api-preview.service
+Requires=atlas-api-preview.service
+[Service]
+ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:4201
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+UMask=0077
+[Install]
+WantedBy=default.target
