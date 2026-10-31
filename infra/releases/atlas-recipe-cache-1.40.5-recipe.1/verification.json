@@ -1,0 +1,16 @@
+{
+  "version": "1.40.5+recipe.1",
+  "baseSha256": "ca532a1c0bd0af8b894f678957a153bef9fde892724918e04ed1dd4636ff38dc",
+  "sha256": "dcc9e27d7a47dc3213cb4b8764a6eacebe53c1b7de6986e669c5a3937abdb129",
+  "changedEntries": [
+    "atlas-core.mixins.json",
+    "fabric.mod.json",
+    "io/atlas/mixin/RestrictedRecipeMixin.class",
+    "io/atlas/mixin/IngredientCacheAccessor.class"
+  ],
+  "prefixes": [
+    "io/atlas/mixin/RestrictedRecipeMixin",
+    "io/atlas/mixin/IngredientCacheAccessor"
+  ],
+  "worldIdsUnchanged": true
+}
