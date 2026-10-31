@@ -1,0 +1,15 @@
+{
+  "version": "1.40.5+luz.1",
+  "baseSha256": "f4e06b078dcbb144885696ca42b253b18e1855b48772cce75b3f649b1030a0f4",
+  "sha256": "ea3c88a2c44e06e0b3da904ec1871397580a41211f843fec64d15085c30a8379",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/AtlasMod.class",
+    "io/atlas/commands/LightCommand.class"
+  ],
+  "prefixes": [
+    "io/atlas/AtlasMod",
+    "io/atlas/commands/LightCommand"
+  ],
+  "worldIdsUnchanged": true
+}
