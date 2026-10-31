@@ -1,0 +1,1 @@
+Hall curator: authenticated interaction explains capture progress, implemented species, 10% Academy milestones and Professor Atlas recognition. Clickable buttons open existing /dex, /academia premios and /dex hall. Only LobbyNpcService is replaced; all other deployed code is byte-identical. No world/database changes.

@@ -1,0 +1,36 @@
+{
+  "version": "1.40.5+lobby.1",
+  "baseSha256": "177a15ccf4c4a252abf964a70310374de9d8c1c591aba97f08ce1600a3baeb31",
+  "sha256": "eab561b2c04531aede087bf082cfd57294d2c686d4613c426ef1c3c224b359b4",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/commands/LobbyCommand.class",
+    "io/atlas/commands/RandomTeleportCommand.class",
+    "io/atlas/modules/auth/listener/AuthConnectionListener.class",
+    "io/atlas/modules/lobby/service/DevTransferService.class",
+    "io/atlas/modules/lobby/service/LobbyHudService$View.class",
+    "io/atlas/modules/lobby/service/LobbyHudService.class",
+    "io/atlas/modules/lobby/service/LobbyTravelService.class",
+    "io/atlas/modules/lobby/service/ServerSelectorService.class",
+    "io/atlas/modules/purchases/service/PurchasesService.class",
+    "io/atlas/modules/survival/listener/SurvivalRespawnListener.class",
+    "io/atlas/modules/survival/service/RandomTeleportService.class",
+    "io/atlas/modules/survival/service/SurvivalRulesService.class",
+    "io/atlas/modules/warp/service/WarpService.class"
+  ],
+  "prefixes": [
+    "io/atlas/commands/LobbyCommand",
+    "io/atlas/commands/RandomTeleportCommand",
+    "io/atlas/modules/auth/listener/AuthConnectionListener",
+    "io/atlas/modules/lobby/service/DevTransferService",
+    "io/atlas/modules/lobby/service/ServerSelectorService",
+    "io/atlas/modules/lobby/service/LobbyHudService",
+    "io/atlas/modules/lobby/service/LobbyTravelService",
+    "io/atlas/modules/purchases/service/PurchasesService",
+    "io/atlas/modules/survival/service/SurvivalRulesService",
+    "io/atlas/modules/survival/service/RandomTeleportService",
+    "io/atlas/modules/survival/listener/SurvivalRespawnListener",
+    "io/atlas/modules/warp/service/WarpService"
+  ],
+  "worldIdsUnchanged": true
+}

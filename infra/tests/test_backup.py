@@ -48,7 +48,7 @@ class RecoveryTests(unittest.TestCase):
         (source / 'server.properties').write_text('level-name=world\n')
         (source / 'logs').mkdir(); (source / 'logs/latest.log').write_text('not part of snapshot')
         self.manager = backup.Manager({'fabric_path': str(source), 'backup_path': str(self.case / 'backups'),
-            'service': None, 'retention_days': 30, 'minimum_copies': 2,
+            'service': None, 'retention_days': 30, 'minimum_copies': 2, 'maximum_copies': 7,
             'postgres': {'host': str(self.socket), 'port': 55439, 'user': 'postgres', 'database': 'source'}})
 
     def test_roundtrip_and_validation(self):
@@ -93,6 +93,42 @@ class RecoveryTests(unittest.TestCase):
         self.manager.prune()
         self.assertEqual(len(list(self.manager.backups.glob('atlas-*'))), 2)
         self.assertTrue(manual.exists())
+
+    def test_retention_caps_recent_copies(self):
+        self.manager.keep_max = 3
+        now = backup.dt.datetime.now(backup.dt.timezone.utc).isoformat()
+        for index in range(5):
+            snapshot = self.manager.backups / f'atlas-20990101T00000000000{index}Z'
+            snapshot.mkdir()
+            (snapshot / 'manifest.json').write_text(json.dumps({'format': 1, 'created_at': now}))
+        self.manager.prune()
+        self.assertEqual(sorted(p.name[-2] for p in self.manager.backups.glob('atlas-*')), ['2', '3', '4'])
+        with self.assertRaises(ValueError):
+            backup.Manager(dict(self.manager.config, maximum_copies=1))
+
+    def test_single_copy_policy_replaces_previous_after_success(self):
+        config = dict(self.manager.config)
+        del config['minimum_copies'], config['maximum_copies']
+        manager = backup.Manager(config)
+        first = manager.backup()
+        second = manager.backup()
+        self.assertEqual(list(manager.backups.glob('atlas-*')), [second])
+        self.assertFalse(first.exists())
+        with patch.object(backup, 'run', side_effect=RuntimeError('dump failed')):
+            with self.assertRaises(RuntimeError):
+                manager.backup()
+        self.assertEqual(list(manager.backups.glob('atlas-*')), [second])
+
+    def test_waits_for_service_transition(self):
+        self.manager.service = 'atlas.service'
+        with patch.object(backup.subprocess, 'check_output', side_effect=['activating\n', 'activating\n', 'active\n']), \
+                patch.object(backup.time, 'sleep') as sleep:
+            self.assertTrue(self.manager.active())
+        self.assertEqual(sleep.call_count, 2)
+        self.manager.settle_seconds = 0
+        with patch.object(backup.subprocess, 'check_output', return_value='deactivating\n'), patch.object(backup.time, 'sleep'):
+            with self.assertRaisesRegex(RuntimeError, 'transição'):
+                self.manager.active()
 
     def test_failed_restore_is_transactional(self):
         env = self.manager.env

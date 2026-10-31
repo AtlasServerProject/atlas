@@ -1,0 +1,23 @@
+{
+  "version": "1.40.5+warp.1",
+  "baseSha256": "988010b32686aa9ec1529ce5fa11cc5d70dea458e490fb29b3fe33ac4d9a1ff9",
+  "sha256": "177a15ccf4c4a252abf964a70310374de9d8c1c591aba97f08ce1600a3baeb31",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/AtlasMod.class",
+    "io/atlas/bootstrap/AtlasBootstrap.class",
+    "io/atlas/commands/WarpCommands.class",
+    "io/atlas/modules/warp/WarpModule.class",
+    "io/atlas/modules/warp/menu/WarpsMenu$1.class",
+    "io/atlas/modules/warp/menu/WarpsMenu.class",
+    "io/atlas/modules/warp/model/Warp$Access.class",
+    "io/atlas/modules/warp/model/Warp.class",
+    "io/atlas/modules/warp/repository/WarpStore$Document.class",
+    "io/atlas/modules/warp/repository/WarpStore.class",
+    "io/atlas/modules/warp/service/WarpService$Pending.class",
+    "io/atlas/modules/warp/service/WarpService.class"
+  ],
+  "preservesUnrelatedClasses": true,
+  "warpStoreTestPassed": true,
+  "inGameTested": false
+}

@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 
 EXCLUDED = {'.fabric', '.mixin.out', 'logs', 'crash-reports', 'mods-disabled', 'atlas-admin.sock'}
 SNAPSHOT = re.compile(r'atlas-\d{8}T\d{12}Z')
@@ -39,9 +40,17 @@ class Manager:
         self.backups = Path(config['backup_path']).resolve()
         self.service = config.get('service', 'atlas.service')
         self.keep_days = int(config.get('retention_days', 30))
-        self.keep_min = int(config.get('minimum_copies', 2))
+        # Operator policy: keep only the newest verified snapshot. prune() runs after the new
+        # snapshot is verified, so the previous copy survives any failed backup.
+        self.keep_min = int(config.get('minimum_copies', 1))
+        self.keep_max = int(config.get('maximum_copies', 1))
+        self.settle_seconds = int(config.get('service_settle_seconds', 600))
         if self.keep_days < 1 or self.keep_min < 1:
             raise ValueError('Retenção e mínimo de cópias devem ser positivos.')
+        if self.keep_max < self.keep_min:
+            raise ValueError('Máximo de cópias não pode ser menor que o mínimo.')
+        if self.settle_seconds < 0:
+            raise ValueError('Espera do serviço não pode ser negativa.')
         if self.backups == self.source or self.source in self.backups.parents:
             raise ValueError('Backups devem ficar fora da pasta Fabric.')
         if not self.source.is_dir() or self.source == Path('/'):
@@ -66,10 +75,15 @@ class Manager:
     def active(self):
         if not self.service:
             return False  # Explicit offline fixtures / independently stopped installations only.
-        state = subprocess.check_output(['systemctl', 'show', self.service, '-p', 'ActiveState', '--value'], text=True).strip()
-        if state not in ('active', 'inactive', 'failed'):
-            raise RuntimeError('Serviço em transição; tente novamente: ' + state)
-        return state == 'active'
+        # A catch-up run right after boot finds the service still "activating"; wait for it to settle.
+        deadline = time.monotonic() + self.settle_seconds
+        while True:
+            state = subprocess.check_output(['systemctl', 'show', self.service, '-p', 'ActiveState', '--value'], text=True).strip()
+            if state in ('active', 'inactive', 'failed'):
+                return state == 'active'
+            if time.monotonic() >= deadline:
+                raise RuntimeError('Serviço em transição; tente novamente: ' + state)
+            time.sleep(5)
 
     def control(self, operation):
         if self.service:
@@ -137,10 +151,10 @@ class Manager:
     def prune(self):
         snapshots = sorted((p for p in self.backups.iterdir() if p.is_dir() and SNAPSHOT.fullmatch(p.name)), reverse=True)
         cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=self.keep_days)
-        for snapshot in snapshots[self.keep_min:]:
+        for index, snapshot in enumerate(snapshots[self.keep_min:], start=self.keep_min):
             try:
                 manifest = json.loads((snapshot / 'manifest.json').read_text())
-                if manifest.get('format') == 1 and dt.datetime.fromisoformat(manifest['created_at']) < cutoff:
+                if manifest.get('format') == 1 and (index >= self.keep_max or dt.datetime.fromisoformat(manifest['created_at']) < cutoff):
                     shutil.rmtree(snapshot)
                     print('Retenção: removido', snapshot.name)
             except (OSError, ValueError, KeyError):
