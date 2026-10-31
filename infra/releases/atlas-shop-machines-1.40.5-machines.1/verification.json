@@ -1,0 +1,15 @@
+{
+  "version": "1.40.5+machines.1",
+  "baseSha256": "dcc9e27d7a47dc3213cb4b8764a6eacebe53c1b7de6986e669c5a3937abdb129",
+  "sha256": "e03416ebbcc647ba6673658bf3b55561efcd1bfad8b808e9c1b0255db5f8dc72",
+  "changedEntries": [
+    "fabric.mod.json",
+    "io/atlas/mixin/RestrictedRecipeMixin.class",
+    "io/atlas/modules/shopkeeper/model/ShopRestrictions.class"
+  ],
+  "prefixes": [
+    "io/atlas/mixin/RestrictedRecipeMixin",
+    "io/atlas/modules/shopkeeper/model/ShopRestrictions"
+  ],
+  "worldIdsUnchanged": true
+}
