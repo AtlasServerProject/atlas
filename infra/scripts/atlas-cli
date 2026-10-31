@@ -20,7 +20,16 @@ run_admin_command() {
         return 1
     fi
 
-    printf '%s\n' "$command" | nc -N -U "$ADMIN_SOCKET"
+    # Python instead of nc: Ubuntu's nc.openbsd AppArmor profile denies connecting to this socket.
+    python3 -I -c '
+import socket, sys
+with socket.socket(socket.AF_UNIX) as s:
+    s.settimeout(30)
+    s.connect(sys.argv[1])
+    s.sendall((sys.argv[2] + "\n").encode())
+    s.shutdown(socket.SHUT_WR)
+    sys.stdout.write(s.makefile(encoding="utf-8", errors="replace").read())
+' "$ADMIN_SOCKET" "$command"
 }
 
 case "$COMMAND" in
@@ -73,11 +82,6 @@ case "$COMMAND" in
         ;;
 
     console)
-        if ! command -v nc >/dev/null 2>&1; then
-            echo "netcat não está instalado."
-            exit 1
-        fi
-
         if [ ! -S "$ADMIN_SOCKET" ]; then
             echo "Console Atlas indisponível em $ADMIN_SOCKET."
             exit 1
