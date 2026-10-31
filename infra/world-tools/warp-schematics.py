@@ -304,7 +304,7 @@ def build_raid():
     arrival(b)
     for z in range(100, 108):
         for x in range(60, 68): b.set(x, SURFACE, z, 'minecraft:polished_blackstone_bricks')
-    cx = cz = 63.5
+    cx = cz = 63   # whole block, so the pedestal has odd width and a true centre block
     # Arena floor with cyan rings.
     b.disc(cx, SURFACE, cz, 27, 'minecraft:polished_blackstone_bricks')
     for ring in (10.5, 18.5, 26.5): b.disc(cx, SURFACE, cz, ring, 'minecraft:cyan_concrete', inner=ring - 1)
@@ -312,7 +312,7 @@ def build_raid():
     for tier, rr in enumerate((7, 5, 3)):
         b.disc(cx, SURFACE + 1 + tier, cz, rr, 'minecraft:polished_deepslate')
         b.disc(cx, SURFACE + 1 + tier, cz, rr, 'minecraft:deepslate_tiles', inner=rr - 1)
-    b.box(63, SURFACE + 3, 63, 64, SURFACE + 3, 64, 'minecraft:chiseled_quartz_block')
+    b.box(62, SURFACE + 3, 62, 64, SURFACE + 3, 64, 'minecraft:chiseled_quartz_block')
     for a in range(0, 360, 30):
         x, z = int(round(cx + 9 * math.cos(math.radians(a)))), int(round(cz + 9 * math.sin(math.radians(a))))
         h = 2 + (a // 30) % 3

@@ -19,7 +19,7 @@ Chegada ao sul, sobre o emblema de Poké Bola, olhando para o norte (yaw 180): p
 
 ## Pontos de integração
 
-- Raid: o pedestal central tem quartzo cinzelado em `x63 y19 z63`; a toca de raid fixa fica em `x63 y20 z63`.
+- Raid: o topo do pedestal é um 3×3 de quartzo cinzelado (`x62..64 y19 z62..64`) com o bloco central em `x63 y19 z63`; a toca de raid fixa fica sobre ele, em `x63 y20 z63`.
 - Safari: área de spawn é o terreno dentro da sebe (raio ~56 a partir de `x63 z63`).
 - SafariVip: cada coluna 4×4 recebe seu bioma pelo `/fillbiome`; caixas em `safarivip-biomes.json`.
 
