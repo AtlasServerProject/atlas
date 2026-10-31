@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Generate the VIP, Raid, Safari and SafariVip warp builds as Litematica schematics (+ top-down previews).
 
-Pure Python, deterministic (fixed seeds). Each build is a 128x128 floating island in the Atlas palette:
+Pure Python, deterministic (fixed seeds). VIP, Raid and Safari are 128x128 floating islands, SafariVip a 192x192
+round island in its own sea; all in the Atlas palette:
 quartz, white/cyan concrete, dark oak, polished blackstone and sea lanterns. Output: <out>/<name>.litematic,
-<name>-preview.png and warps.json with the arrival point of each build (relative to the schematic origin).
+<name>-preview.png (top-down), <name>-view.png (from the south) and warps.json with the arrival point of each build (relative to the schematic origin).
 """
-import argparse, array, gzip, json, math, pathlib, random, struct, time, zlib
+import argparse, array, collections, gzip, json, math, pathlib, random, struct, time, zlib
 
 SIZE, HEIGHT, SURFACE = 128, 56, 16      # x/z size, y size, y of the walkable surface
 DATA_VERSION = 3955                      # Minecraft 1.21.1
@@ -41,10 +42,10 @@ def nbt(root):
 
 # ---------------------------------------------------------------- build volume
 class Build:
-    def __init__(self, name, seed):
-        self.name, self.rng = name, random.Random(seed)
+    def __init__(self, name, seed, size=SIZE):
+        self.name, self.rng, self.size = name, random.Random(seed), size
         self.palette, self.index = ['minecraft:air'], {'minecraft:air': 0}
-        self.cells = array.array('H', bytes(2 * SIZE * HEIGHT * SIZE))
+        self.cells = array.array('H', bytes(2 * size * HEIGHT * size))
         self.arrival = None
         self.notes = {}
 
@@ -54,12 +55,14 @@ class Build:
         return self.index[block]
 
     def set(self, x, y, z, block):
-        if 0 <= x < SIZE and 0 <= y < HEIGHT and 0 <= z < SIZE:
-            self.cells[(y * SIZE + z) * SIZE + x] = self.id(block)
+        n = self.size
+        if 0 <= x < n and 0 <= y < HEIGHT and 0 <= z < n:
+            self.cells[(y * n + z) * n + x] = self.id(block)
 
     def get(self, x, y, z):
-        if 0 <= x < SIZE and 0 <= y < HEIGHT and 0 <= z < SIZE:
-            return self.palette[self.cells[(y * SIZE + z) * SIZE + x]]
+        n = self.size
+        if 0 <= x < n and 0 <= y < HEIGHT and 0 <= z < n:
+            return self.palette[self.cells[(y * n + z) * n + x]]
         return 'minecraft:air'
 
     def box(self, x0, y0, z0, x1, y1, z1, block):
@@ -76,7 +79,7 @@ class Build:
 
     def litematic(self, author='Atlas Cobblemon'):
         bits = max(2, (len(self.palette) - 1).bit_length())
-        volume = SIZE * HEIGHT * SIZE
+        volume = self.size * HEIGHT * self.size
         longs = [0] * ((volume * bits + 63) // 64)
         for i, v in enumerate(self.cells):
             if not v: continue
@@ -92,7 +95,7 @@ class Build:
                 entry['Properties'] = dict(p.split('=') for p in props.rstrip(']').split(','))
             palette.append(entry)
         now = Long(int(time.time() * 1000))
-        size = {'x': Int(SIZE), 'y': Int(HEIGHT), 'z': Int(SIZE)}
+        size = {'x': Int(self.size), 'y': Int(HEIGHT), 'z': Int(self.size)}
         total = sum(1 for v in self.cells if v)
         root = {
             'MinecraftDataVersion': Int(DATA_VERSION), 'Version': Int(7), 'SubVersion': Int(1),
@@ -174,11 +177,11 @@ def flatten(b, surf, x0, z0, x1, z1):
 def water_leaks(b):
     leaks = 0
     for y in range(HEIGHT):
-        for z in range(SIZE):
-            for x in range(SIZE):
+        for z in range(b.size):
+            for x in range(b.size):
                 if b.get(x, y, z).startswith('minecraft:water'):
                     for dx, dy, dz in ((1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, -1, 0)):
-                        if b.get(x + dx, y + dy, z + dz) == 'minecraft:air' or not (0 <= x + dx < SIZE and 0 <= z + dz < SIZE and y + dy >= 0):
+                        if b.get(x + dx, y + dy, z + dz) == 'minecraft:air' or not (0 <= x + dx < b.size and 0 <= z + dz < b.size and y + dy >= 0):
                             leaks += 1; break
     return leaks
 
@@ -429,435 +432,671 @@ def build_safari():
     b.notes = {'spawn_area': 'terreno dentro da sebe (raio 56 a partir do centro x63 z63)', 'ranger_station': {'x': 77, 'y': SURFACE + 1, 'z': 93}}
     return b
 
-# ---------------------------------------------------------------- SafariVip: 64 biome zones
-# 8x8 grid of 16x16 zones, one per vanilla biome (rows north -> south). Paths of polished andesite on every
-# zone border (2 wide between zones) keep the zones apart and contain water. Biomes are applied after pasting
-# with /fillbiome (see biome_cells in warps.json); the blocks below only give each zone the matching terrain.
-BIOME_GRID = [
-    ['the_end', 'end_highlands', 'end_midlands', 'small_end_islands', 'end_barrens', 'the_void', 'deep_dark', 'dripstone_caves'],
-    ['nether_wastes', 'crimson_forest', 'warped_forest', 'soul_sand_valley', 'basalt_deltas', 'lush_caves', 'stony_peaks', 'windswept_gravelly_hills'],
-    ['jagged_peaks', 'frozen_peaks', 'snowy_slopes', 'grove', 'ice_spikes', 'windswept_hills', 'windswept_forest', 'stony_shore'],
-    ['snowy_plains', 'snowy_taiga', 'old_growth_spruce_taiga', 'plains', 'meadow', 'taiga', 'frozen_river', 'deep_frozen_ocean'],
-    ['snowy_beach', 'old_growth_pine_taiga', 'dark_forest', 'forest', 'flower_forest', 'birch_forest', 'frozen_ocean', 'deep_cold_ocean'],
-    ['mushroom_fields', 'swamp', 'mangrove_swamp', 'cherry_grove', 'old_growth_birch_forest', 'river', 'cold_ocean', 'deep_ocean'],
-    ['desert', 'badlands', 'eroded_badlands', 'sunflower_plains', 'savanna', 'beach', 'lukewarm_ocean', 'deep_lukewarm_ocean'],
-    ['wooded_badlands', 'savanna_plateau', 'windswept_savanna', 'jungle', 'bamboo_jungle', 'sparse_jungle', 'ocean', 'warm_ocean'],
+# ---------------------------------------------------------------- SafariVip: round island of the main overworld biomes
+# A round island in a circular sea with the Atlas Pokémon Center under a glass dome in the middle and the main
+# overworld biomes around it as organic sectors, laid out like a climate wheel: snowy mountain to the north, snow and
+# taiga to the north-west, forests and swamp to the west, plains at the southern arrival, desert, savanna and jungle to
+# the east, cherry grove and meadow under the mountain. No Nether or End biomes. Each 4x4 column gets its biome after
+# pasting with /fillbiome (safarivip-biomes.json / safarivip-fillbiome.txt); the caves are 3D boxes inside the mountain.
+SV, SV_C, SV_PLAZA, SV_SEA = 192, 96, 22, 93   # build size, centre, plaza radius, sea radius (barrier ring outside)
+SECTORS = [  # degrees clockwise from north: from, to, inner biome, outer biome
+    (130, 155, 'desert', 'badlands'), (155, 205, 'plains', 'plains'), (205, 232, 'forest', 'flower_forest'),
+    (232, 256, 'birch_forest', 'swamp'), (256, 280, 'dark_forest', 'swamp'), (280, 302, 'taiga', 'snowy_taiga'),
+    (302, 328, 'snowy_plains', 'ice_spikes'), (328, 385, 'mountain', 'mountain'), (25, 60, 'cherry_grove', 'meadow'),
+    (60, 105, 'jungle', 'jungle'), (105, 130, 'savanna', 'savanna'),
 ]
-SNOWY = {'snowy_plains', 'snowy_taiga', 'grove', 'snowy_slopes', 'ice_spikes', 'frozen_peaks', 'jagged_peaks', 'snowy_beach',
-         'frozen_river', 'frozen_ocean', 'deep_frozen_ocean', 'old_growth_spruce_taiga'}
-CAVES = {'lush_caves', 'dripstone_caves', 'deep_dark'}
+PEAKS = [(352, 42, 33, 30), (18, 52, 22, 20), (330, 58, 17, 16)]   # angle, distance, height, radius
+RIVER = [(34, 28), (40, 42), (47, 55), (50, 68), (56, 92)]          # (angle, distance) from the mountain to the NE sea
+CAVES = {'lush_caves': (344, 38), 'dripstone_caves': (16, 46)}      # chamber centres (angle, distance)
+SNOWY = {'snowy_plains', 'snowy_taiga', 'ice_spikes', 'jagged_peaks'}
+BASE = {'plains': (0.2, 0.8), 'forest': (1, 1.5), 'flower_forest': (0.6, 1), 'birch_forest': (1, 1.5), 'swamp': (-0.1, 0.6),
+        'dark_forest': (1.2, 1.5), 'taiga': (1.5, 2), 'snowy_taiga': (1.5, 2), 'snowy_plains': (0.8, 1.2), 'ice_spikes': (0.8, 1),
+        'jagged_peaks': (2, 1), 'stony_peaks': (2, 2), 'cherry_grove': (3, 3), 'meadow': (2.5, 2), 'jungle': (1.2, 1.8),
+        'savanna': (1, 1.2), 'desert': (0.6, 1.8), 'badlands': (1, 1), 'beach': (0.2, 0.3), 'river': (-2.5, 0),
+        'ocean': (-6, 2), 'warm_ocean': (-5, 2)}
+BANDS = ['minecraft:terracotta', 'minecraft:orange_terracotta', 'minecraft:yellow_terracotta', 'minecraft:terracotta',
+         'minecraft:brown_terracotta', 'minecraft:red_terracotta', 'minecraft:white_terracotta']
 LEAF = '[distance=1,persistent=true,waterlogged=false]'
 
-def zone_cells(x0, z0, margin=1):
-    for z in range(z0 + margin, z0 + 16 - margin):
-        for x in range(x0 + margin, x0 + 16 - margin):
-            yield x, z
+def sv_xy(angle, dist):
+    a = math.radians(angle); return SV_C + dist * math.sin(a), SV_C - dist * math.cos(a)
 
-def zone_ground(b, x0, z0, top, sub='minecraft:dirt', depth=3, deep='minecraft:stone'):
-    for x, z in zone_cells(x0, z0):
-        b.set(x, SURFACE, z, top)
-        for dy in range(1, depth + 1): b.set(x, SURFACE - dy, z, sub)
-        for y in range(1, SURFACE - depth): b.set(x, y, z, deep)
+def sv_polar(x, z):
+    dx, dz = x - SV_C, z - SV_C
+    return math.hypot(dx, dz), math.degrees(math.atan2(dx, -dz)) % 360
 
-def zone_scatter(b, x0, z0, chance, fn, margin=2):
-    for x, z in zone_cells(x0, z0, margin):
-        if b.get(x, SURFACE + 1, z) == 'minecraft:air' and b.rng.random() < chance: fn(x, SURFACE + 1, z)
+def seg_dist(px, pz, ax, az, bx, bz):
+    vx, vz = bx - ax, bz - az; t = max(0.0, min(1.0, ((px - ax) * vx + (pz - az) * vz) / (vx * vx + vz * vz)))
+    return math.hypot(px - ax - t * vx, pz - az - t * vz)
 
-def mound(b, x0, z0, height, body, top, roughness=0.35):
-    """Hill centred in the zone; returns nothing, raises columns up to SURFACE+height."""
-    n = noise2(b.rng.random(), 4)
-    for x, z in zone_cells(x0, z0, 2):
-        d = math.hypot(x - (x0 + 7.5), z - (z0 + 7.5)) / 6.5
-        h = int(height * max(0.0, 1 - d * d) * (1 - roughness + roughness * n(x, z)))
-        for dy in range(1, h + 1): b.set(x, SURFACE + dy, z, top if dy == h else body)
-        if h: b.set(x, SURFACE, z, body)
+class SafariMap:
+    """Biome and height field of the island, both deterministic from the seed."""
+    def __init__(self, rng):
+        n = lambda scale: noise2(rng.random(), scale)
+        self.warp, self.split, self.coast_n, self.rough, self.rough2 = n(22), n(12), n(14), n(6), n(3)
+        self.detail, self.mesa, self.puddle, self.under = n(7), n(9), n(4), n(9)
+        self.river = [sv_xy(a, d) for a, d in RIVER]
+        self.peaks = [(*sv_xy(a, d), h, r) for a, d, h, r in PEAKS]
 
-def water_zone(b, x0, z0, depth, floor='minecraft:sand', area=None):
-    for x, z in zone_cells(x0, z0):
-        if area and not area(x - x0, z - z0): continue
-        b.set(x, SURFACE - depth, z, floor)
-        for y in range(SURFACE - depth + 1, SURFACE + 1): b.set(x, y, z, 'minecraft:water[level=0]')
+    def coast(self, x, z): return 80 + 14 * (self.coast_n(x, z) - 0.5)
+    def river_dist(self, x, z): return min(seg_dist(x, z, *a, *b) for a, b in zip(self.river, self.river[1:]))
 
-def big_tree(b, x, y, z, kind, height):
-    """Taller variants (old growth): plain trunk with a layered crown."""
-    log, leaves = f'minecraft:{kind}_log[axis=y]', f'minecraft:{kind}_leaves' + LEAF
-    for dy in range(height): b.set(x, y + dy, z, log)
-    for dy in range(height - 4, height + 2):
-        r = 2 if dy < height else 1
-        for dz in range(-r, r + 1):
-            for dx in range(-r, r + 1):
-                if (dx or dz or dy >= height) and abs(dx) + abs(dz) <= r + 1 and b.get(x + dx, y + dy, z + dz) == 'minecraft:air':
-                    b.set(x + dx, y + dy, z + dz, leaves)
+    def mountain(self, x, z):
+        h = max(H * max(0.0, 1 - math.hypot(x - px, z - pz) / R) ** 1.6 for px, pz, H, R in self.peaks)
+        r, _ = sv_polar(x, z)
+        return h * (0.8 + 0.4 * self.rough(x, z)) * max(0.0, min(1.0, (r - 26) / 10))
 
-def huge_mushroom(b, x, y, z, red=True):
-    for dy in range(4): b.set(x, y + dy, z, 'minecraft:mushroom_stem')
-    cap = 'minecraft:red_mushroom_block' if red else 'minecraft:brown_mushroom_block'
-    for dz in range(-2, 3):
-        for dx in range(-2, 3):
-            if abs(dx) + abs(dz) < 4: b.set(x + dx, y + 4, z + dz, cap)
-
-def nether_tree(b, x, y, z, kind):
-    stem, wart = f'minecraft:{kind}_stem[axis=y]', 'minecraft:nether_wart_block' if kind == 'crimson' else 'minecraft:warped_wart_block'
-    h = b.rng.randint(4, 6)
-    for dy in range(h): b.set(x, y + dy, z, stem)
-    for dy in range(h - 2, h + 1):
-        for dz in range(-2, 3):
-            for dx in range(-2, 3):
-                if abs(dx) + abs(dz) <= 3 and b.get(x + dx, y + dy, z + dz) == 'minecraft:air':
-                    b.set(x + dx, y + dy, z + dz, 'minecraft:shroomlight' if b.rng.random() < 0.08 else wart)
-
-def cave_shell(b, x0, z0, floor, wall, roof_y=7):
-    """Enclosed zone with a 2-wide southern entrance so it keeps low sky light."""
-    zone_ground(b, x0, z0, floor, floor, 3, wall)
-    for x, z in zone_cells(x0, z0):
-        b.set(x, SURFACE + roof_y, z, wall)
-        edge = x in (x0 + 1, x0 + 14) or z in (z0 + 1, z0 + 14)
-        if edge and not (z == z0 + 14 and x in (x0 + 7, x0 + 8)):
-            for dy in range(1, roof_y): b.set(x, SURFACE + dy, z, wall)
-
-def lava_pool(b, x0, z0, rim='minecraft:blackstone'):
-    """Central 3x3 lava pool, two deep, with a rim wall; kept >= 5 blocks from the zone border."""
-    for z in range(z0 + 5, z0 + 11):
-        for x in range(x0 + 5, x0 + 11):
-            inner = x0 + 6 <= x <= x0 + 9 and z0 + 6 <= z <= z0 + 9
-            if inner:
-                b.set(x, SURFACE - 2, z, rim)
-                for y in (SURFACE - 1, SURFACE): b.set(x, y, z, 'minecraft:lava[level=0]')
-            else:
-                b.set(x, SURFACE + 1, z, 'minecraft:polished_blackstone_wall')
-
-def ruins(b, x, z, floor, nearby):
-    for dz in range(-2, 3):
-        for dx in range(-2, 3): b.set(x + dx, SURFACE, z + dz, floor)
-    for dx, dz in ((-2, -2), (2, -2), (-2, 2), (2, 2)):
-        for dy in range(1, b.rng.randint(2, 4)): b.set(x + dx, SURFACE + dy, z + dz, b.rng.choice(nearby))
-
-def build_zone(b, biome, x0, z0):
-    r, cx, cz = b.rng, x0 + 7, z0 + 7
-    flowers = ['dandelion', 'poppy', 'cornflower', 'oxeye_daisy', 'azure_bluet']
-    grass = lambda: zone_ground(b, x0, z0, 'minecraft:grass_block')
-    trees = lambda kind, chance, h=None: zone_scatter(b, x0, z0, chance, lambda x, y, z: tree(b, x, y, z, kind, h), 3)
-    plant = lambda chance, fl=flowers: zone_scatter(b, x0, z0, chance, lambda x, y, z: plants(b, x, y, z, fl), 1)
-    snow = lambda: zone_scatter(b, x0, z0, 0.9, lambda x, y, z: b.set(x, y, z, 'minecraft:snow[layers=1]') if b.get(x, y - 1, z) in ('minecraft:grass_block[snowy=true]', 'minecraft:snow_block') else None, 1)
-    if biome in ('plains', 'meadow', 'sunflower_plains', 'forest', 'flower_forest', 'birch_forest', 'old_growth_birch_forest', 'cherry_grove', 'dark_forest'):
-        grass()
-        if biome == 'plains':
-            plant(0.4); trees('oak', 0.01)
-            zone_scatter(b, x0, z0, 0.03, lambda x, y, z: b.set(x, y, z, 'minecraft:pumpkin'), 2)
-            for x, z in ((x0 + 3, z0 + 3), (x0 + 12, z0 + 12)):  # lightning rods on short stone posts
-                b.set(x, SURFACE + 1, z, 'minecraft:cobblestone'); b.set(x, SURFACE + 2, z, 'minecraft:lightning_rod[facing=up,powered=false,waterlogged=false]')
-        elif biome == 'meadow':
-            plant(0.6, ['allium', 'azure_bluet', 'cornflower', 'oxeye_daisy', 'dandelion'])
-            sx, sz = x0 + 4, z0 + 4
-            for dy in range(5): b.set(sx, SURFACE + 1 + dy, sz, 'cobblemon:saccharine_log[axis=y]')
-            for dz in range(-2, 3):
-                for dx in range(-2, 3):
-                    for dy in (4, 5, 6):
-                        if abs(dx) + abs(dz) <= 3 and b.get(sx + dx, SURFACE + dy, sz + dz) == 'minecraft:air':
-                            b.set(sx + dx, SURFACE + dy, sz + dz, 'cobblemon:saccharine_leaves[age=0,distance=1,persistent=true,waterlogged=false]')
-            b.set(x0 + 11, SURFACE + 1, z0 + 11, 'minecraft:oak_planks'); b.set(x0 + 11, SURFACE + 2, z0 + 11, 'minecraft:cake[bites=0]')
-        elif biome == 'sunflower_plains':
-            plant(0.3)
-            zone_scatter(b, x0, z0, 0.18, lambda x, y, z: (b.set(x, y, z, 'minecraft:sunflower[half=lower]'), b.set(x, y + 1, z, 'minecraft:sunflower[half=upper]')), 1)
-        elif biome == 'forest': trees('oak', 0.05); trees('birch', 0.02); plant(0.3)
-        elif biome == 'flower_forest':
-            colours = ['poppy', 'red_tulip', 'orange_tulip', 'torchflower', 'dandelion', 'white_tulip', 'lily_of_the_valley', 'pink_tulip', 'cornflower', 'blue_orchid', 'allium', 'oxeye_daisy']
-            zone_scatter(b, x0, z0, 0.7, lambda x, y, z: b.set(x, y, z, 'minecraft:' + r.choice(colours)), 1); trees('oak', 0.015)
-        elif biome == 'birch_forest':
-            trees('birch', 0.06); plant(0.3)
-            for x, z, berry in ((x0 + 3, z0 + 12, 'oran'), (x0 + 5, z0 + 12, 'pecha'), (x0 + 7, z0 + 12, 'cheri')):
-                b.set(x, SURFACE + 1, z, f'cobblemon:{berry}_berry[age=3,rooted=false]')
-        elif biome == 'old_growth_birch_forest': zone_scatter(b, x0, z0, 0.05, lambda x, y, z: big_tree(b, x, y, z, 'birch', 9), 3); plant(0.3)
-        elif biome == 'cherry_grove':
-            trees('cherry', 0.03, 5)
-            zone_scatter(b, x0, z0, 0.4, lambda x, y, z: b.set(x, y, z, 'minecraft:pink_petals[facing=north,flower_amount=4]') if on_ground(b, x, y, z) else None, 1)
-        elif biome == 'dark_forest':
-            water_zone(b, x0, z0, 2, 'minecraft:clay', lambda dx, dz: 9 <= dx <= 12 and 9 <= dz <= 12)
-            trees('dark_oak', 0.08, 6)
-            zone_scatter(b, x0, z0, 0.015, lambda x, y, z: huge_mushroom(b, x, y, z, r.random() < 0.5), 3)
-    elif biome in ('taiga', 'old_growth_pine_taiga', 'old_growth_spruce_taiga', 'snowy_taiga', 'grove'):
-        top = 'minecraft:grass_block[snowy=true]' if biome in SNOWY else 'minecraft:podzol' if biome.startswith('old_growth') else 'minecraft:grass_block'
-        zone_ground(b, x0, z0, top)
-        if biome == 'grove': mound(b, x0, z0, 5, 'minecraft:snow_block', 'minecraft:snow_block')
-        zone_scatter(b, x0, z0, 0.06, lambda x, y, z: tree(b, x, y, z, 'spruce', 9 if biome.startswith('old_growth') else r.randint(6, 8)) if b.get(x, y - 1, z) != 'minecraft:snow_block' else None, 3)
-        zone_scatter(b, x0, z0, 0.2, lambda x, y, z: b.set(x, y, z, 'minecraft:fern') if b.get(x, y - 1, z) in ('minecraft:grass_block', 'minecraft:podzol') else None, 1)
-        if biome == 'taiga': zone_scatter(b, x0, z0, 0.03, lambda x, y, z: b.set(x, y, z, 'minecraft:pumpkin') if b.get(x, y - 1, z) == 'minecraft:grass_block' else None, 2)
-        if biome == 'grove':  # small concrete ice sculpture: ice-urban spawns need concrete near natural ground
-            for dy in (1, 2): b.set(x0 + 2, SURFACE + dy, z0 + 2, 'minecraft:white_concrete')
-            b.set(x0 + 2, SURFACE + 3, z0 + 2, 'minecraft:light_blue_concrete')
-        if biome == 'old_growth_spruce_taiga' or biome == 'old_growth_pine_taiga':
-            zone_scatter(b, x0, z0, 0.02, lambda x, y, z: b.set(x, y, z, 'minecraft:mossy_cobblestone'), 2)
-        if biome in SNOWY: snow()
-    elif biome in ('snowy_plains', 'snowy_slopes', 'ice_spikes', 'frozen_peaks', 'jagged_peaks'):
-        zone_ground(b, x0, z0, 'minecraft:grass_block[snowy=true]' if biome == 'snowy_plains' else 'minecraft:snow_block')
-        if biome == 'snowy_slopes': mound(b, x0, z0, 7, 'minecraft:snow_block', 'minecraft:snow_block')
-        if biome == 'frozen_peaks': mound(b, x0, z0, 10, 'minecraft:packed_ice', 'minecraft:snow_block')
-        if biome == 'jagged_peaks': mound(b, x0, z0, 12, 'minecraft:stone', 'minecraft:snow_block', 0.6)
-        if biome == 'ice_spikes':
-            for _ in range(6):
-                x, z = r.randint(x0 + 3, x0 + 12), r.randint(z0 + 3, z0 + 12); h = r.randint(4, 11)
-                for dy in range(1, h + 1): b.set(x, SURFACE + dy, z, 'minecraft:packed_ice')
-                if h > 6:
-                    for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                        for dy in range(1, h // 2): b.set(x + dx, SURFACE + dy, z + dz, 'minecraft:packed_ice')
-        snow()
-    elif biome in ('stony_peaks', 'windswept_hills', 'windswept_forest', 'windswept_gravelly_hills'):
-        zone_ground(b, x0, z0, 'minecraft:gravel' if biome == 'windswept_gravelly_hills' else 'minecraft:grass_block')
-        if biome == 'stony_peaks':
-            mound(b, x0, z0, 10, 'minecraft:stone', 'minecraft:calcite', 0.5)
-            for x, z in ((x0 + 3, z0 + 12), (x0 + 12, z0 + 3)): b.set(x, SURFACE, z, 'minecraft:iron_ore')
-        if biome == 'windswept_hills':
-            mound(b, x0, z0, 5, 'minecraft:stone', 'minecraft:stone')
-            ruins(b, x0 + 11, z0 + 11, 'minecraft:stone_bricks', ['minecraft:cracked_stone_bricks', 'minecraft:mossy_stone_bricks'])
-            for z in range(z0 + 2, z0 + 8): b.set(x0 + 3, SURFACE + 1, z, 'minecraft:rail[shape=north_south,waterlogged=false]')
-            b.set(x0 + 2, SURFACE, z0 + 4, 'minecraft:coal_ore'); b.set(x0 + 4, SURFACE, z0 + 6, 'minecraft:coal_ore')
-            plant(0.2)
-        if biome == 'windswept_forest': mound(b, x0, z0, 4, 'minecraft:stone', 'minecraft:grass_block'); trees('spruce', 0.05, 7); trees('oak', 0.02)
-        if biome == 'windswept_gravelly_hills':
-            mound(b, x0, z0, 4, 'minecraft:stone', 'minecraft:gravel')
-            for x, z in ((x0 + 3, z0 + 3), (x0 + 12, z0 + 12), (x0 + 3, z0 + 12)): b.set(x, SURFACE, z, 'minecraft:redstone_ore[lit=false]')
-    elif biome in ('desert', 'badlands', 'eroded_badlands', 'wooded_badlands'):
-        if biome == 'desert':
-            zone_ground(b, x0, z0, 'minecraft:sand', 'minecraft:sandstone')
-            ruins(b, x0 + 10, z0 + 10, 'minecraft:sandstone', ['minecraft:chiseled_sandstone', 'minecraft:orange_terracotta', 'minecraft:cut_sandstone'])
-            sx, sz = x0 + 3, z0 + 9  # roofed shrine: covered sand floor beside pyramid blocks
-            for z in range(sz, sz + 5):
-                for x in range(sx, sx + 5):
-                    wall = x in (sx, sx + 4) or z in (sz, sz + 4)
-                    b.set(x, SURFACE + 4, z, 'minecraft:cut_sandstone')
-                    if wall and not (z == sz and x == sx + 2):
-                        for dy in (1, 2, 3): b.set(x, SURFACE + dy, z, 'minecraft:chiseled_sandstone' if dy == 2 else 'minecraft:sandstone')
-            b.set(sx + 2, SURFACE + 1, sz + 3, 'minecraft:orange_terracotta')
-            for x, z in ((x0 + 3, z0 + 3), (x0 + 4, z0 + 9), (x0 + 9, z0 + 4)):
-                for dy in range(1, 3): b.set(x, SURFACE + dy, z, 'minecraft:cactus[age=0]')
-            zone_scatter(b, x0, z0, 0.05, lambda x, y, z: b.set(x, y, z, 'minecraft:dead_bush') if b.get(x, y - 1, z) == 'minecraft:sand' else None, 1)
-        else:
-            zone_ground(b, x0, z0, 'minecraft:red_sand' if biome != 'wooded_badlands' else 'minecraft:coarse_dirt', 'minecraft:terracotta')
-            bands = ['minecraft:terracotta', 'minecraft:orange_terracotta', 'minecraft:yellow_terracotta', 'minecraft:brown_terracotta', 'minecraft:red_terracotta', 'minecraft:white_terracotta']
-            if biome == 'badlands': mound(b, x0, z0, 6, 'minecraft:orange_terracotta', 'minecraft:red_sand')
-            if biome == 'eroded_badlands':
-                for _ in range(5):
-                    x, z = r.randint(x0 + 3, x0 + 12), r.randint(z0 + 3, z0 + 12)
-                    for dy in range(1, r.randint(5, 12)): b.set(x, SURFACE + dy, z, bands[dy % len(bands)])
-            if biome == 'wooded_badlands':
-                mound(b, x0, z0, 5, 'minecraft:terracotta', 'minecraft:grass_block'); trees('oak', 0.03, 5)
-            zone_scatter(b, x0, z0, 0.04, lambda x, y, z: b.set(x, y, z, 'minecraft:dead_bush') if b.get(x, y - 1, z) == 'minecraft:red_sand' else None, 1)
-    elif biome in ('savanna', 'savanna_plateau', 'windswept_savanna'):
-        grass()
-        if biome == 'savanna_plateau': mound(b, x0, z0, 5, 'minecraft:dirt', 'minecraft:grass_block', 0.1)
-        if biome == 'windswept_savanna': mound(b, x0, z0, 6, 'minecraft:stone', 'minecraft:coarse_dirt', 0.6)
-        trees('acacia', 0.03, 5); plant(0.35, ['dandelion', 'poppy'])
-    elif biome in ('jungle', 'sparse_jungle', 'bamboo_jungle'):
-        zone_ground(b, x0, z0, 'minecraft:podzol' if biome == 'bamboo_jungle' else 'minecraft:grass_block')
-        if biome == 'bamboo_jungle':
-            zone_scatter(b, x0, z0, 0.25, lambda x, y, z: [b.set(x, y + dy, z, 'minecraft:bamboo[age=0,leaves=large,stage=0]') for dy in range(r.randint(4, 9))], 2)
-        else:
-            trees('jungle', 0.06 if biome == 'jungle' else 0.02, 9 if biome == 'jungle' else 6)
-            if biome == 'jungle':
-                ruins(b, x0 + 4, z0 + 4, 'minecraft:mossy_cobblestone', ['minecraft:chiseled_stone_bricks', 'minecraft:mossy_cobblestone'])
-                for x, z in ((x0 + 3, z0 + 3), (x0 + 5, z0 + 5)): b.set(x, SURFACE, z, 'minecraft:cobblestone')
-        plant(0.4, ['poppy', 'dandelion'])
-    elif biome == 'mushroom_fields':
-        zone_ground(b, x0, z0, 'minecraft:mycelium')
-        zone_scatter(b, x0, z0, 0.02, lambda x, y, z: huge_mushroom(b, x, y, z, r.random() < 0.5), 3)
-        zone_scatter(b, x0, z0, 0.08, lambda x, y, z: b.set(x, y, z, r.choice(['minecraft:red_mushroom', 'minecraft:brown_mushroom'])), 1)
-    elif biome in ('swamp', 'mangrove_swamp'):
-        zone_ground(b, x0, z0, 'minecraft:grass_block' if biome == 'swamp' else 'minecraft:mud', 'minecraft:mud')
-        pools = noise2(r.random(), 4)
-        water_zone(b, x0, z0, 2, 'minecraft:mud', lambda dx, dz: 2 <= dx <= 13 and 2 <= dz <= 13 and pools(x0 + dx, z0 + dz) > 0.5)
-        if biome == 'swamp': trees('oak', 0.03, 5)
-        else:
-            def mangrove(x, y, z):
-                if b.get(x, y - 1, z) == 'minecraft:water[level=0]': return
-                for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)): b.set(x + dx, y, z + dz, 'minecraft:mangrove_roots[waterlogged=false]')
-                for dy in range(1, 6): b.set(x, y + dy, z, 'minecraft:mangrove_log[axis=y]')
-                for dz in range(-2, 3):
-                    for dx in range(-2, 3):
-                        for dy in (5, 6):
-                            if abs(dx) + abs(dz) <= 3 and b.get(x + dx, y + dy, z + dz) == 'minecraft:air': b.set(x + dx, y + dy, z + dz, 'minecraft:mangrove_leaves' + LEAF)
-            zone_scatter(b, x0, z0, 0.03, mangrove, 3)
-        for x, z in zone_cells(x0, z0):
-            if b.get(x, SURFACE, z).startswith('minecraft:water') and r.random() < 0.15: b.set(x, SURFACE + 1, z, 'minecraft:lily_pad')
-    elif biome in ('ocean', 'deep_ocean', 'warm_ocean', 'lukewarm_ocean', 'deep_lukewarm_ocean', 'cold_ocean', 'deep_cold_ocean', 'frozen_ocean', 'deep_frozen_ocean'):
-        deep = biome.startswith('deep')
-        floor = 'minecraft:sand' if 'warm' in biome or biome.endswith('lukewarm_ocean') else 'minecraft:gravel'
-        water_zone(b, x0, z0, 12 if deep else 6, floor)
-        bottom = SURFACE - (12 if deep else 6)
-        if biome == 'warm_ocean':
-            for x, z in zone_cells(x0, z0, 2):
-                if r.random() < 0.25: b.set(x, bottom + 1, z, 'minecraft:' + r.choice(['tube', 'brain', 'bubble', 'fire', 'horn']) + '_coral_block')
-        if 'warm' in biome or 'lukewarm' in biome or biome in ('ocean', 'deep_ocean'):
-            for x, z in zone_cells(x0, z0, 2):
-                if b.get(x, bottom + 1, z).startswith('minecraft:water') and r.random() < 0.3: b.set(x, bottom + 1, z, 'minecraft:seagrass')
-        if biome in ('ocean', 'deep_ocean', 'cold_ocean', 'deep_cold_ocean', 'lukewarm_ocean', 'deep_lukewarm_ocean'):
-            for x, z in zone_cells(x0, z0, 3):
-                if r.random() < 0.08 and b.get(x, bottom + 1, z) == 'minecraft:water[level=0]':
-                    top = SURFACE - 2
-                    for y in range(bottom + 1, top): b.set(x, y, z, 'minecraft:kelp_plant')
-                    b.set(x, top, z, 'minecraft:kelp[age=20]')
-        if 'frozen' in biome:
-            for x, z in zone_cells(x0, z0):
-                if r.random() < 0.45: b.set(x, SURFACE, z, 'minecraft:packed_ice')
-    elif biome in ('river', 'frozen_river', 'beach', 'snowy_beach', 'stony_shore'):
-        land = {'river': 'minecraft:grass_block', 'frozen_river': 'minecraft:grass_block[snowy=true]', 'beach': 'minecraft:sand',
-                'snowy_beach': 'minecraft:sand', 'stony_shore': 'minecraft:stone'}[biome]
-        zone_ground(b, x0, z0, land, 'minecraft:sand' if 'beach' in biome else 'minecraft:dirt')
-        channel = (lambda dx, dz: 5 <= dx <= 10) if 'river' in biome else (lambda dx, dz: dz >= 8)
-        water_zone(b, x0, z0, 3 if 'river' in biome else 4, 'minecraft:sand', channel)
-        if biome == 'frozen_river':
-            for x, z in zone_cells(x0, z0):
-                if b.get(x, SURFACE, z).startswith('minecraft:water') and r.random() < 0.5: b.set(x, SURFACE, z, 'minecraft:ice')
-            snow()
-        if biome == 'snowy_beach':
-            zone_scatter(b, x0, z0, 0.9, lambda x, y, z: b.set(x, y, z, 'minecraft:snow[layers=1]') if b.get(x, y - 1, z) == 'minecraft:sand' else None, 1)
-        if biome == 'beach':
-            for x, z in ((x0 + 4, z0 + 4), (x0 + 10, z0 + 3)):
-                b.set(x, SURFACE, z, 'minecraft:grass_block'); tree(b, x, SURFACE + 1, z, 'jungle', 6)
-        if biome in ('river', 'beach'):  # sugar cane needs water right beside its base
-            for x, z in zone_cells(x0, z0):
-                if b.get(x, SURFACE, z) in ('minecraft:sand', 'minecraft:grass_block') and r.random() < 0.35 and any(
-                        b.get(x + dx, SURFACE, z + dz).startswith('minecraft:water') for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                    for dy in (1, 2): b.set(x, SURFACE + dy, z, 'minecraft:sugar_cane[age=0]')
-            if biome == 'river': plant(0.25)
-    elif biome in CAVES:
-        if biome == 'lush_caves':
-            cave_shell(b, x0, z0, 'minecraft:moss_block', 'minecraft:stone')
-            water_zone(b, x0, z0, 2, 'minecraft:clay', lambda dx, dz: 9 <= dx <= 12 and 3 <= dz <= 6)
-            zone_scatter(b, x0, z0, 0.12, lambda x, y, z: b.set(x, y, z, r.choice(['minecraft:azalea', 'minecraft:flowering_azalea', 'minecraft:moss_carpet', 'minecraft:big_dripleaf[facing=north,tilt=none,waterlogged=false]'])) if b.get(x, y - 1, z) == 'minecraft:moss_block' else None, 2)
-            for x, z in ((x0 + 4, z0 + 4), (x0 + 11, z0 + 11)): b.set(x, SURFACE + 7, z, 'minecraft:glowstone')
-        elif biome == 'dripstone_caves':
-            cave_shell(b, x0, z0, 'minecraft:dripstone_block', 'minecraft:stone')
-            zone_scatter(b, x0, z0, 0.08, lambda x, y, z: b.set(x, y, z, 'minecraft:pointed_dripstone[thickness=tip,vertical_direction=up,waterlogged=false]'), 2)
-            for x, z, ore in ((x0 + 3, z0 + 3, 'iron_ore'), (x0 + 12, z0 + 4, 'copper_ore'), (x0 + 4, z0 + 11, 'redstone_ore[lit=false]'), (x0 + 11, z0 + 11, 'coal_ore')):
-                b.set(x, SURFACE, z, 'minecraft:' + ore)
-            for z in range(z0 + 4, z0 + 11): b.set(x0 + 7, SURFACE + 1, z, 'minecraft:rail[shape=north_south,waterlogged=false]')
-            ruins(b, x0 + 11, z0 + 8, 'minecraft:stone_bricks', ['minecraft:cracked_stone_bricks', 'minecraft:mossy_stone_bricks'])
-            b.set(x0 + 3, SURFACE, z0 + 8, 'minecraft:diamond_ore')
-        else:
-            cave_shell(b, x0, z0, 'minecraft:sculk', 'minecraft:deepslate')
-            for x, z in zone_cells(x0, z0, 2):
-                if r.random() < 0.4: b.set(x, SURFACE, z, 'minecraft:deepslate')
-    elif biome in ('nether_wastes', 'crimson_forest', 'warped_forest', 'soul_sand_valley', 'basalt_deltas'):
-        top = {'nether_wastes': 'minecraft:netherrack', 'crimson_forest': 'minecraft:crimson_nylium', 'warped_forest': 'minecraft:warped_nylium',
-               'soul_sand_valley': 'minecraft:soul_soil', 'basalt_deltas': 'minecraft:basalt[axis=y]'}[biome]
-        zone_ground(b, x0, z0, top, 'minecraft:netherrack', 3, 'minecraft:netherrack')
-        if biome == 'nether_wastes':
-            for x, z in zone_cells(x0, z0, 2):
-                if r.random() < 0.06: b.set(x, SURFACE, z, r.choice(['minecraft:nether_quartz_ore', 'minecraft:nether_gold_ore']))
-            lava_pool(b, x0, z0)
-        if biome in ('crimson_forest', 'warped_forest'):
-            kind = biome.split('_')[0]
-            zone_scatter(b, x0, z0, 0.025, lambda x, y, z: nether_tree(b, x, y, z, kind) if not (5 <= x - x0 <= 10 and 5 <= z - z0 <= 10) else None, 3)
-            zone_scatter(b, x0, z0, 0.15, lambda x, y, z: b.set(x, y, z, f'minecraft:{kind}_roots' if r.random() < 0.7 else f'minecraft:{kind}_fungus') if b.get(x, y - 1, z) == top else None, 1)
-        if biome == 'soul_sand_valley':
-            for x, z in zone_cells(x0, z0, 2):
-                if r.random() < 0.4: b.set(x, SURFACE, z, 'minecraft:soul_sand')
-            for x, z in ((x0 + 4, z0 + 4), (x0 + 11, z0 + 10)):
-                for dy in range(1, 5): b.set(x, SURFACE + dy, z, 'minecraft:bone_block[axis=y]')
-                b.set(x + 1, SURFACE + 4, z, 'minecraft:bone_block[axis=x]')
-            for dy in range(1, 7): b.set(x0 + 11, SURFACE + dy, z0 + 3, 'minecraft:basalt[axis=y]')
-        if biome == 'basalt_deltas':
-            for x, z in zone_cells(x0, z0, 2):
-                if r.random() < 0.3: b.set(x, SURFACE, z, r.choice(['minecraft:blackstone', 'minecraft:magma_block']))
-            lava_pool(b, x0, z0, 'minecraft:basalt[axis=y]')
-    elif biome in ('the_end', 'end_highlands', 'end_midlands', 'small_end_islands', 'end_barrens', 'the_void'):
-        zone_ground(b, x0, z0, 'minecraft:end_stone', 'minecraft:end_stone', 3, 'minecraft:end_stone')
-        if biome == 'end_highlands': mound(b, x0, z0, 7, 'minecraft:end_stone', 'minecraft:end_stone', 0.5)
-        if biome == 'the_end':
-            for dy in range(1, 10): b.box(cx, SURFACE + dy, cz, cx + 1, SURFACE + dy, cz + 1, 'minecraft:obsidian')
-            b.set(cx, SURFACE + 10, cz, 'minecraft:end_rod[facing=up]')
-        if biome == 'small_end_islands':
-            for x, z in zone_cells(x0, z0):
-                if math.hypot(x - cx - 0.5, z - cz - 0.5) > 4.5: b.set(x, SURFACE, z, 'minecraft:end_stone')
-            for dx, dz, h in ((-4, -4, 3), (4, 3, 5), (-3, 4, 4)):
-                b.box(cx + dx - 1, SURFACE + h, cz + dz - 1, cx + dx + 1, SURFACE + h, cz + dz + 1, 'minecraft:end_stone')
-        if biome == 'the_void':
-            for x, z in zone_cells(x0, z0): b.set(x, SURFACE, z, 'minecraft:obsidian' if (x + z) % 2 else 'minecraft:end_stone')
-        if biome in ('end_midlands', 'end_barrens', 'end_highlands'):
-            zone_scatter(b, x0, z0, 0.03, lambda x, y, z: [b.set(x, y + dy, z, 'minecraft:purpur_pillar[axis=y]') for dy in range(r.randint(1, 3))] if b.get(x, y - 1, z) == 'minecraft:end_stone' else None, 2)
-            zone_scatter(b, x0, z0, 0.03, lambda x, y, z: b.set(x, y, z, 'minecraft:chorus_flower[age=5]') if b.get(x, y - 1, z) == 'minecraft:end_stone' else None, 2)
-    else:
-        raise ValueError(biome)
-
-def zone_inventory(b, cell):
-    """What a zone offers to spawn rules: blocks present, fluids and open/covered ground spots."""
-    (x0, _, z0), (x1, _, z1) = cell['from'], cell['to']
-    blocks, water, lava, open_sky, covered = set(), False, False, False, False
-    for z in range(z0 + 1, z1):
-        for x in range(x0 + 1, x1):
-            column = [b.get(x, y, z) for y in range(HEIGHT)]
-            for blk in column:
-                if blk != 'minecraft:air': blocks.add(blk.split('[')[0])
-            water |= any(c.startswith('minecraft:water') for c in column)
-            for y in range(HEIGHT - 1):  # water surface under open sky, or under ice/roof
-                if column[y].startswith('minecraft:water') and not column[y + 1].startswith('minecraft:water'):
-                    above = any(c != 'minecraft:air' for c in column[y + 1:])
-                    covered |= above; open_sky |= not above
-            lava |= any(c.startswith('minecraft:lava') for c in column)
-            for y in range(1, HEIGHT - 2):
-                if column[y] != 'minecraft:air' and not column[y].startswith(('minecraft:water', 'minecraft:lava')) and column[y + 1] == 'minecraft:air' and column[y + 2] == 'minecraft:air':
-                    above = any(c != 'minecraft:air' for c in column[y + 3:])
-                    covered |= above; open_sky |= not above
-    return {'biome': cell['biome'], 'blocks': sorted(blocks), 'water': water, 'lava': lava, 'open_sky': open_sky, 'covered': covered}
+    def biome(self, x, z):
+        r, a = sv_polar(x, z)
+        if r <= SV_PLAZA + 2: return 'plains'
+        c = self.coast(x, z)
+        if r > c: return 'warm_ocean' if 50 <= a <= 165 else 'ocean'
+        if r > 26 and self.river_dist(x, z) < 2.6: return 'river'
+        aw = (a + 26 * (self.warp(x, z) - 0.5)) % 360
+        name = next(inner if r < 50 + 14 * (self.split(x, z) - 0.5) else outer
+                    for lo, hi, inner, outer in SECTORS if lo <= aw < hi or lo <= aw + 360 < hi)
+        if name == 'mountain': return 'jagged_peaks' if self.mountain(x, z) > 15 else 'stony_peaks'
+        if r > c - 5 and 55 <= a <= 210 and name != 'badlands': return 'beach'
+        return name
 
 def build_safari_vip():
-    b = Build('SafariVip', 4004)
-    # Square slab island: stone body, rough underside, polished andesite paths on every zone border.
-    under = noise2(5, 9)
-    for z in range(SIZE):
-        for x in range(SIZE):
-            bottom = 1 + int(under(x, z) * 3)
-            for y in range(bottom, SURFACE): b.set(x, y, z, 'minecraft:stone')
-            if x % 16 in (0, 15) or z % 16 in (0, 15): b.set(x, SURFACE, z, 'minecraft:polished_andesite')
-    cells = []
-    for row, names in enumerate(BIOME_GRID):
-        for col, biome in enumerate(names):
-            x0, z0 = col * 16, row * 16
-            build_zone(b, biome, x0, z0)
-            cells.append({'biome': 'minecraft:' + biome, 'from': [x0, 0, z0], 'to': [x0 + 15, HEIGHT - 1, z0 + 15]})
-    # Central VIP lodge and urban plaza (concrete only here, >= 5 blocks from the wild interiors of other zones).
-    for z in range(54, 74):
-        for x in range(54, 74):
-            for y in range(SURFACE + 1, HEIGHT): b.set(x, y, z, 'minecraft:air')
-            b.set(x, SURFACE, z, 'minecraft:white_concrete' if (x + z) % 2 else 'minecraft:cyan_concrete')
-    for z in range(58, 70):
-        for x in range(58, 70):
-            wall = x in (58, 69) or z in (58, 69)
-            b.set(x, SURFACE, z, 'minecraft:smooth_quartz')
-            if wall:
-                for dy in range(1, 6): b.set(x, SURFACE + dy, z, 'minecraft:quartz_bricks')
-            b.set(x, SURFACE + 6, z, 'minecraft:gold_block' if wall else 'minecraft:smooth_quartz')
-    for x in (60, 63, 64, 67):
-        for dy in (2, 3): b.set(x, SURFACE + dy, 58, 'minecraft:cyan_stained_glass'); b.set(x, SURFACE + dy, 69, 'minecraft:cyan_stained_glass')
-    for x in (63, 64):
-        for dy in (1, 2, 3): b.set(x, SURFACE + dy, 69, 'minecraft:air')
-    for x in (60, 66):
-        b.set(x, SURFACE + 1, 60, 'cobblemon:pc[facing=south,on=false,part=bottom]'); b.set(x, SURFACE + 2, 60, 'cobblemon:pc[facing=south,on=false,part=top]')
-    b.set(63, SURFACE + 5, 63, 'minecraft:lantern[hanging=true]')
-    for x, z in ((55, 55), (72, 55), (55, 72), (72, 72)):
-        b.set(x, SURFACE + 1, z, 'minecraft:quartz_pillar[axis=y]'); b.set(x, SURFACE + 2, z, 'minecraft:lightning_rod[facing=up,powered=false,waterlogged=false]')
-    b.set(71, SURFACE + 1, 63, 'minecraft:dark_oak_planks'); b.set(71, SURFACE + 2, 63, 'minecraft:cake[bites=0]')
-    # Paths from the plaza to the arrival and the arrival platform (no concrete outside the plaza).
-    for z in range(74, 118):
-        for x in (63, 64): b.set(x, SURFACE, z, 'minecraft:polished_andesite'); [b.set(x, SURFACE + dy, z, 'minecraft:air') for dy in range(1, 8)]
-    for z in range(116, 128):
-        for x in range(57, 71):
-            b.set(x, SURFACE, z, 'minecraft:smooth_quartz')
-            for dy in range(1, 12): b.set(x, SURFACE + dy, z, 'minecraft:air')
-    pokeball(b, 63, SURFACE, 121, 4, colours=('minecraft:cyan_wool', 'minecraft:white_wool'))
-    b.arrival = {'x': 63, 'y': SURFACE + 1, 'z': 121, 'yaw': 180}
-    # Lamp posts at path crossings, except next to snow or ice (block light would melt it).
-    for row in range(1, 8):
-        for col in range(1, 8):
-            around = {BIOME_GRID[r][c] for r in (row - 1, row) for c in (col - 1, col)}
-            if around & SNOWY or (54 <= col * 16 <= 73 and 54 <= row * 16 <= 73): continue
-            lamp_post(b, col * 16 - 1 + (col % 2), SURFACE + 1, row * 16 - 1 + (row % 2), 3)
-    b.notes = {'biome_cells': cells, 'paste_hint': 'superficie em Y=61 (origem Y=45) para os pés dos Pokémon ficarem em Y=62',
-               'plaza': {'x': 63, 'y': SURFACE + 1, 'z': 63}}
+    b = Build('SafariVip', 4004, SV); m = SafariMap(b.rng)
+    quart = {(qx, qz): m.biome(qx * 4 + 1.5, qz * 4 + 1.5) for qz in range(SV // 4) for qx in range(SV // 4)}
+    biome_of = lambda x, z: quart[(x // 4, z // 4)]
+    cols = [(x, z) for z in range(SV) for x in range(SV) if math.hypot(x - SV_C, z - SV_C) <= SV_SEA]
+
+    # Height field: per-biome base blurred across biome borders, then mountains, mesas, river, coast and plaza.
+    target = {}
+    for x, z in cols:
+        base, amp = BASE[biome_of(x, z)]; target[(x, z)] = base + amp * (2 * m.detail(x, z) - 1)
+    surf = {}
+    for x, z in cols:
+        near = [target[(x + dx, z + dz)] for dz in range(-3, 4) for dx in range(-3, 4) if (x + dx, z + dz) in target]
+        h, r, biome = sum(near) / len(near), math.hypot(x - SV_C, z - SV_C), biome_of(x, z)
+        h += m.mountain(x, z)
+        if biome == 'badlands': h += 8 if m.mesa(x, z) > 0.6 else 4 if m.mesa(x, z) > 0.52 else 0
+        if biome == 'swamp' and m.puddle(x, z) > 0.56: h = -1
+        rd = m.river_dist(x, z)
+        if r > 26 and rd < 3.2: h = -3 if rd < 1.8 else min(h, -1)
+        c = m.coast(x, z)
+        if r > c: h = -min(10.0, 2 + (r - c) * 0.7) + 1.5 * (m.detail(x, z) - 0.5)
+        elif r > c - 6: h = min(h, (c - r) * (3 if biome.endswith('peaks') else 0.35))
+        if r < SV_PLAZA: h = 0
+        elif r < SV_PLAZA + 8: h *= (r - SV_PLAZA) / 8
+        surf[(x, z)] = max(3, min(HEIGHT - 8, SURFACE + round(h)))
+
+    # Columns: rugged underside, stone body, biome soil and top, water up to sea level.
+    for x, z in cols:
+        y0, biome, r = surf[(x, z)], biome_of(x, z), math.hypot(x - SV_C, z - SV_C)
+        bottom = max(1, min(y0 - 2, SURFACE - 5 - int(max(0.0, 1 - (r / 88) ** 2) * 9 * (0.6 + 0.4 * m.under(x, z)))))
+        steep = max(abs(y0 - surf.get((x + dx, z + dz), y0)) for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1))) >= 3
+        wet = y0 < SURFACE
+        for y in range(bottom, y0 + 1):
+            depth = y0 - y
+            if biome == 'badlands' and y >= SURFACE - 2 and (depth or steep): blk = BANDS[y % len(BANDS)]
+            elif depth >= 4: blk = b.rng.choice(['minecraft:stone'] * 7 + ['minecraft:andesite', 'minecraft:tuff', 'minecraft:deepslate'])
+            elif depth: blk = soil(biome, wet, b.rng)
+            else: blk = top_block(biome, y0, wet, steep, m, x, z, b.rng)
+            b.set(x, y, z, blk)
+        for y in range(y0 + 1, SURFACE + 1): b.set(x, y, z, 'minecraft:water[level=0]')
+    for x, z in ((x, z) for z in range(SV) for x in range(SV) if SV_SEA < math.hypot(x - SV_C, z - SV_C) <= SV_SEA + 1.5):
+        for y in range(SURFACE - 12, SURFACE + 1): b.set(x, y, z, 'minecraft:barrier')   # holds the sea, invisible
+    blocked = set()
+
+    plaza_and_center(b, blocked)
+    caves = carve_caves(b, m, surf)
+    arrival_pier(b, surf, blocked)
+    for angle, reach in ((40, 62), (78, 66), (140, 60), (245, 62), (292, 60), (344, 30), (16, 38)):
+        winding_path(b, surf, blocked, angle, reach)
+    pikachu(b, *ground(b, surf, *map(round, sv_xy(196, 50))), blocked)
+    snorlax(b, *ground(b, surf, *map(round, sv_xy(224, 64))), blocked)
+    pokeball_statue(b, *map(round, sv_xy(138, 87)), blocked)
+    by_biome = collections.defaultdict(list)
+    for x, z in cols: by_biome[biome_of(x, z)].append((x, z))
+    landmarks(b, m, surf, blocked, by_biome)
+    decorate(b, surf, blocked, by_biome)
+    lamps(b, surf, blocked, biome_of)
+
+    b.arrival = {'x': SV_C, 'y': SURFACE + 1, 'z': SV_C + 72, 'yaw': 180}
+    b.biome_boxes = biome_boxes(quart, caves)
+    b.zones = [region_inventory(b, name, by_biome[name], caves) for name in sorted(by_biome)] + \
+              [region_inventory(b, name, None, caves) for name in sorted(caves)]
+    b.notes = {'paste_hint': 'origem com X e Z múltiplos de 4 e Y=45: superfície em Y=61, Pokémon em Y=62',
+               'plaza': {'x': SV_C, 'y': SURFACE + 1, 'z': SV_C}, 'biomes': sorted(set(by_biome) | set(caves)),
+               'fillbiome_boxes': len(b.biome_boxes)}
     return b
 
+def soil(biome, wet, rng):
+    if biome in ('desert', 'beach') or (wet and biome in ('ocean', 'warm_ocean', 'river')): return 'minecraft:sandstone' if biome == 'desert' else 'minecraft:sand'
+    if biome == 'badlands': return 'minecraft:terracotta'
+    if biome.endswith('peaks'): return 'minecraft:stone'
+    if biome == 'ice_spikes': return 'minecraft:snow_block'
+    return 'minecraft:mud' if biome == 'swamp' and wet else 'minecraft:dirt'
+
+def top_block(biome, y, wet, steep, m, x, z, rng):
+    high = y > SURFACE + 14
+    if wet:
+        if biome in ('ocean', 'river'): return rng.choice(['minecraft:gravel', 'minecraft:sand', 'minecraft:sand', 'minecraft:clay'])
+        if biome == 'swamp': return 'minecraft:mud'
+        return 'minecraft:sand'
+    if biome == 'jagged_peaks': return 'minecraft:snow_block' if high or not steep else 'minecraft:stone'
+    if biome == 'stony_peaks':
+        if steep: return rng.choice(['minecraft:stone', 'minecraft:andesite', 'minecraft:stone'])
+        return rng.choice(['minecraft:stone', 'minecraft:calcite', 'minecraft:gravel', 'minecraft:andesite', 'minecraft:grass_block'])
+    if biome in ('desert', 'beach', 'warm_ocean', 'ocean'): return 'minecraft:sandstone' if steep and biome == 'desert' else 'minecraft:sand'
+    if biome == 'badlands': return BANDS[y % len(BANDS)] if steep else 'minecraft:red_sand'
+    if biome == 'ice_spikes': return 'minecraft:snow_block'
+    if steep and y > SURFACE + 5: return 'minecraft:snow_block' if biome in SNOWY else 'minecraft:stone'
+    if biome in SNOWY or high: return 'minecraft:grass_block[snowy=true]'
+    if biome in ('taiga', 'dark_forest') and m.rough2(x, z) > 0.62: return 'minecraft:podzol'
+    if biome == 'jungle' and m.rough2(x, z) > 0.7: return 'minecraft:podzol'
+    if biome == 'swamp' and m.rough2(x, z) > 0.65: return 'minecraft:mud'
+    if biome == 'savanna' and m.rough2(x, z) > 0.72: return 'minecraft:coarse_dirt'
+    return 'minecraft:grass_block'
+
+def ground(b, surf, x, z):
+    return x, surf[(x, z)] + 1, z
+
+def clear_above(b, x, y, z, height=12):
+    for dy in range(height): b.set(x, y + dy, z, 'minecraft:air')
+
+# ---- centre: Atlas Pokémon Center under a glass dome
+def plaza_and_center(b, blocked):
+    c, y = SV_C, SURFACE
+    for z in range(c - SV_PLAZA - 1, c + SV_PLAZA + 2):
+        for x in range(c - SV_PLAZA - 1, c + SV_PLAZA + 2):
+            d = math.hypot(x - c, z - c)
+            if d > SV_PLAZA + 0.5: continue
+            clear_above(b, x, y + 1, z, 30)
+            if d > SV_PLAZA - 1: blk = 'minecraft:quartz_bricks'
+            elif d > 17: blk = 'minecraft:polished_andesite' if (x + z) % 2 else 'minecraft:smooth_stone'
+            elif d > 16: blk = 'minecraft:chiseled_quartz_block'
+            else: blk = 'minecraft:smooth_quartz'
+            b.set(x, y, z, blk); blocked.add((x, z))
+    # Terrace, round walls with glass windows between eight pillars, cyan band, glass dome with quartz ribs.
+    for z in range(c - 15, c + 16):
+        for x in range(c - 15, c + 16):
+            d, a = math.hypot(x - c, z - c), math.degrees(math.atan2(x - c, c - z)) % 360
+            rib = min(a % 45, 45 - a % 45) * math.pi / 180 * d < 0.9
+            if 13.5 < d <= 14.6: b.set(x, y + 1, z, 'minecraft:smooth_quartz_slab[type=bottom,waterlogged=false]')
+            if 11 < d <= 12.4:
+                for dy in range(1, 7):
+                    window = 2 <= dy <= 4 and not rib
+                    b.set(x, y + dy, z, 'minecraft:cyan_stained_glass' if window else 'minecraft:quartz_pillar[axis=y]' if rib else 'minecraft:quartz_bricks')
+                b.set(x, y + 6, z, 'minecraft:cyan_concrete')
+            if 11 < d <= 13.2: b.set(x, y + 7, z, 'minecraft:smooth_quartz')
+            if 12.4 < d <= 13.2: b.set(x, y + 6, z, 'minecraft:gold_block')
+            for dy in range(0, 12):   # dome: ellipsoid shell, radius 12.4, height 11
+                inner = 12.4 * math.sqrt(max(0.0, 1 - (dy / 11) ** 2))
+                if inner - 1.3 < d <= inner:
+                    b.set(x, y + 8 + dy, z, 'minecraft:quartz_block' if rib or dy in (4, 8) and d > inner - 0.8 else 'minecraft:light_blue_stained_glass' if dy >= 9 else 'minecraft:cyan_stained_glass')
+            if d <= 11:   # floor: Poké Ball emblem with a sea-lantern ring
+                b.set(x, y, z, 'minecraft:sea_lantern' if 9 < d <= 10 and int(a) % 30 < 8 else 'minecraft:smooth_quartz')
+    pokeball(b, c, y, c, 6)
+    b.set(c, y + 19, c, 'minecraft:sea_lantern'); b.set(c, y + 20, c, 'minecraft:lightning_rod[facing=up,powered=false,waterlogged=false]')
+    for dx, dz in ((0, 1), (0, -1), (1, 0), (-1, 0)):   # four doorways, 4 wide
+        for k in range(-2, 2):
+            for d in range(10, 16):
+                x, z = c + dx * d + (k if dz else 0), c + dz * d + (k if dx else 0)
+                for dy in range(1, 5): b.set(x, y + dy, z, 'minecraft:air')
+                if d <= 12: b.set(x, y + 5, z, 'minecraft:cyan_concrete')
+    for x in (c - 5, c + 4):   # PCs and the healing counter on the north side, facing the entrance
+        b.set(x, y + 1, c - 8, 'cobblemon:pc[facing=south,on=false,part=bottom]'); b.set(x, y + 2, c - 8, 'cobblemon:pc[facing=south,on=false,part=top]')
+    for x in range(c - 2, c + 2): b.set(x, y + 1, c - 7, 'minecraft:polished_diorite')
+    b.set(c - 1, y + 2, c - 7, 'cobblemon:healing_machine'); b.set(c + 1, y + 2, c - 7, 'minecraft:cake[bites=0]')
+    for dx, dz in ((-6, -6), (6, -6), (-6, 6), (6, 6)): b.set(c + dx, y + 10, c + dz, 'minecraft:lantern[hanging=true]'); b.set(c + dx, y + 11, c + dz, 'minecraft:chain[axis=y]')
+    for a in range(45, 360, 90):   # plaza corners: quartz posts with lightning rods (urban spawns), benches
+        x, z = map(round, sv_xy(a, 19))
+        for dy in (1, 2): b.set(x, y + dy, z, 'minecraft:quartz_pillar[axis=y]')
+        b.set(x, y + 3, z, 'minecraft:lightning_rod[facing=up,powered=false,waterlogged=false]')
+    for a in range(0, 360, 30):
+        if a % 90:
+            x, z = map(round, sv_xy(a, 18.5)); lamp_post(b, x, y + 1, z, 3)
+
+# ---- caves inside the mountain (3D biome boxes)
+def carve_caves(b, m, surf):
+    boxes = {}
+    for name, (angle, dist) in CAVES.items():
+        cx, cz = map(round, sv_xy(angle, dist)); rx, ry, rz = 9, 4.5, 8; cy = SURFACE + 5
+        for z in range(cz - rz, cz + rz + 1):
+            for x in range(cx - rx, cx + rx + 1):
+                for y in range(SURFACE + 1, cy + 5):
+                    if ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2 <= 1 and y < surf[(x, z)] - 2:
+                        b.set(x, y, z, 'minecraft:air')
+        # Tunnel towards the plaza until the slope is low enough to walk in.
+        ux, uz = (SV_C - cx) / math.hypot(SV_C - cx, SV_C - cz), (SV_C - cz) / math.hypot(SV_C - cx, SV_C - cz)
+        for step in range(0, 40):
+            px, pz = cx + ux * step, cz + uz * step
+            for w in (-1, 0, 1):
+                x, z = round(px - uz * w), round(pz + ux * w)
+                for dy in (1, 2, 3): b.set(x, SURFACE + dy, z, 'minecraft:air')
+                b.set(x, SURFACE, z, 'minecraft:gravel' if name == 'dripstone_caves' else 'minecraft:moss_block')
+            if surf[(round(px), round(pz))] <= SURFACE + 1 and step > rx: break
+        rng = b.rng
+        for z in range(cz - rz, cz + rz + 1):
+            for x in range(cx - rx, cx + rx + 1):
+                for y in range(SURFACE, cy + 6):
+                    if b.get(x, y, z) == 'minecraft:air' or b.get(x, y + 1, z) != 'minecraft:air' and b.get(x, y - 1, z) != 'minecraft:air': continue
+                    floor = b.get(x, y + 1, z) == 'minecraft:air' and b.get(x, y, z) != 'minecraft:air'
+                    if name == 'lush_caves':
+                        if floor:
+                            b.set(x, y, z, 'minecraft:clay' if rng.random() < 0.12 else 'minecraft:moss_block')
+                            roll = rng.random()
+                            if roll < 0.25: b.set(x, y + 1, z, 'minecraft:moss_carpet')
+                            elif roll < 0.3: b.set(x, y + 1, z, rng.choice(['minecraft:azalea', 'minecraft:flowering_azalea']))
+                        elif b.get(x, y - 1, z) == 'minecraft:air' and rng.random() < 0.18:   # ceiling: glow berries
+                            n = rng.randint(1, 3)
+                            for k in range(1, n): b.set(x, y - k, z, 'minecraft:cave_vines_plant[berries=true]')
+                            b.set(x, y - n, z, 'minecraft:cave_vines[age=25,berries=true]')
+                    else:
+                        if floor:
+                            b.set(x, y, z, 'minecraft:dripstone_block' if rng.random() < 0.5 else 'minecraft:stone')
+                            if rng.random() < 0.08: b.set(x, y + 1, z, 'minecraft:pointed_dripstone[thickness=tip,vertical_direction=up,waterlogged=false]')
+                        elif b.get(x, y - 1, z) == 'minecraft:air' and rng.random() < 0.15:
+                            b.set(x, y, z, 'minecraft:dripstone_block')
+                            b.set(x, y - 1, z, 'minecraft:pointed_dripstone[thickness=tip,vertical_direction=down,waterlogged=false]')
+        if name == 'lush_caves':
+            b.box(cx - 1, SURFACE, cz - 1, cx + 2, SURFACE, cz + 1, 'minecraft:water[level=0]')
+            b.box(cx - 1, SURFACE - 1, cz - 1, cx + 2, SURFACE - 1, cz + 1, 'minecraft:clay')
+            b.set(cx, cy + 4, cz, 'minecraft:spore_blossom') if b.get(cx, cy + 5, cz) != 'minecraft:air' else None
+        else:   # brick ruin and exposed ores (iron, copper, diamond)
+            for dx, dz in ((-3, -3), (3, -3), (-3, 3), (3, 3)):
+                for dy in range(1, rng.randint(2, 4)): b.set(cx + dx, SURFACE + dy, cz + dz, 'minecraft:bricks')
+            for dx, dz, ore in ((-6, 0, 'iron_ore'), (6, 1, 'copper_ore'), (0, -6, 'diamond_ore'), (2, 6, 'coal_ore')):
+                b.set(cx + dx, SURFACE + 1, cz + dz, 'minecraft:' + ore)
+        boxes[name] = {'from': [cx - rx - 1, SURFACE - 1, cz - rz - 1], 'to': [cx + rx + 1, SURFACE + 11, cz + rz + 1]}
+    return boxes
+
+# ---- arrival, paths, lamps
+def arrival_pier(b, surf, blocked):
+    c, z0 = SV_C, SV_C + 72
+    for z in range(z0 - 6, z0 + 6):
+        for x in range(c - 6, c + 7):
+            for y in range(SURFACE - 4, SURFACE): b.set(x, y, z, 'minecraft:stone')
+            clear_above(b, x, SURFACE + 1, z, 14)
+            b.set(x, SURFACE, z, 'minecraft:cyan_wool' if x in (c - 6, c + 6) else 'minecraft:smooth_quartz'); blocked.add((x, z)); surf[(x, z)] = SURFACE
+    pokeball(b, c, SURFACE, z0, 4, colours=('minecraft:cyan_wool', 'minecraft:white_wool'))
+    for x in (c - 6, c + 6):
+        for z in (z0 - 6, z0 + 5): lamp_post(b, x, SURFACE + 1, z, 3)
+    for z in range(z0 + 6, z0 + 19):   # wooden pier into the sea
+        for x in range(c - 1, c + 2):
+            b.set(x, SURFACE + 1, z, 'minecraft:spruce_planks'); clear_above(b, x, SURFACE + 2, z, 6); blocked.add((x, z))
+        if z % 4 == 0:
+            for x in (c - 2, c + 2):
+                for y in range(surf.get((x, z), SURFACE - 6), SURFACE + 2): b.set(x, y, z, 'minecraft:spruce_log[axis=y]')
+                b.set(x, SURFACE + 2, z, 'minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]')
+                b.set(x, SURFACE + 3, z, 'minecraft:lantern[hanging=false]')
+    for z in range(SV_C + SV_PLAZA, z0 - 6):   # straight avenue from the plaza
+        for x in range(c - 2, c + 3):
+            if (x, z) not in surf: continue
+            y = min(surf[(x, z)], SURFACE + 2); surf[(x, z)] = y
+            for yy in range(SURFACE - 3, y): b.set(x, yy, z, 'minecraft:dirt')
+            b.set(x, y, z, 'minecraft:smooth_quartz' if abs(x - c) <= 1 else 'minecraft:polished_andesite'); clear_above(b, x, y + 1, z, 10); blocked.add((x, z))
+
+def path_cells(b, surf, blocked, pts, width=1):
+    for (x0, z0), (x1, z1) in zip(pts, pts[1:]):
+        steps = int(max(abs(x1 - x0), abs(z1 - z0))) + 1
+        for i in range(steps):
+            t = i / max(1, steps - 1); px, pz = x0 + (x1 - x0) * t, z0 + (z1 - z0) * t
+            for dz in range(-width - 2, width + 3):
+                for dx in range(-width - 2, width + 3):
+                    x, z = round(px + dx), round(pz + dz)
+                    if (x, z) not in surf: continue
+                    blocked.add((x, z))
+                    if dx * dx + dz * dz > width * width + 1 or b.get(x, SURFACE, z) == 'minecraft:barrier': continue
+                    y = surf[(x, z)]
+                    if y < SURFACE:   # bridge over water at sea level
+                        b.set(x, SURFACE, z, 'minecraft:spruce_planks'); clear_above(b, x, SURFACE + 1, z, 3)
+                    elif b.get(x, y, z) not in ('minecraft:smooth_quartz', 'minecraft:polished_andesite', 'minecraft:spruce_planks'):
+                        b.set(x, y, z, 'minecraft:dirt_path'); clear_above(b, x, y + 1, z, 3)
+
+def winding_path(b, surf, blocked, angle, reach):
+    pts = [sv_xy(angle + 9 * math.sin(d / 9 + angle), d) for d in range(SV_PLAZA, reach + 1, 3)]
+    path_cells(b, surf, blocked, pts)
+    b.path_points = getattr(b, 'path_points', []) + pts
+
+def lamps(b, surf, blocked, biome_of):
+    for i, (px, pz) in enumerate(b.path_points):
+        if i % 4 != 2: continue
+        x, z = round(px) + 2, round(pz)
+        if (x, z) not in surf or surf[(x, z)] < SURFACE or biome_of(x, z) in SNOWY: continue
+        if any(biome_of(x + dx, z + dz) in SNOWY for dx in (-8, 0, 8) for dz in (-8, 0, 8) if (x + dx, z + dz) in surf): continue
+        y = surf[(x, z)] + 1
+        if b.get(x, y, z) == 'minecraft:air' and b.get(x, y - 1, z) != 'minecraft:dirt_path': lamp_post(b, x, y, z, 3)
+
+# ---- statues (wool and terracotta: concrete would block wild spawns nearby)
+def ellipsoid(b, cx, cy, cz, rx, ry, rz, block, cond=None):
+    for y in range(math.floor(cy - ry), math.ceil(cy + ry) + 1):
+        for z in range(math.floor(cz - rz), math.ceil(cz + rz) + 1):
+            for x in range(math.floor(cx - rx), math.ceil(cx + rx) + 1):
+                if ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2 <= 1 and (cond is None or cond(x, y, z)):
+                    b.set(x, y, z, block)
+
+def paint_front(b, x, y, z, block, depth=8):
+    """Paint the first solid block seen from the south (+z) at column (x, y)."""
+    for zz in range(z, z - depth, -1):
+        if b.get(x, y, zz) != 'minecraft:air': b.set(x, y, zz, block); return
+
+def stroke(b, pts, radius, block_at):
+    for (x0, y0, z0), (x1, y1, z1) in zip(pts, pts[1:]):
+        n = int(max(abs(x1 - x0), abs(y1 - y0), abs(z1 - z0)) * 2) + 1
+        for i in range(n + 1):
+            t = i / n; ellipsoid(b, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z0 + (z1 - z0) * t, *radius, block_at(t))
+
+def footprint(blocked, x, z, r):
+    blocked.update((x + dx, z + dz) for dz in range(-r, r + 1) for dx in range(-r, r + 1))
+
+def pikachu(b, gx, gy, gz, blocked):
+    Y, K, R, Br = 'minecraft:yellow_wool', 'minecraft:black_wool', 'minecraft:red_wool', 'minecraft:brown_wool'
+    for s in (-1, 1): ellipsoid(b, gx + 2.5 * s, gy + 0.6, gz + 1.5, 1.7, 1.1, 2.4, Y)
+    ellipsoid(b, gx, gy + 5, gz, 4.6, 5, 4, Y)
+    ellipsoid(b, gx, gy + 7, gz, 4.6, 5, 4, Br, cond=lambda x, y, z: z <= gz - 3 and y in (gy + 5, gy + 8))
+    for s in (-1, 1): ellipsoid(b, gx + 3.6 * s, gy + 6.5, gz + 2.6, 1.3, 1.3, 1.7, Y)
+    ellipsoid(b, gx, gy + 12, gz + 0.5, 5.2, 4.3, 4.3, Y)
+    for s in (-1, 1): stroke(b, [(gx + 3 * s, gy + 15, gz), (gx + 6.5 * s, gy + 21.5, gz - 0.5)], (1.3, 1.3, 1.0), lambda t: K if t > 0.65 else Y)
+    stroke(b, [(gx, gy + 3, gz - 4), (gx, gy + 5, gz - 6.5)], (1.0, 1.2, 1.2), lambda t: Br)
+    stroke(b, [(gx, gy + 5, gz - 6.5), (gx, gy + 8, gz - 5.5), (gx, gy + 10, gz - 8.5), (gx, gy + 13, gz - 7.5), (gx, gy + 16, gz - 11)], (1.0, 1.6, 1.6), lambda t: Y)
+    for s in (-1, 1):
+        for y in (gy + 12, gy + 13): paint_front(b, gx + 2 * s, y, gz + 7, K)
+        paint_front(b, gx + 2 * s, gy + 14, gz + 7, K)
+        for x in (gx + 3 * s, gx + 4 * s):
+            for y in (gy + 10, gy + 11): paint_front(b, x, y, gz + 7, R)
+    paint_front(b, gx, gy + 11, gz + 7, K)
+    footprint(blocked, gx, gz, 12)
+
+def snorlax(b, gx, gy, gz, blocked):
+    T, C, K = 'minecraft:cyan_terracotta', 'minecraft:white_terracotta', 'minecraft:black_wool'
+    ellipsoid(b, gx, gy + 7, gz, 8, 7.5, 7, T)
+    ellipsoid(b, gx, gy + 6.5, gz + 2.2, 6.4, 6, 5.4, C)
+    for s in (-1, 1):
+        ellipsoid(b, gx + 4.5 * s, gy + 1.6, gz + 6, 2.6, 2, 1.8, C)
+        ellipsoid(b, gx + 8.2 * s, gy + 8, gz + 1, 2.2, 4, 2.2, T)
+        ellipsoid(b, gx + 4 * s, gy + 20, gz, 1.4, 1.7, 1.3, T)
+    ellipsoid(b, gx, gy + 16, gz + 0.5, 5.6, 4.6, 5, T)
+    ellipsoid(b, gx, gy + 15, gz + 2.4, 4.6, 3.4, 3.4, C, cond=lambda x, y, z: y <= gy + 16)
+    for x in (gx - 3, gx - 2, gx + 2, gx + 3): paint_front(b, x, gy + 16, gz + 8, K)
+    for x in range(gx - 1, gx + 2): paint_front(b, x, gy + 14, gz + 8, K)
+    for s in (-1, 1): paint_front(b, gx + 4 * s, gy + 1, gz + 9, 'minecraft:brown_terracotta')
+    footprint(blocked, gx, gz, 13)
+
+def pokeball_statue(b, cx, cz, blocked):
+    ellipsoid(b, cx, SURFACE - 4, cz, 9, 6, 9, 'minecraft:stone')
+    ellipsoid(b, cx, SURFACE - 1, cz, 8, 2.5, 8, 'minecraft:moss_block', cond=lambda x, y, z: b.get(x, y, z) in ('minecraft:water[level=0]', 'minecraft:stone', 'minecraft:air'))
+    cy = SURFACE + 7
+    ellipsoid(b, cx, cy, cz, 6.5, 6.5, 6.5, 'minecraft:cyan_wool', cond=lambda x, y, z: y > cy)
+    ellipsoid(b, cx, cy, cz, 6.5, 6.5, 6.5, 'minecraft:white_wool', cond=lambda x, y, z: y < cy)
+    ellipsoid(b, cx, cy, cz, 6.5, 6.5, 6.5, 'minecraft:black_wool', cond=lambda x, y, z: y == cy)
+    # Button facing the island centre (north-west).
+    for dy in range(-2, 3):
+        for dk in range(-2, 3):
+            d = math.hypot(dy, dk)
+            if d > 2.4: continue
+            x, z = round(cx - 4.4 + dk * 0.7), round(cz - 4.4 - dk * 0.7)
+            b.set(x, cy + dy, z, 'minecraft:white_wool' if d <= 1.2 else 'minecraft:black_wool')
+    footprint(blocked, cx, cz, 9)
+
+# ---- landmarks the spawn rules look for, then scattered vegetation
+def spot(b, surf, blocked, cells, size, rng):
+    """A dry, fairly flat, unblocked square of side 2*size+1 inside the biome, as central as possible."""
+    if not cells: return None
+    mx, mz = sum(x for x, _ in cells) / len(cells), sum(z for _, z in cells) / len(cells)
+    own = set(cells)
+    for x, z in sorted(cells, key=lambda p: (p[0] - mx) ** 2 + (p[1] - mz) ** 2):
+        area = [(x + dx, z + dz) for dz in range(-size, size + 1) for dx in range(-size, size + 1)]
+        if all(p in own and p not in blocked and surf[p] >= SURFACE for p in area):
+            ys = [surf[p] for p in area]
+            if max(ys) - min(ys) <= 2: return x, z, max(ys)
+    return None
+
+def level(b, surf, blocked, x, z, size, y, top=None):
+    for dz in range(-size, size + 1):
+        for dx in range(-size, size + 1):
+            p = (x + dx, z + dz)
+            for yy in range(surf[p], y): b.set(p[0], yy, p[1], 'minecraft:dirt')
+            if top: b.set(p[0], y, p[1], top)
+            elif surf[p] != y: b.set(p[0], y, p[1], b.get(p[0], surf[p], p[1]))
+            clear_above(b, p[0], y + 1, p[1], 10); surf[p] = y; blocked.add(p)
+
+def landmarks(b, m, surf, blocked, by_biome):
+    rng = b.rng
+    def at(biome, size):
+        s = spot(b, surf, blocked, by_biome[biome], size, rng)
+        if s: level(b, surf, blocked, s[0], s[1], size, s[2])
+        return s
+    s = at('desert', 3)
+    if s:   # roofed sandstone shrine (covered sand floor) beside a small ruin
+        x, z, y = s
+        for dz in range(-3, 4):
+            for dx in range(-3, 4):
+                b.set(x + dx, y, z + dz, 'minecraft:sand'); b.set(x + dx, y + 4, z + dz, 'minecraft:cut_sandstone')
+                if max(abs(dx), abs(dz)) == 3 and not (dz == 3 and abs(dx) <= 1):
+                    for dy in (1, 2, 3): b.set(x + dx, y + dy, z + dz, 'minecraft:chiseled_sandstone' if dy == 2 else 'minecraft:sandstone')
+        b.set(x, y + 1, z - 1, 'minecraft:orange_terracotta'); b.set(x, y + 5, z, 'minecraft:chiseled_sandstone')
+    s = at('jungle', 2)
+    if s:
+        x, z, y = s
+        for dx, dz in ((-2, -2), (2, -2), (-2, 2), (2, 2)):
+            for dy in range(1, rng.randint(2, 5)): b.set(x + dx, y + dy, z + dz, rng.choice(['minecraft:mossy_cobblestone', 'minecraft:chiseled_stone_bricks']))
+        b.set(x, y, z, 'minecraft:cobblestone'); b.set(x + 1, y, z, 'minecraft:mossy_cobblestone')
+    s = at('meadow', 2)
+    if s:   # Cobblemon saccharine tree and a picnic cake
+        x, z, y = s
+        for dy in range(1, 6): b.set(x, y + dy, z, 'cobblemon:saccharine_log[axis=y]')
+        ellipsoid(b, x, y + 6, z, 2.6, 1.8, 2.6, 'cobblemon:saccharine_leaves[age=0,distance=1,persistent=true,waterlogged=false]',
+                  cond=lambda xx, yy, zz: b.get(xx, yy, zz) == 'minecraft:air')
+        b.set(x + 2, y + 1, z + 2, 'minecraft:oak_planks'); b.set(x + 2, y + 2, z + 2, 'minecraft:cake[bites=0]')
+    s = at('birch_forest', 2)
+    if s:
+        x, z, y = s
+        for dx, berry in ((-2, 'oran'), (0, 'pecha'), (2, 'cheri')): b.set(x + dx, y + 1, z, f'cobblemon:{berry}_berry[age=3,rooted=false]')
+    s = at('dark_forest', 3)
+    if s:   # fishing pond
+        x, z, y = s
+        for dz in range(-2, 3):
+            for dx in range(-2, 3):
+                b.set(x + dx, y - 2, z + dz, 'minecraft:clay')
+                for yy in (y - 1, y): b.set(x + dx, yy, z + dz, 'minecraft:water[level=0]')
+    for biome in ('plains', 'taiga'):
+        for _ in range(2):
+            s = at(biome, 1)
+            if s:
+                x, z, y = s
+                b.set(x, y + 1, z, 'minecraft:pumpkin'); b.set(x + 1, y + 1, z, 'minecraft:pumpkin')
+    s = at('plains', 1)
+    if s: b.set(s[0], s[2] + 1, s[1], 'minecraft:cobblestone'); b.set(s[0], s[2] + 2, s[1], 'minecraft:lightning_rod[facing=up,powered=false,waterlogged=false]')
+    for x, z in by_biome['stony_peaks'][::97]:
+        if (x, z) not in blocked: b.set(x, surf[(x, z)], z, 'minecraft:iron_ore')
+    cells = [p for p in by_biome['ice_spikes'] if p not in blocked]
+    for x, z in rng.sample(cells, min(9, len(cells))):
+        h, y = rng.randint(5, 14), surf[(x, z)] + 1
+        for dy in range(h): b.set(x, y + dy, z, 'minecraft:packed_ice')
+        if h > 8:
+            for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                for dy in range(h // 2): b.set(x + dx, y + dy, z + dz, 'minecraft:packed_ice')
+        blocked.add((x, z))
+
+def round_tree(b, x, y, z, kind, h, r, flat=0.8, log=None):
+    log = log or f'minecraft:{kind}_log[axis=y]'
+    leaves = f'minecraft:{kind}_leaves' + LEAF
+    for dy in range(h): b.set(x, y + dy, z, log)
+    rng = b.rng
+    for dy in range(-math.ceil(r * flat), math.ceil(r * flat) + 1):
+        for dz in range(-r - 1, r + 2):
+            for dx in range(-r - 1, r + 2):
+                if (dx * dx + dz * dz) / (r * r) + (dy / (r * flat)) ** 2 <= 1 + 0.25 * rng.random() and rng.random() > 0.06:
+                    if b.get(x + dx, y + h + dy, z + dz) == 'minecraft:air': b.set(x + dx, y + h + dy, z + dz, leaves)
+
+def big_tree2(b, x, y, z, kind, h, r):
+    """2x2 trunk (dark oak, jungle) with a wide crown."""
+    for dx in (0, 1):
+        for dz in (0, 1):
+            for dy in range(h): b.set(x + dx, y + dy, z + dz, f'minecraft:{kind}_log[axis=y]')
+    round_tree(b, x, y + h - 1, z, kind, 1, r, 0.55)
+    if kind == 'jungle':
+        for dx, dz in ((3, 0), (-3, 1)): round_tree(b, x + dx, y + h - 5, z + dz, kind, 0, 2, 0.6)
+
+def acacia(b, x, y, z):
+    dx, dz = b.rng.choice(((1, 0), (-1, 0), (0, 1), (0, -1)))
+    for dy in range(3): b.set(x, y + dy, z, 'minecraft:acacia_log[axis=y]')
+    for k in (1, 2): b.set(x + dx * k, y + 2 + k, z + dz * k, 'minecraft:acacia_log[axis=y]')
+    tx, tz, ty = x + 2 * dx, z + 2 * dz, y + 5
+    for ddz in range(-3, 4):
+        for ddx in range(-3, 4):
+            if abs(ddx) + abs(ddz) <= 4 and b.get(tx + ddx, ty, tz + ddz) == 'minecraft:air': b.set(tx + ddx, ty, tz + ddz, 'minecraft:acacia_leaves' + LEAF)
+            if abs(ddx) + abs(ddz) <= 2 and b.get(tx + ddx, ty + 1, tz + ddz) == 'minecraft:air': b.set(tx + ddx, ty + 1, tz + ddz, 'minecraft:acacia_leaves' + LEAF)
+
+def palm(b, x, y, z):
+    dx, dz = b.rng.choice(((1, 0), (-1, 0), (0, 1), (0, -1)))
+    for dy in range(6): b.set(x + (dx if dy > 3 else 0), y + dy, z + (dz if dy > 3 else 0), 'minecraft:jungle_log[axis=y]')
+    tx, ty, tz = x + dx, y + 6, z + dz
+    b.set(tx, ty, tz, 'minecraft:jungle_leaves' + LEAF)
+    for ddx, ddz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        for k in (1, 2, 3): b.set(tx + ddx * k, ty - (k == 3), tz + ddz * k, 'minecraft:jungle_leaves' + LEAF)
+
+def decorate(b, surf, blocked, by_biome):
+    rng = b.rng
+    FLOWERS_FF = ['poppy', 'red_tulip', 'orange_tulip', 'dandelion', 'white_tulip', 'lily_of_the_valley', 'pink_tulip', 'cornflower', 'allium', 'oxeye_daisy']
+    def free(x, z, r=0):
+        return all((x + dx, z + dz) not in blocked for dz in range(-r, r + 1) for dx in range(-r, r + 1))
+    def place(biome, chance, fn, room=0, dry=True):
+        for x, z in by_biome[biome]:
+            y = surf[(x, z)]
+            if rng.random() >= chance or not free(x, z, room) or (dry and y < SURFACE): continue
+            if b.get(x, y + 1, z) != 'minecraft:air': continue
+            fn(x, y + 1, z)
+            if room: blocked.update((x + dx, z + dz) for dz in (-1, 0, 1) for dx in (-1, 0, 1))
+    grounded = lambda fn: lambda x, y, z: fn(x, y, z) if on_ground(b, x, y, z) else None
+    on = lambda block, *under: lambda x, y, z: b.set(x, y, z, block) if b.get(x, y - 1, z).split('[')[0] in under else None
+    flowers = ['dandelion', 'poppy', 'cornflower', 'oxeye_daisy', 'azure_bluet']
+    place('plains', 0.004, grounded(lambda x, y, z: round_tree(b, x, y, z, 'oak', 5, 3)), 3)
+    place('plains', 0.45, lambda x, y, z: plants(b, x, y, z, flowers))
+    place('forest', 0.03, grounded(lambda x, y, z: round_tree(b, x, y, z, 'oak', rng.randint(5, 7), 3)), 3)
+    place('forest', 0.008, grounded(lambda x, y, z: round_tree(b, x, y, z, 'birch', 6, 2)), 2)
+    place('forest', 0.3, lambda x, y, z: plants(b, x, y, z, flowers))
+    place('flower_forest', 0.008, grounded(lambda x, y, z: round_tree(b, x, y, z, 'oak', 5, 3)), 3)
+    place('flower_forest', 0.6, grounded(lambda x, y, z: b.set(x, y, z, 'minecraft:' + rng.choice(FLOWERS_FF))))
+    place('birch_forest', 0.035, grounded(lambda x, y, z: round_tree(b, x, y, z, 'birch', rng.randint(6, 8), 2, 1.1)), 2)
+    place('birch_forest', 0.3, lambda x, y, z: plants(b, x, y, z, flowers))
+    place('dark_forest', 0.022, grounded(lambda x, y, z: big_tree2(b, x, y, z, 'dark_oak', rng.randint(6, 8), 4)), 3)
+    place('dark_forest', 0.004, grounded(lambda x, y, z: huge_mushroom(b, x, y, z, rng.random() < 0.5)), 3)
+    place('dark_forest', 0.15, lambda x, y, z: plants(b, x, y, z, ['lily_of_the_valley']))
+    place('swamp', 0.012, grounded(lambda x, y, z: round_tree(b, x, y, z, 'oak', 5, 3, 0.6)), 3)
+    place('swamp', 0.25, lambda x, y, z: plants(b, x, y, z, ['blue_orchid']))
+    for x, z in by_biome['swamp']:
+        if surf[(x, z)] < SURFACE and b.get(x, SURFACE, z).startswith('minecraft:water') and rng.random() < 0.15: b.set(x, SURFACE + 1, z, 'minecraft:lily_pad')
+    for biome in ('taiga', 'snowy_taiga', 'snowy_plains'):
+        chance = {'taiga': 0.035, 'snowy_taiga': 0.035, 'snowy_plains': 0.003}[biome]
+        place(biome, chance, grounded(lambda x, y, z: tree(b, x, y, z, 'spruce', rng.randint(7, 10))), 3)
+    place('taiga', 0.2, on('minecraft:fern', 'minecraft:grass_block', 'minecraft:podzol'))
+    place('taiga', 0.015, on('minecraft:sweet_berry_bush[age=3]', 'minecraft:grass_block', 'minecraft:podzol'))
+    place('cherry_grove', 0.012, grounded(lambda x, y, z: round_tree(b, x, y, z, 'cherry', rng.randint(5, 6), 4, 0.6)), 4)
+    place('cherry_grove', 0.4, on('minecraft:pink_petals[facing=north,flower_amount=4]', 'minecraft:grass_block'))
+    place('meadow', 0.55, grounded(lambda x, y, z: b.set(x, y, z, 'minecraft:' + rng.choice(['allium', 'azure_bluet', 'cornflower', 'oxeye_daisy', 'dandelion', 'short_grass', 'short_grass']))))
+    place('jungle', 0.014, grounded(lambda x, y, z: big_tree2(b, x, y, z, 'jungle', rng.randint(11, 15), 4)), 4)
+    place('jungle', 0.03, grounded(lambda x, y, z: round_tree(b, x, y, z, 'jungle', 1, 2, 0.7, 'minecraft:oak_log[axis=y]')), 1)
+    place('jungle', 0.01, on('minecraft:melon', 'minecraft:grass_block', 'minecraft:podzol'))
+    place('jungle', 0.008, grounded(lambda x, y, z: [b.set(x, y + dy, z, 'minecraft:bamboo[age=0,leaves=large,stage=0]') for dy in range(rng.randint(5, 10))]))
+    place('jungle', 0.4, lambda x, y, z: plants(b, x, y, z, ['poppy', 'dandelion']))
+    place('savanna', 0.01, grounded(lambda x, y, z: acacia(b, x, y, z)), 3)
+    place('savanna', 0.5, lambda x, y, z: plants(b, x, y, z, ['dandelion', 'poppy']))
+    place('desert', 0.006, on('minecraft:cactus[age=0]', 'minecraft:sand'), 1)
+    place('desert', 0.02, on('minecraft:dead_bush', 'minecraft:sand'))
+    place('badlands', 0.02, on('minecraft:dead_bush', 'minecraft:red_sand'))
+    place('badlands', 0.003, on('minecraft:cactus[age=0]', 'minecraft:red_sand'), 1)
+    place('beach', 0.01, lambda x, y, z: palm(b, x, y, z) if b.get(x, y - 1, z) == 'minecraft:sand' else None, 2)
+    place('stony_peaks', 0.01, lambda x, y, z: b.set(x, y, z, rng.choice(['minecraft:cobblestone', 'minecraft:mossy_cobblestone'])))
+    for x in [p for p in by_biome['desert'] + by_biome['badlands'] if b.get(p[0], surf[p] + 1, p[1]) == 'minecraft:cactus[age=0]']:
+        b.set(x[0], surf[x] + 2, x[1], 'minecraft:cactus[age=0]')
+    # Underwater: kelp and seagrass, corals in the warm sea, sugar cane on the river banks.
+    for biome in ('ocean', 'warm_ocean', 'river'):
+        for x, z in by_biome[biome]:
+            y = surf[(x, z)]
+            if y >= SURFACE - 1 or b.get(x, y + 1, z) != 'minecraft:water[level=0]': continue
+            roll = rng.random()
+            if biome == 'warm_ocean' and roll < 0.18: b.set(x, y + 1, z, 'minecraft:' + rng.choice(['tube', 'brain', 'bubble', 'fire', 'horn']) + '_coral_block')
+            elif biome != 'river' and roll < 0.26 and y <= SURFACE - 4:
+                for yy in range(y + 1, SURFACE - 1): b.set(x, yy, z, 'minecraft:kelp_plant')
+                b.set(x, SURFACE - 1, z, 'minecraft:kelp[age=20]')
+            elif roll < 0.5: b.set(x, y + 1, z, 'minecraft:seagrass')
+    for x, z in by_biome['river']:
+        for dx, dz in ((2, 0), (-2, 0), (0, 2), (0, -2)):
+            p = (x + dx, z + dz)
+            if p in surf and surf[p] == SURFACE and p not in blocked and rng.random() < 0.05 and b.get(p[0], SURFACE + 1, p[1]) == 'minecraft:air' \
+                    and b.get(p[0], SURFACE, p[1]).startswith(('minecraft:grass_block', 'minecraft:sand')):
+                for dy in (1, 2): b.set(p[0], SURFACE + dy, p[1], 'minecraft:sugar_cane[age=0]')
+    # Snow cover on the cold side and the mountain tops.
+    for biome in SNOWY:
+        for x, z in by_biome[biome]:
+            y = surf[(x, z)]
+            if b.get(x, y, z) in ('minecraft:grass_block[snowy=true]', 'minecraft:snow_block') and b.get(x, y + 1, z) == 'minecraft:air' and (x, z) not in blocked:
+                b.set(x, y + 1, z, 'minecraft:snow[layers=1]')
+
+# ---- biome boxes for /fillbiome and per-biome inventories for the spawn analysis
+def biome_boxes(quart, caves, limit=32768):
+    """Merge equal 4x4 biome cells into rectangles below the /fillbiome volume limit; caves last (3D)."""
+    n, rows = SV // 4, []
+    keep = lambda qx, qz: math.hypot(qx * 4 + 1.5 - SV_C, qz * 4 + 1.5 - SV_C) <= SV_SEA + 3
+    runs = {}
+    for qz in range(n):
+        qx = 0
+        while qx < n:
+            if not keep(qx, qz): qx += 1; continue
+            biome, start = quart[(qx, qz)], qx
+            while qx < n and keep(qx, qz) and quart[(qx, qz)] == biome: qx += 1
+            runs.setdefault((start, qx - 1, biome), []).append(qz)
+    max_area = limit // (HEIGHT * 16)   # in 4x4 cells
+    boxes = []
+    for (x0, x1, biome), zs in sorted(runs.items(), key=lambda kv: (kv[1][0], kv[0][0])):
+        groups, cur = [], [zs[0]]
+        for qz in zs[1:]:
+            if qz == cur[-1] + 1: cur.append(qz)
+            else: groups.append(cur); cur = [qz]
+        groups.append(cur)
+        width = x1 - x0 + 1
+        for g in groups:
+            depth = max(1, max_area // min(width, max_area))
+            for xs in range(x0, x1 + 1, max_area):
+                xe = min(x1, xs + max_area - 1)
+                for k in range(0, len(g), depth):
+                    zs0, zs1 = g[k], g[min(len(g), k + depth) - 1]
+                    boxes.append({'biome': 'minecraft:' + biome, 'from': [xs * 4, 0, zs0 * 4], 'to': [xe * 4 + 3, HEIGHT - 1, zs1 * 4 + 3]})
+    for name, box in sorted(caves.items()): boxes.append({'biome': 'minecraft:' + name, **box})
+    return boxes
+
+def in_box(box, x, y, z):
+    return all(box['from'][i] <= v <= box['to'][i] for i, v in enumerate((x, y, z)))
+
+def region_inventory(b, biome, columns, caves):
+    """What a biome region offers to spawn rules: blocks present, fluids and open/covered ground spots."""
+    if columns is None:   # cave: the 3D box only
+        box = caves[biome]; (x0, y0, z0), (x1, y1, z1) = box['from'], box['to']
+        columns, yr = [(x, z) for z in range(z0, z1 + 1) for x in range(x0, x1 + 1)], range(y0, y1 + 1)
+        cell = lambda x, y, z: b.get(x, y, z)
+    else:
+        yr = range(HEIGHT)
+        cell = lambda x, y, z: 'minecraft:stone' if any(in_box(bx, x, y, z) for bx in caves.values()) else b.get(x, y, z)
+    blocks, water, lava, open_sky, covered = set(), False, False, False, False
+    for x, z in columns:
+        column = [cell(x, y, z) for y in yr]
+        for blk in column:
+            if blk not in ('minecraft:air', 'minecraft:barrier'): blocks.add(blk.split('[')[0])
+        water |= any(c.startswith('minecraft:water') for c in column)
+        lava |= any(c.startswith('minecraft:lava') for c in column)
+        for i in range(len(column) - 2):
+            solid = column[i] not in ('minecraft:air', 'minecraft:barrier') and not column[i].startswith('minecraft:lava')
+            surface_water = column[i].startswith('minecraft:water') and not column[i + 1].startswith('minecraft:water')
+            if (solid and not column[i].startswith('minecraft:water') and column[i + 1] == 'minecraft:air' and column[i + 2] == 'minecraft:air') or surface_water:
+                above = any(c != 'minecraft:air' for c in column[i + 1:]) if biome not in CAVES else True
+                covered |= above; open_sky |= not above
+    return {'biome': 'minecraft:' + biome, 'blocks': sorted(blocks), 'water': water, 'lava': lava, 'open_sky': open_sky, 'covered': covered}
+
 # ---------------------------------------------------------------- preview
-COLORS = [('end_stone', (222, 222, 160)), ('red_sand', (190, 100, 40)), ('netherrack', (110, 40, 40)), ('crimson', (150, 30, 40)),
+COLORS = [('yellow_wool', (240, 200, 40)), ('black_wool', (25, 25, 30)), ('red_wool', (190, 40, 40)), ('brown_wool', (110, 70, 40)),
+          ('white_wool', (235, 235, 235)), ('cyan_wool', (22, 150, 160)), ('white_terracotta', (210, 180, 160)), ('cyan_terracotta', (70, 90, 98)),
+          ('light_blue_stained_glass', (120, 190, 230)), ('pink_petals', (240, 170, 200)), ('dark_oak_leaves', (40, 90, 35)),
+          ('red_mushroom_block', (180, 40, 40)), ('brown_mushroom_block', (140, 105, 80)), ('melon', (110, 160, 50)), ('sugar_cane', (120, 190, 90)),
+          ('planks', (150, 110, 70)), ('clay', (160, 165, 180)), ('acacia_leaves', (110, 140, 40)), ('jungle_leaves', (50, 140, 40)),
+          ('end_stone', (222, 222, 160)), ('red_sand', (190, 100, 40)), ('netherrack', (110, 40, 40)), ('crimson', (150, 30, 40)),
           ('warped', (40, 125, 115)), ('soul', (85, 65, 50)), ('basalt', (80, 80, 88)), ('magma', (150, 70, 30)), ('lava', (230, 110, 20)),
           ('terracotta', (160, 90, 60)), ('mycelium', (115, 95, 115)), ('podzol', (100, 70, 40)), ('mud', (60, 50, 45)),
           ('packed_ice', (150, 180, 230)), ('ice', (170, 200, 240)), ('calcite', (220, 220, 215)), ('gravel', (130, 125, 120)),
@@ -882,24 +1121,48 @@ def color(block):
 
 def preview(b, path, scale=4):
     rows = []
-    for z in range(SIZE):
+    for z in range(b.size):
         row = bytearray()
-        for x in range(SIZE):
+        for x in range(b.size):
             rgb, top = (18, 22, 30), None
             for y in range(HEIGHT - 1, -1, -1):
                 blk = b.get(x, y, z)
-                if blk != 'minecraft:air': rgb, top = color(blk), y; break
+                if blk not in ('minecraft:air', 'minecraft:barrier'): rgb, top = color(blk), y; break
             if top is not None:
                 shade = 0.75 + 0.5 * (top / HEIGHT); rgb = tuple(min(255, int(c * shade)) for c in rgb)
             row += bytes(rgb) * scale
         for _ in range(scale): rows.append(b'\x00' + bytes(row))
-    w = h = SIZE * scale
+    w = h = b.size * scale
     def chunk(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d))
     png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b''.join(rows), 9)) + chunk(b'IEND', b'')
     path.write_bytes(png)
 
+def oblique_view(b, path, S=5, T=3, F=4):
+    """View from the south (arrival side) at roughly 45 degrees: top faces plus darker south faces, painter's order."""
+    N, AIR = b.size, ('minecraft:air', 'minecraft:barrier')
+    W, H = N * S, N * T + HEIGHT * F + 20
+    img = bytearray()
+    for py in range(H): t = py / H; img += bytes((int(150 + 70 * t), int(190 + 45 * t), int(230 + 15 * t))) * W
+    def put(x0, y0, h, rgb):
+        for yy in range(max(0, y0), min(H, y0 + h)): img[(yy * W + x0) * 3:(yy * W + x0 + S) * 3] = bytes(rgb) * S
+    for z in range(N):
+        for y in range(HEIGHT):
+            for x in range(N):
+                blk = b.get(x, y, z)
+                if blk in AIR: continue
+                up, front, water = b.get(x, y + 1, z), b.get(x, y, z + 1), blk.startswith('minecraft:water')
+                if water and up.startswith('minecraft:water'): continue
+                if not (up in AIR or front in AIR or up.startswith('minecraft:water') or front.startswith('minecraft:water')): continue
+                rgb, lift = color(blk), 0.82 + 0.35 * y / HEIGHT
+                sy = z * T - y * F + HEIGHT * F
+                put(x * S, sy, T, tuple(min(255, int(c * lift)) for c in rgb))
+                if not water: put(x * S, sy + T, F, tuple(int(c * lift * 0.68) for c in rgb))
+    def chunk(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d))
+    raw = b''.join(b'\x00' + bytes(img[r * W * 3:(r + 1) * W * 3]) for r in range(H))
+    path.write_bytes(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b''))
+
 def biome_commands(cells, ox, oy, oz):
-    """Absolute /fillbiome commands for the SafariVip zones pasted with its origin at (ox, oy, oz)."""
+    """Absolute /fillbiome commands for the SafariVip biome boxes pasted with its origin at (ox, oy, oz)."""
     return [f"fillbiome {ox + c['from'][0]} {oy + c['from'][1]} {oz + c['from'][2]} {ox + c['to'][0]} {oy + c['to'][1]} {oz + c['to'][2]} {c['biome']}"
             for c in cells]
 
@@ -912,13 +1175,15 @@ def main():
         b = build()
         (out / f'atlas-warp-{b.name.lower()}.litematic').write_bytes(b.litematic())
         preview(b, out / f'atlas-warp-{b.name.lower()}-preview.png')
-        summary[b.name] = {'file': f'atlas-warp-{b.name.lower()}.litematic', 'size': [SIZE, HEIGHT, SIZE],
+        oblique_view(b, out / f'atlas-warp-{b.name.lower()}-view.png')
+        summary[b.name] = {'file': f'atlas-warp-{b.name.lower()}.litematic', 'size': [b.size, HEIGHT, b.size],
                            'arrival': b.arrival, 'palette': len(b.palette), 'blocks': sum(1 for v in b.cells if v), 'notes': b.notes}
         summary[b.name]['water_leaks'] = water_leaks(b)
         if b.name == 'SafariVip':
-            (out / 'safarivip-zones.json').write_text(json.dumps([zone_inventory(b, c) for c in b.notes['biome_cells']], indent=1) + '\n')
+            (out / 'safarivip-zones.json').write_text(json.dumps(b.zones, indent=1) + '\n')
+            (out / 'safarivip-biomes.json').write_text(json.dumps(b.biome_boxes, indent=1) + '\n')
             if args.safarivip_origin:
-                (out / 'safarivip-fillbiome.txt').write_text('\n'.join(biome_commands(b.notes['biome_cells'], *args.safarivip_origin)) + '\n')
+                (out / 'safarivip-fillbiome.txt').write_text('\n'.join(biome_commands(b.biome_boxes, *args.safarivip_origin)) + '\n')
         print(b.name, summary[b.name]['blocks'], 'blocos,', len(b.palette), 'tipos, vazamentos de água:', summary[b.name]['water_leaks'])
     (out / 'warps.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n')
 
