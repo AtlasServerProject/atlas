@@ -1,6 +1,7 @@
 package io.atlas.client;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -9,6 +10,7 @@ import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 
 public final class AtlasClient implements ClientModInitializer {
  public void onInitializeClient(){
+  ClientLifecycleEvents.CLIENT_STARTED.register(AtlasWindowIcon::apply);
   ClientTickEvents.END_CLIENT_TICK.register(client->{
    if(client.screen instanceof TitleScreen){client.setScreen(new AtlasTitleScreen());return;}
    if(client.player!=null && client.screen instanceof ContainerScreen screen && screen.getTitle().getString().startsWith("Atlas Mart • ") && screen.getMenu().slots.size()==90){
@@ -16,6 +18,7 @@ public final class AtlasClient implements ClientModInitializer {
    }
   });
   ScreenEvents.AFTER_INIT.register((client,screen,w,h)->{
+   if(screen instanceof net.minecraft.client.gui.screens.DisconnectedScreen) AtlasConnectionDiagnostic.report(screen.getNarrationMessage().getString());
    if(screen instanceof PauseScreen)
     ScreenEvents.afterRender(screen).register((s,g,mx,my,delta)->{
      g.fill(0,0,s.width,25,0xE6101B30);g.fill(0,24,s.width,25,0xFF52DEF2);

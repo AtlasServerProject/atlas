@@ -1,6 +1,6 @@
-# Atlas Interface 1.1.1
+# Atlas Interface 1.1.2
 
-Mod de cliente para Minecraft 1.21.1, Fabric Loader >=0.17.3, Java 21 e Fabric API. Não instalar Atlas Core no cliente: somente atlas-interface-1.1.1.jar.
+Mod de cliente para Minecraft 1.21.1, Fabric Loader >=0.17.3, Java 21 e Fabric API. Não instalar Atlas Core no cliente: somente atlas-interface-1.1.2.jar.
 
 Tela própria do Atlas Mart: categorias separadas por NPC, abas Comprar/Vender, busca, ícones originais dos itens instalados, lista rolável, quantidade, total, saldo e confirmação. Reapresenta os menus Atlas Core >=1.39.1 existentes e envia cliques vanilla; preço/quantidade/saldo, proximidade e entrega continuam validados pelo servidor. Não adiciona protocolo de compra que aceite preço do cliente. Jogadores sem este mod continuam usando o menu de baú.
 
@@ -23,3 +23,7 @@ Testado com execução real Minecraft 1.21.1/Fabric em display virtual isolado a
 ## 1.1.1 — Endereço atual do Atlas
 
 O botão Jogar Agora usa `stapling-gpo.tun.ply.gg`, consistente com o Atlas Launcher 0.4.0. Mesma interface, protocolo de lojas e compatibilidade Minecraft 1.21.1/Fabric/Java 21 da versão anterior. Não requer atualização do Atlas Core ou reinício do servidor.
+
+## 1.1.2 — Ícone da janela
+
+Aplica o ícone Atlas à janela GLFW e à entrada da barra de tarefas do Windows no evento CLIENT_STARTED. Os PNGs de 16, 32, 48 e 256 pixels são extraídos sem alterações do ICO existente do Atlas. Buffers nativos são liberados após a chamada; falha conserva o ícone padrão e registra aviso. Build Gradle passou e recursos/registro do callback foram inspecionados no JAR. Validação visual no Windows fica pendente do jogador.
