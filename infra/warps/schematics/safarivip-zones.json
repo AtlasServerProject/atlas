@@ -1,0 +1,1047 @@
+[
+ {
+  "biome": "minecraft:the_end",
+  "blocks": [
+   "minecraft:end_rod",
+   "minecraft:end_stone",
+   "minecraft:obsidian"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:end_highlands",
+  "blocks": [
+   "minecraft:end_stone",
+   "minecraft:purpur_pillar"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:end_midlands",
+  "blocks": [
+   "minecraft:chorus_flower",
+   "minecraft:end_stone",
+   "minecraft:purpur_pillar"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:small_end_islands",
+  "blocks": [
+   "minecraft:end_stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:end_barrens",
+  "blocks": [
+   "minecraft:chorus_flower",
+   "minecraft:end_stone",
+   "minecraft:purpur_pillar"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:the_void",
+  "blocks": [
+   "minecraft:end_stone",
+   "minecraft:obsidian"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:deep_dark",
+  "blocks": [
+   "minecraft:deepslate",
+   "minecraft:sculk"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:dripstone_caves",
+  "blocks": [
+   "minecraft:coal_ore",
+   "minecraft:copper_ore",
+   "minecraft:cracked_stone_bricks",
+   "minecraft:diamond_ore",
+   "minecraft:dripstone_block",
+   "minecraft:iron_ore",
+   "minecraft:mossy_stone_bricks",
+   "minecraft:pointed_dripstone",
+   "minecraft:rail",
+   "minecraft:redstone_ore",
+   "minecraft:stone",
+   "minecraft:stone_bricks"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:nether_wastes",
+  "blocks": [
+   "minecraft:blackstone",
+   "minecraft:lava",
+   "minecraft:nether_gold_ore",
+   "minecraft:nether_quartz_ore",
+   "minecraft:netherrack",
+   "minecraft:polished_blackstone_wall"
+  ],
+  "water": false,
+  "lava": true,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:crimson_forest",
+  "blocks": [
+   "minecraft:crimson_fungus",
+   "minecraft:crimson_nylium",
+   "minecraft:crimson_roots",
+   "minecraft:crimson_stem",
+   "minecraft:nether_wart_block",
+   "minecraft:netherrack",
+   "minecraft:shroomlight"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:warped_forest",
+  "blocks": [
+   "minecraft:netherrack",
+   "minecraft:shroomlight",
+   "minecraft:warped_fungus",
+   "minecraft:warped_nylium",
+   "minecraft:warped_roots",
+   "minecraft:warped_stem",
+   "minecraft:warped_wart_block"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:soul_sand_valley",
+  "blocks": [
+   "minecraft:basalt",
+   "minecraft:bone_block",
+   "minecraft:netherrack",
+   "minecraft:soul_sand",
+   "minecraft:soul_soil"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:basalt_deltas",
+  "blocks": [
+   "minecraft:basalt",
+   "minecraft:blackstone",
+   "minecraft:lava",
+   "minecraft:magma_block",
+   "minecraft:netherrack",
+   "minecraft:polished_blackstone_wall"
+  ],
+  "water": false,
+  "lava": true,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:lush_caves",
+  "blocks": [
+   "minecraft:azalea",
+   "minecraft:big_dripleaf",
+   "minecraft:clay",
+   "minecraft:flowering_azalea",
+   "minecraft:glowstone",
+   "minecraft:moss_block",
+   "minecraft:moss_carpet",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:stony_peaks",
+  "blocks": [
+   "minecraft:calcite",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:iron_ore",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:windswept_gravelly_hills",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:gravel",
+   "minecraft:redstone_ore",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:jagged_peaks",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:snow",
+   "minecraft:snow_block",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:frozen_peaks",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:packed_ice",
+   "minecraft:snow",
+   "minecraft:snow_block",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:snowy_slopes",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:snow",
+   "minecraft:snow_block",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:grove",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:light_blue_concrete",
+   "minecraft:snow",
+   "minecraft:snow_block",
+   "minecraft:spruce_leaves",
+   "minecraft:spruce_log",
+   "minecraft:stone",
+   "minecraft:white_concrete"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:ice_spikes",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:packed_ice",
+   "minecraft:snow",
+   "minecraft:snow_block",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:windswept_hills",
+  "blocks": [
+   "minecraft:azure_bluet",
+   "minecraft:coal_ore",
+   "minecraft:cracked_stone_bricks",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:mossy_stone_bricks",
+   "minecraft:oxeye_daisy",
+   "minecraft:rail",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:stone_bricks"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:windswept_forest",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:oak_leaves",
+   "minecraft:oak_log",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:stony_shore",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:sand",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:snowy_plains",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:snow",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:snowy_taiga",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:snow",
+   "minecraft:spruce_leaves",
+   "minecraft:spruce_log",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:old_growth_spruce_taiga",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:mossy_cobblestone",
+   "minecraft:snow",
+   "minecraft:spruce_leaves",
+   "minecraft:spruce_log",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:plains",
+  "blocks": [
+   "cobblemon:pc",
+   "minecraft:azure_bluet",
+   "minecraft:cobblestone",
+   "minecraft:cyan_concrete",
+   "minecraft:cyan_stained_glass",
+   "minecraft:dirt",
+   "minecraft:gold_block",
+   "minecraft:grass_block",
+   "minecraft:lightning_rod",
+   "minecraft:oak_leaves",
+   "minecraft:oak_log",
+   "minecraft:oxeye_daisy",
+   "minecraft:pumpkin",
+   "minecraft:quartz_bricks",
+   "minecraft:quartz_pillar",
+   "minecraft:short_grass",
+   "minecraft:smooth_quartz",
+   "minecraft:stone",
+   "minecraft:tall_grass",
+   "minecraft:white_concrete"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:meadow",
+  "blocks": [
+   "cobblemon:pc",
+   "cobblemon:saccharine_leaves",
+   "cobblemon:saccharine_log",
+   "minecraft:allium",
+   "minecraft:azure_bluet",
+   "minecraft:cake",
+   "minecraft:cyan_concrete",
+   "minecraft:cyan_stained_glass",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:gold_block",
+   "minecraft:grass_block",
+   "minecraft:lightning_rod",
+   "minecraft:oak_planks",
+   "minecraft:oxeye_daisy",
+   "minecraft:quartz_bricks",
+   "minecraft:quartz_pillar",
+   "minecraft:short_grass",
+   "minecraft:smooth_quartz",
+   "minecraft:stone",
+   "minecraft:tall_grass",
+   "minecraft:white_concrete"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:taiga",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:fern",
+   "minecraft:grass_block",
+   "minecraft:pumpkin",
+   "minecraft:spruce_leaves",
+   "minecraft:spruce_log",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:frozen_river",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:ice",
+   "minecraft:sand",
+   "minecraft:snow",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:deep_frozen_ocean",
+  "blocks": [
+   "minecraft:gravel",
+   "minecraft:packed_ice",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:snowy_beach",
+  "blocks": [
+   "minecraft:sand",
+   "minecraft:snow",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:old_growth_pine_taiga",
+  "blocks": [
+   "minecraft:dirt",
+   "minecraft:fern",
+   "minecraft:mossy_cobblestone",
+   "minecraft:podzol",
+   "minecraft:spruce_leaves",
+   "minecraft:spruce_log",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:dark_forest",
+  "blocks": [
+   "minecraft:clay",
+   "minecraft:dark_oak_leaves",
+   "minecraft:dark_oak_log",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:mushroom_stem",
+   "minecraft:red_mushroom_block",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:forest",
+  "blocks": [
+   "minecraft:azure_bluet",
+   "minecraft:cornflower",
+   "minecraft:cyan_concrete",
+   "minecraft:cyan_stained_glass",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:gold_block",
+   "minecraft:grass_block",
+   "minecraft:lightning_rod",
+   "minecraft:oak_leaves",
+   "minecraft:oak_log",
+   "minecraft:quartz_bricks",
+   "minecraft:quartz_pillar",
+   "minecraft:short_grass",
+   "minecraft:smooth_quartz",
+   "minecraft:stone",
+   "minecraft:tall_grass",
+   "minecraft:white_concrete"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:flower_forest",
+  "blocks": [
+   "minecraft:allium",
+   "minecraft:blue_orchid",
+   "minecraft:cornflower",
+   "minecraft:cyan_concrete",
+   "minecraft:cyan_stained_glass",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:gold_block",
+   "minecraft:grass_block",
+   "minecraft:lightning_rod",
+   "minecraft:lily_of_the_valley",
+   "minecraft:oak_leaves",
+   "minecraft:orange_tulip",
+   "minecraft:oxeye_daisy",
+   "minecraft:pink_tulip",
+   "minecraft:poppy",
+   "minecraft:quartz_bricks",
+   "minecraft:quartz_pillar",
+   "minecraft:red_tulip",
+   "minecraft:smooth_quartz",
+   "minecraft:stone",
+   "minecraft:torchflower",
+   "minecraft:white_concrete",
+   "minecraft:white_tulip"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:birch_forest",
+  "blocks": [
+   "cobblemon:cheri_berry",
+   "cobblemon:oran_berry",
+   "cobblemon:pecha_berry",
+   "minecraft:azure_bluet",
+   "minecraft:birch_leaves",
+   "minecraft:birch_log",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:oxeye_daisy",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:frozen_ocean",
+  "blocks": [
+   "minecraft:gravel",
+   "minecraft:packed_ice",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:deep_cold_ocean",
+  "blocks": [
+   "minecraft:gravel",
+   "minecraft:kelp",
+   "minecraft:kelp_plant",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:mushroom_fields",
+  "blocks": [
+   "minecraft:brown_mushroom",
+   "minecraft:dirt",
+   "minecraft:mycelium",
+   "minecraft:red_mushroom",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:swamp",
+  "blocks": [
+   "minecraft:grass_block",
+   "minecraft:lily_pad",
+   "minecraft:mud",
+   "minecraft:oak_leaves",
+   "minecraft:oak_log",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:mangrove_swamp",
+  "blocks": [
+   "minecraft:lily_pad",
+   "minecraft:mud",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:cherry_grove",
+  "blocks": [
+   "minecraft:cherry_leaves",
+   "minecraft:cherry_log",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:pink_petals",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:old_growth_birch_forest",
+  "blocks": [
+   "minecraft:azure_bluet",
+   "minecraft:birch_leaves",
+   "minecraft:birch_log",
+   "minecraft:cornflower",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:oxeye_daisy",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:river",
+  "blocks": [
+   "minecraft:cornflower",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:poppy",
+   "minecraft:sand",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:sugar_cane",
+   "minecraft:tall_grass",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:cold_ocean",
+  "blocks": [
+   "minecraft:gravel",
+   "minecraft:kelp",
+   "minecraft:kelp_plant",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:deep_ocean",
+  "blocks": [
+   "minecraft:gravel",
+   "minecraft:kelp",
+   "minecraft:kelp_plant",
+   "minecraft:seagrass",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:desert",
+  "blocks": [
+   "minecraft:cactus",
+   "minecraft:chiseled_sandstone",
+   "minecraft:cut_sandstone",
+   "minecraft:dead_bush",
+   "minecraft:orange_terracotta",
+   "minecraft:sand",
+   "minecraft:sandstone",
+   "minecraft:stone"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:badlands",
+  "blocks": [
+   "minecraft:dead_bush",
+   "minecraft:orange_terracotta",
+   "minecraft:red_sand",
+   "minecraft:stone",
+   "minecraft:terracotta"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:eroded_badlands",
+  "blocks": [
+   "minecraft:brown_terracotta",
+   "minecraft:dead_bush",
+   "minecraft:orange_terracotta",
+   "minecraft:red_sand",
+   "minecraft:red_terracotta",
+   "minecraft:stone",
+   "minecraft:terracotta",
+   "minecraft:white_terracotta",
+   "minecraft:yellow_terracotta"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:sunflower_plains",
+  "blocks": [
+   "minecraft:cornflower",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:sunflower",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:savanna",
+  "blocks": [
+   "minecraft:acacia_leaves",
+   "minecraft:acacia_log",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:beach",
+  "blocks": [
+   "minecraft:grass_block",
+   "minecraft:jungle_leaves",
+   "minecraft:jungle_log",
+   "minecraft:sand",
+   "minecraft:stone",
+   "minecraft:sugar_cane",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:lukewarm_ocean",
+  "blocks": [
+   "minecraft:kelp",
+   "minecraft:kelp_plant",
+   "minecraft:sand",
+   "minecraft:seagrass",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:deep_lukewarm_ocean",
+  "blocks": [
+   "minecraft:kelp",
+   "minecraft:kelp_plant",
+   "minecraft:sand",
+   "minecraft:seagrass",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:wooded_badlands",
+  "blocks": [
+   "minecraft:coarse_dirt",
+   "minecraft:grass_block",
+   "minecraft:stone",
+   "minecraft:terracotta"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:savanna_plateau",
+  "blocks": [
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:windswept_savanna",
+  "blocks": [
+   "minecraft:coarse_dirt",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:jungle",
+  "blocks": [
+   "minecraft:chiseled_stone_bricks",
+   "minecraft:cobblestone",
+   "minecraft:cyan_wool",
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:jungle_leaves",
+   "minecraft:jungle_log",
+   "minecraft:mossy_cobblestone",
+   "minecraft:polished_blackstone",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:smooth_quartz",
+   "minecraft:stone",
+   "minecraft:tall_grass",
+   "minecraft:white_wool"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:bamboo_jungle",
+  "blocks": [
+   "minecraft:bamboo",
+   "minecraft:cyan_wool",
+   "minecraft:dirt",
+   "minecraft:podzol",
+   "minecraft:polished_blackstone",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:smooth_quartz",
+   "minecraft:stone",
+   "minecraft:tall_grass",
+   "minecraft:white_wool"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:sparse_jungle",
+  "blocks": [
+   "minecraft:dandelion",
+   "minecraft:dirt",
+   "minecraft:grass_block",
+   "minecraft:jungle_leaves",
+   "minecraft:jungle_log",
+   "minecraft:poppy",
+   "minecraft:short_grass",
+   "minecraft:stone",
+   "minecraft:tall_grass"
+  ],
+  "water": false,
+  "lava": false,
+  "open_sky": true,
+  "covered": true
+ },
+ {
+  "biome": "minecraft:ocean",
+  "blocks": [
+   "minecraft:gravel",
+   "minecraft:kelp",
+   "minecraft:kelp_plant",
+   "minecraft:seagrass",
+   "minecraft:stone",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ },
+ {
+  "biome": "minecraft:warm_ocean",
+  "blocks": [
+   "minecraft:brain_coral_block",
+   "minecraft:bubble_coral_block",
+   "minecraft:fire_coral_block",
+   "minecraft:horn_coral_block",
+   "minecraft:sand",
+   "minecraft:seagrass",
+   "minecraft:stone",
+   "minecraft:tube_coral_block",
+   "minecraft:water"
+  ],
+  "water": true,
+  "lava": false,
+  "open_sky": true,
+  "covered": false
+ }
+]

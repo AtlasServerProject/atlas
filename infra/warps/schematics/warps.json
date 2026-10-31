@@ -87,22 +87,851 @@
     "arrival": {
       "x": 63,
       "y": 17,
-      "z": 113,
+      "z": 121,
       "yaw": 180
     },
-    "palette": 45,
-    "blocks": 110376,
+    "palette": 155,
+    "blocks": 269296,
     "notes": {
-      "biomes": {
-        "nw": "campo florido",
-        "ne": "lago",
-        "sw": "morros rochosos",
-        "se": "taiga nevada"
-      },
-      "lodge": {
+      "biome_cells": [
+        {
+          "biome": "minecraft:the_end",
+          "from": [
+            0,
+            0,
+            0
+          ],
+          "to": [
+            15,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:end_highlands",
+          "from": [
+            16,
+            0,
+            0
+          ],
+          "to": [
+            31,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:end_midlands",
+          "from": [
+            32,
+            0,
+            0
+          ],
+          "to": [
+            47,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:small_end_islands",
+          "from": [
+            48,
+            0,
+            0
+          ],
+          "to": [
+            63,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:end_barrens",
+          "from": [
+            64,
+            0,
+            0
+          ],
+          "to": [
+            79,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:the_void",
+          "from": [
+            80,
+            0,
+            0
+          ],
+          "to": [
+            95,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:deep_dark",
+          "from": [
+            96,
+            0,
+            0
+          ],
+          "to": [
+            111,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:dripstone_caves",
+          "from": [
+            112,
+            0,
+            0
+          ],
+          "to": [
+            127,
+            55,
+            15
+          ]
+        },
+        {
+          "biome": "minecraft:nether_wastes",
+          "from": [
+            0,
+            0,
+            16
+          ],
+          "to": [
+            15,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:crimson_forest",
+          "from": [
+            16,
+            0,
+            16
+          ],
+          "to": [
+            31,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:warped_forest",
+          "from": [
+            32,
+            0,
+            16
+          ],
+          "to": [
+            47,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:soul_sand_valley",
+          "from": [
+            48,
+            0,
+            16
+          ],
+          "to": [
+            63,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:basalt_deltas",
+          "from": [
+            64,
+            0,
+            16
+          ],
+          "to": [
+            79,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:lush_caves",
+          "from": [
+            80,
+            0,
+            16
+          ],
+          "to": [
+            95,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:stony_peaks",
+          "from": [
+            96,
+            0,
+            16
+          ],
+          "to": [
+            111,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:windswept_gravelly_hills",
+          "from": [
+            112,
+            0,
+            16
+          ],
+          "to": [
+            127,
+            55,
+            31
+          ]
+        },
+        {
+          "biome": "minecraft:jagged_peaks",
+          "from": [
+            0,
+            0,
+            32
+          ],
+          "to": [
+            15,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:frozen_peaks",
+          "from": [
+            16,
+            0,
+            32
+          ],
+          "to": [
+            31,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:snowy_slopes",
+          "from": [
+            32,
+            0,
+            32
+          ],
+          "to": [
+            47,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:grove",
+          "from": [
+            48,
+            0,
+            32
+          ],
+          "to": [
+            63,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:ice_spikes",
+          "from": [
+            64,
+            0,
+            32
+          ],
+          "to": [
+            79,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:windswept_hills",
+          "from": [
+            80,
+            0,
+            32
+          ],
+          "to": [
+            95,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:windswept_forest",
+          "from": [
+            96,
+            0,
+            32
+          ],
+          "to": [
+            111,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:stony_shore",
+          "from": [
+            112,
+            0,
+            32
+          ],
+          "to": [
+            127,
+            55,
+            47
+          ]
+        },
+        {
+          "biome": "minecraft:snowy_plains",
+          "from": [
+            0,
+            0,
+            48
+          ],
+          "to": [
+            15,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:snowy_taiga",
+          "from": [
+            16,
+            0,
+            48
+          ],
+          "to": [
+            31,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:old_growth_spruce_taiga",
+          "from": [
+            32,
+            0,
+            48
+          ],
+          "to": [
+            47,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:plains",
+          "from": [
+            48,
+            0,
+            48
+          ],
+          "to": [
+            63,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:meadow",
+          "from": [
+            64,
+            0,
+            48
+          ],
+          "to": [
+            79,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:taiga",
+          "from": [
+            80,
+            0,
+            48
+          ],
+          "to": [
+            95,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:frozen_river",
+          "from": [
+            96,
+            0,
+            48
+          ],
+          "to": [
+            111,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:deep_frozen_ocean",
+          "from": [
+            112,
+            0,
+            48
+          ],
+          "to": [
+            127,
+            55,
+            63
+          ]
+        },
+        {
+          "biome": "minecraft:snowy_beach",
+          "from": [
+            0,
+            0,
+            64
+          ],
+          "to": [
+            15,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:old_growth_pine_taiga",
+          "from": [
+            16,
+            0,
+            64
+          ],
+          "to": [
+            31,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:dark_forest",
+          "from": [
+            32,
+            0,
+            64
+          ],
+          "to": [
+            47,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:forest",
+          "from": [
+            48,
+            0,
+            64
+          ],
+          "to": [
+            63,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:flower_forest",
+          "from": [
+            64,
+            0,
+            64
+          ],
+          "to": [
+            79,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:birch_forest",
+          "from": [
+            80,
+            0,
+            64
+          ],
+          "to": [
+            95,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:frozen_ocean",
+          "from": [
+            96,
+            0,
+            64
+          ],
+          "to": [
+            111,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:deep_cold_ocean",
+          "from": [
+            112,
+            0,
+            64
+          ],
+          "to": [
+            127,
+            55,
+            79
+          ]
+        },
+        {
+          "biome": "minecraft:mushroom_fields",
+          "from": [
+            0,
+            0,
+            80
+          ],
+          "to": [
+            15,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:swamp",
+          "from": [
+            16,
+            0,
+            80
+          ],
+          "to": [
+            31,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:mangrove_swamp",
+          "from": [
+            32,
+            0,
+            80
+          ],
+          "to": [
+            47,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:cherry_grove",
+          "from": [
+            48,
+            0,
+            80
+          ],
+          "to": [
+            63,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:old_growth_birch_forest",
+          "from": [
+            64,
+            0,
+            80
+          ],
+          "to": [
+            79,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:river",
+          "from": [
+            80,
+            0,
+            80
+          ],
+          "to": [
+            95,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:cold_ocean",
+          "from": [
+            96,
+            0,
+            80
+          ],
+          "to": [
+            111,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:deep_ocean",
+          "from": [
+            112,
+            0,
+            80
+          ],
+          "to": [
+            127,
+            55,
+            95
+          ]
+        },
+        {
+          "biome": "minecraft:desert",
+          "from": [
+            0,
+            0,
+            96
+          ],
+          "to": [
+            15,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:badlands",
+          "from": [
+            16,
+            0,
+            96
+          ],
+          "to": [
+            31,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:eroded_badlands",
+          "from": [
+            32,
+            0,
+            96
+          ],
+          "to": [
+            47,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:sunflower_plains",
+          "from": [
+            48,
+            0,
+            96
+          ],
+          "to": [
+            63,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:savanna",
+          "from": [
+            64,
+            0,
+            96
+          ],
+          "to": [
+            79,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:beach",
+          "from": [
+            80,
+            0,
+            96
+          ],
+          "to": [
+            95,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:lukewarm_ocean",
+          "from": [
+            96,
+            0,
+            96
+          ],
+          "to": [
+            111,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:deep_lukewarm_ocean",
+          "from": [
+            112,
+            0,
+            96
+          ],
+          "to": [
+            127,
+            55,
+            111
+          ]
+        },
+        {
+          "biome": "minecraft:wooded_badlands",
+          "from": [
+            0,
+            0,
+            112
+          ],
+          "to": [
+            15,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:savanna_plateau",
+          "from": [
+            16,
+            0,
+            112
+          ],
+          "to": [
+            31,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:windswept_savanna",
+          "from": [
+            32,
+            0,
+            112
+          ],
+          "to": [
+            47,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:jungle",
+          "from": [
+            48,
+            0,
+            112
+          ],
+          "to": [
+            63,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:bamboo_jungle",
+          "from": [
+            64,
+            0,
+            112
+          ],
+          "to": [
+            79,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:sparse_jungle",
+          "from": [
+            80,
+            0,
+            112
+          ],
+          "to": [
+            95,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:ocean",
+          "from": [
+            96,
+            0,
+            112
+          ],
+          "to": [
+            111,
+            55,
+            127
+          ]
+        },
+        {
+          "biome": "minecraft:warm_ocean",
+          "from": [
+            112,
+            0,
+            112
+          ],
+          "to": [
+            127,
+            55,
+            127
+          ]
+        }
+      ],
+      "paste_hint": "superficie em Y=61 (origem Y=45) para os pés dos Pokémon ficarem em Y=62",
+      "plaza": {
         "x": 63,
         "y": 17,
-        "z": 61
+        "z": 63
       }
     },
     "water_leaks": 0

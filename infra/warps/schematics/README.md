@@ -7,9 +7,9 @@ Geradas por `infra/world-tools/warp-schematics.py` (Python puro, sementes fixas)
 | `atlas-warp-vip.litematic` | Avenida iluminada, praça com fonte, pavilhão com cúpula de vidro ciano e friso dourado, quatro jardins com bétulas, bancos |
 | `atlas-warp-raid.litematic` | Arena circular com anéis ciano, arquibancadas, muralha com quatro portões, pilares iluminados, cristais de ametista e pedestal central |
 | `atlas-warp-safari.litematic` | Relevo natural, lago, árvores, capim alto e flores, sebe na borda, posto de guarda-parque e torre de observação |
-| `atlas-warp-safarivip.litematic` | Quatro biomas (campo florido com cerejeiras, lago com ilhotas, morros rochosos, taiga nevada), chalé VIP central com friso dourado |
+| `atlas-warp-safarivip.litematic` | Tabuleiro 8×8 de zonas 16×16, uma para cada um dos 64 biomas vanilla, com terreno típico; praça urbana e chalé VIP no centro |
 
-Todas têm a chegada ao sul, sobre o emblema de Poké Bola: posição relativa `x63 y17 z113`, olhando para o norte (yaw 180). Depois de colar em `(X, Y, Z)`, ficar nesse ponto e usar `/setwarp <nome>`.
+Chegada ao sul, sobre o emblema de Poké Bola, olhando para o norte (yaw 180): posição relativa `x63 y17 z113` (SafariVip: `x63 y17 z121`). Depois de colar em `(X, Y, Z)`, ficar nesse ponto e usar `/setwarp <nome>`.
 
 ## Colar
 
@@ -22,4 +22,13 @@ Todas têm a chegada ao sul, sobre o emblema de Poké Bola: posição relativa `
 - Raid: o pedestal central tem quartzo cinzelado em `x63 y19 z63`; a toca de raid fixa fica em `x63 y20 z63`.
 - Safari e SafariVip: área de spawn é o terreno dentro da sebe (raio ~56 a partir de `x63 z63`). No SafariVip os quadrantes são noroeste campo florido, nordeste lago, sudoeste morros, sudeste taiga nevada.
 
-Acesso VIP, spawns do Safari e a toca de raid rotativa ainda não foram implementados.
+
+## SafariVip — 64 biomas
+
+O schematic leva só os blocos. O bioma de cada zona é aplicado depois de colar, com `/fillbiome` (comandos absolutos gerados por `python3 infra/world-tools/warp-schematics.py <saída> --safarivip-origin X Y Z`, um por zona, dentro do limite de volume do comando). Colar com a origem alinhada a múltiplos de 16 em X/Z e Y=45, para a superfície ficar em Y=61 e os Pokémon em Y=62: atende regras com `minY 62` e com `maxY 62`.
+
+Cobertura calculada por `infra/world-tools/spawn-coverage.py --zones safarivip-zones.json`, que cruza as 5.226 regras de spawn instaladas (Cobblemon 1.8.2, Mega Showdown, presets e tags de bioma/bloco) com o que cada zona realmente contém: **855 de 916 espécies implementadas (93,3%)**. Fora: 59 espécies sem spawn natural (lendárias/míticas de evento), Feebas e Milotic (pesca com condição rara). Estimativa por regra, não teste em jogo; a chance real de cada espécie depende do peso e da raridade da regra.
+
+Detalhes que existem por causa de regras específicas: concreto só na praça central e numa escultura da zona Grove (o preset "wild" bloqueia spawns a até 4 blocos de concreto); para-raios, bolo e PC na praça; árvore saccharine e bolo na Meadow; frutas do Cobblemon na Birch Forest; abóboras em Plains e Taiga; kelp nos oceanos; árvores na Beach; lago na Dark Forest (pesca); ruína de tijolos, minérios e diamante na Dripstone Caves; santuário coberto de arenito no Desert. Lava só no centro das zonas do Nether, cercada e a 5+ blocos das bordas; sem lanternas junto às zonas de neve.
+
+Acesso VIP, spawns próprios do Safari e a toca de raid rotativa ainda não foram implementados.
