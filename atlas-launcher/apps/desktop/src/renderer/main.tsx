@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { launcherDiagnostic, diagnosticText, type Diagnostic } from '../shared/diagnostics';
 import { createRoot } from 'react-dom/client';
 import type {
   AtlasBridge,
@@ -38,6 +39,29 @@ function App() {
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [observedError, setObservedError] = useState<Diagnostic>();
+  const [copied, setCopied] = useState(false);
+  const lastGameDiagnostic = useRef('');
+  useEffect(() => {
+    const diagnostic = runtime?.gameDiagnostic;
+    if (diagnostic && diagnostic.id !== lastGameDiagnostic.current) {
+      lastGameDiagnostic.current = diagnostic.id;
+      setObservedError(diagnostic);
+      setCopied(false);
+    }
+  }, [runtime?.gameDiagnostic?.id]);
+  const currentDiagnostic = error ? launcherDiagnostic(error) : observedError;
+  async function copyDiagnostic() {
+    if (!currentDiagnostic) return;
+    try {
+      await navigator.clipboard.writeText(
+        `${diagnosticText(currentDiagnostic)}\nLauncher: ${data?.version ?? PROJECT.version}\nModpack: ${runtime?.packVersion ?? 'não consultado'}`,
+      );
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
   useEffect(() => {
     window.atlas
       ?.bootstrap()
@@ -82,6 +106,11 @@ function App() {
   }, [runtime?.auth.status]);
   async function action(
     name:
+      | 'applyLauncherUpdate'
+      | 'checkLauncherUpdates'
+      | 'downloadLauncherUpdate'
+      | 'openLauncherDownloads'
+      | 'checkUpdates'
       | 'signInMicrosoft'
       | 'openMicrosoftVerification'
       | 'signOut'
@@ -93,7 +122,9 @@ function App() {
       await window.atlas?.[name]();
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : 'Não foi possível concluir. Tente novamente.',
+        error instanceof Error
+          ? error.message.replace(/^Error invoking remote method '[^']+': (?:Error: )?/, '')
+          : 'Não foi possível concluir. Tente novamente.',
       );
     }
   }
@@ -122,12 +153,15 @@ function App() {
       <WindowBar />
       {login ? (
         <Login
-          onExplore={() => setLogin(false)}
           onWebsite={website}
           auth={runtime?.auth}
           onSignIn={() => void action('signInMicrosoft')}
           onOpenMicrosoft={() => void action('openMicrosoftVerification')}
           onCancel={() => void action('signOut')}
+          onOffline={async (nickname) => {
+            if (!window.atlas) throw new Error('Abra o aplicativo desktop.');
+            await window.atlas.signInOffline(nickname);
+          }}
         />
       ) : (
         <div className="app-shell">
@@ -167,7 +201,13 @@ function App() {
                 </span>
                 <span>
                   {runtime?.auth.account?.name ?? 'Visitante'}
-                  <small>{runtime?.auth.account ? 'Microsoft · Java Edition' : 'Sem sessão'}</small>
+                  <small>
+                    {runtime?.auth.account
+                      ? runtime?.auth.account?.kind === 'offline'
+                        ? 'Offline · Login no servidor'
+                        : 'Microsoft · Java Edition'
+                      : 'Sem sessão'}
+                  </small>
                 </span>
               </button>
             </div>
@@ -200,14 +240,32 @@ function App() {
                 <Icon name="info" />
                 <div>
                   <strong>{runtime.installation.label}</strong>
-                  <small>{runtime.installation.message}</small>
+                  <small>
+                    {runtime.installation.diagnostic?.code} · {runtime.installation.message}
+                  </small>
                 </div>
                 <button className="secondary" onClick={() => void action('installMinecraft')}>
-                  Tentar novamente
+                  Verificar instalação
+                </button>
+                <button
+                  className="secondary"
+                  onClick={() =>
+                    setObservedError(
+                      runtime.installation.diagnostic ??
+                        launcherDiagnostic(runtime.installation.message),
+                    )
+                  }
+                >
+                  Ver orientação
                 </button>
               </div>
             )}
 
+            {runtime?.launchMessage && (
+              <p className="preview-notice" role="status">
+                {runtime.launchMessage}
+              </p>
+            )}
             {!window.atlas && (
               <div className="preview-notice">
                 <Icon name="info" size={14} />
@@ -242,9 +300,17 @@ function App() {
                 runtime={runtime}
                 onInstall={() => void action('installMinecraft')}
                 onCancel={() => void action('cancelInstallation')}
+                onCheck={() => {
+                  void action('checkUpdates');
+                  void action('checkLauncherUpdates');
+                }}
+                onDownloadLauncher={() => void action('downloadLauncherUpdate')}
+                onOpenDownloads={() => void action('openLauncherDownloads')}
+                onApplyLauncher={() => void action('applyLauncherUpdate')}
               />
             ) : (
               <Settings
+                runtime={runtime}
                 data={data}
                 settings={settings}
                 onChange={setSettings}
@@ -254,7 +320,9 @@ function App() {
               />
             )}
             <footer>
-              <span>Atlas Launcher {data?.version ?? '0.4.0'} · Prévia de desenvolvimento</span>
+              <span>
+                Atlas Launcher {data?.version ?? PROJECT.version} · Prévia de desenvolvimento
+              </span>
               <button className="text-button" onClick={website} disabled={!window.atlas}>
                 Site oficial <Icon name="external" size={12} />
               </button>
@@ -262,7 +330,7 @@ function App() {
           </main>
         </div>
       )}
-      {error && (
+      {currentDiagnostic && (
         <div className="modal-backdrop">
           <section
             className="error-dialog"
@@ -271,11 +339,41 @@ function App() {
             aria-labelledby="error-title"
           >
             <span className="error-icon">!</span>
-            <h2 id="error-title">Algo não saiu como esperado</h2>
-            <p>{error}</p>
-            <button className="primary" autoFocus onClick={() => setError('')}>
-              Entendi
-            </button>
+            <span className="diagnostic-code">{currentDiagnostic.code}</span>
+            <h2 id="error-title">{currentDiagnostic.title}</h2>
+            <p>{currentDiagnostic.explanation}</p>
+            <ol className="diagnostic-steps">
+              {currentDiagnostic.steps.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+            <p className="diagnostic-owner">Verificação: {currentDiagnostic.responsibility}</p>
+            <div className="diagnostic-actions">
+              <button className="secondary" onClick={() => void copyDiagnostic()}>
+                {copied ? 'Copiado' : 'Copiar orientação'}
+              </button>
+              <button
+                className="secondary"
+                onClick={() =>
+                  void window.atlas
+                    ?.openDiagnostics()
+                    .catch(() => setError('Não foi possível abrir os diagnósticos.'))
+                }
+              >
+                Abrir diagnósticos
+              </button>
+              <button
+                className="primary"
+                autoFocus
+                onClick={() => {
+                  setError('');
+                  setObservedError(undefined);
+                  setCopied(false);
+                }}
+              >
+                Entendi
+              </button>
+            </div>
           </section>
         </div>
       )}

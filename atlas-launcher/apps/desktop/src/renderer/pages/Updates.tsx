@@ -5,10 +5,18 @@ export function Updates({
   runtime,
   onInstall,
   onCancel,
+  onCheck,
+  onDownloadLauncher,
+  onOpenDownloads,
+  onApplyLauncher,
 }: {
   runtime?: RuntimeState;
   onInstall: () => void;
   onCancel: () => void;
+  onCheck: () => void;
+  onDownloadLauncher: () => void;
+  onOpenDownloads: () => void;
+  onApplyLauncher: () => void;
 }) {
   const state = runtime?.installation;
   const busy = state && ['checking', 'downloading-game', 'downloading-pack'].includes(state.status);
@@ -37,6 +45,15 @@ export function Updates({
       </div>
       <div className="updates-grid">
         <section className="panel">
+          <h2>Versões do modpack</h2>
+          <p role="status">{runtime?.updates?.message ?? 'Consulte novas versões oficiais.'}</p>
+          <button
+            className="secondary"
+            disabled={runtime?.busy || runtime?.gameRunning || !runtime}
+            onClick={onCheck}
+          >
+            {runtime?.updates?.status === 'checking' ? 'Consultando…' : 'Buscar atualizações'}
+          </button>
           <h2>Preparação do modpack</h2>
           <p>{state?.label ?? 'Prepare sua instalação Atlas.'}</p>
           <div className="inactive-progress" role="status">
@@ -95,7 +112,30 @@ export function Updates({
           </div>
           <section className="panel">
             <Icon name="info" />
-            <h3>Atualizações sem complicação</h3>
+            <h3>Atualizações do launcher</h3>
+            <p role="status">
+              {runtime?.launcherUpdate?.message ?? 'A fonte das versões é o site oficial do Atlas.'}
+            </p>
+            {runtime?.launcherUpdate?.status === 'available' && (
+              <button className="primary" onClick={onDownloadLauncher}>
+                Baixar nova versão
+              </button>
+            )}
+            {runtime?.launcherUpdate?.status === 'downloading' && (
+              <progress
+                max={runtime.launcherUpdate.total || 1}
+                value={runtime.launcherUpdate.completed}
+              />
+            )}
+            {runtime?.launcherUpdate?.status === 'downloaded' && (
+              <button
+                className="primary"
+                disabled={runtime.gameRunning || runtime.busy}
+                onClick={onApplyLauncher}
+              >
+                Reiniciar e atualizar
+              </button>
+            )}
             <p>
               O launcher verifica os arquivos oficiais e mostra o progresso real aqui. A barra
               mostra o estado real da instalação; o jogo só é liberado após conferir os arquivos.

@@ -1,84 +1,60 @@
-# Atlas Launcher 0.4.0
+# Atlas Launcher 0.7.1
 
-Aplicativo desktop independente para Atlas Cobblemon. Interface baseada na referência fornecida: login com arte lateral, menu compacto, Início, Modpack, Servidores, Conta, Configurações e Atualizações. Mantém a marca e os assets do Atlas.
+Launcher desktop do Atlas Cobblemon para Windows x64. Minecraft 1.21.1, Fabric 0.18.0, Java 21 e modpack Atlas 1.0.2-beta.4 (58 mods). Site: https://www.atlascobblemon.com.br. Servidor: stapling-gpo.tun.ply.gg.
 
-## Executável Windows para teste
+## Instalar uma vez
 
-Pacote Windows x64: `/home/somente/downloads/Atlas-Launcher-0.4.0-Windows-x64.zip`.
+Baixe o instalador na seção [Como jogar](https://www.atlascobblemon.com.br/how-to-play), feche versões antigas do launcher e execute `Atlas-Launcher-0.7.1-Setup-x64.exe`. Use o atalho Atlas Launcher depois de instalar. Não é necessário extrair ZIP, instalar Node.js ou preparar Java manualmente.
 
-Extraia **todo o ZIP** e abra `AtlasLauncher.exe`. Preserve as DLLs e a pasta `resources` ao lado do executável. Node.js não é necessário no computador do jogador. Este é um pacote executável de prévia, sem instalador, assinatura Authenticode ou atualizador do aplicativo. Não foi executado em Windows nesta sessão; a validação nativa ainda é necessária. Não desative proteções do Windows para abri-lo.
+A instalação é por usuário, sem administrador, no destino fixo `LOCALAPPDATA/Programs/AtlasLauncher`. Mundos, modpack, configurações e cache permanecem no mesmo userData do aplicativo, fora da pasta substituída. Quem usa uma prévia em ZIP precisa fazer essa migração uma única vez.
 
-Download e instalação de Minecraft 1.21.1, Fabric 0.18.0, Java 21 e 57 mods estão integrados. O fluxo Microsoft e a inicialização estão implementados, mas o login real depende do Client ID próprio do Atlas e de validação em Windows. **Conhecer o launcher** abre a navegação sem criar sessão. Contagens de jogadores, notícias e versões instaladas não são simuladas. Emerald é apresentado como lobby do Atlas, sem inventar endereço de outro servidor.
+Modo offline por nickname: use seu nick do Atlas e autentique-se com `/login` ou `/register` dentro do Minecraft. Não há coleta da senha do servidor no launcher. Login Microsoft permanece preparado, mas depende do Client ID próprio do Atlas e de teste real da autorização.
 
-## Desenvolvimento
+## Atualizações
 
-Requisitos: Node.js 22.12+ e npm; Java 21 para o backend. Windows é a plataforma inicial de distribuição. Na pasta `atlas-launcher`:
+- O aplicativo instalado consulta versões ao abrir e a cada cinco minutos, baixa instaladores assinados e aplica ao fechar quando o jogo e as operações terminaram.
+- **Reiniciar e atualizar** permite aplicar uma atualização pronta imediatamente.
+- Se o jogador fechar a janela com Minecraft aberto, o launcher permanece oculto até o jogo terminar e então conclui o fechamento/atualização.
+- O instalador espera a saída do PID pai, usa staging e conserva a versão anterior; a ativação é revertida se a troca de diretórios falhar.
+- Desinstalar remove programa e atalhos; não remove os dados locais do jogo.
+
+Fontes no site oficial:
+
+- `/launcher/windows/latest.json`: manifesto Ed25519 dos instaladores Windows.
+- `/launcher/modpack.json`: manifesto Ed25519 do modpack.
+- `/launcher/latest.json`: último ZIP legado, mantido para compatibilidade de distribuição.
+
+Partes e pacote completo têm SHA-256; o executável é reconferido imediatamente antes de iniciar. A chave privada de publicação fica fora do repositório e dos pacotes. Não há certificado Authenticode configurado; a confiança do atualizador usa a assinatura Ed25519 fixada no aplicativo. ASAR não é criptografia.
+
+## Desenvolvimento e distribuição
+
+Node.js 22.12+ e npm. Java 21 somente para o backend independente.
 
 ```bash
 npm ci
 npm run dev
-```
-
-Vite usa `127.0.0.1:5179`. React tem recarga automática; alterações em main/preload exigem reiniciar. Electron 45 baixa seu binário no primeiro `npm run setup`; dev/start executam esse preparo automaticamente. Não use `--no-sandbox`.
-
-Build local e geração Windows:
-
-```bash
-npm run build
-npm start
-npm run package:windows
-```
-
-O empacotamento usa `@electron/packager` 20.4.0, Electron 45.0.0, runtime Windows x64 com checksums verificados, código em ASAR e ícone Atlas. A saída fica em `artifacts/windows/Atlas Launcher-win32-x64`. Empacotar não cria uma assinatura de distribuição.
-
-## Backend separado
-
-O backend continua na fundação 0.1.0, sem alterações na API do site ou bancos do servidor:
-
-```bash
-cd services/backend
-./mvnw spring-boot:run
-```
-
-No Windows use `mvnw.cmd`. Escuta somente `127.0.0.1:8091`, sem MySQL nesta fase. Não precisa estar aberto para explorar a interface.
-
-## Verificação
-
-```bash
 npm run typecheck
 npm test
 npm run build
 npm run format:check
 npm audit
-cd services/backend
-./mvnw verify
 ```
 
-Preferências RAM/resolução/tela cheia/minimização são persistidas localmente com validação no processo principal. São aplicadas ao iniciar o jogo. O renderer não acessa arquivos, credenciais, shell ou comandos arbitrários. Controles da janela usam IPC restrito.
+Vite: 127.0.0.1:5179. Dev/start preparam Electron automaticamente. Não desative o sandbox. Main/preload exigem reinício após mudanças; React usa recarga de desenvolvimento. Não existem APIs genéricas de filesystem/shell/URLs no renderer.
 
-## Documentação
+Para gerar o instalador em Linux, disponibilize NSIS 3.10 em `artifacts/nsis-tools/root/usr`. Nesta VM foram baixados os pacotes oficiais Ubuntu `nsis` e `nsis-common` com `apt download` e extraídos com `dpkg-deb -x`, sem instalação de sistema.
 
-- [Arquitetura](docs/architecture.md)
-- [Execução e limitação do sandbox Linux](docs/development.md)
-- [API](docs/api.md)
-- [Manifestos futuros](docs/manifest-spec.md)
-- [Segurança](docs/security.md)
-- [Verificações](docs/verification.md)
+```bash
+npm run package:installer
+node scripts/publish-installer.mjs /caminho/Atlas-Launcher-VERSAO-Setup-x64.exe
+```
 
-Próximos passos: cadastrar o aplicativo Microsoft, validar login e jogo em Windows e preparar distribuição assinada. Sem conta oficial autenticada, Jogar permanece bloqueado.
+O publicador produz metadados assinados em `atlas-web/public/launcher/windows` e partes estáticas de até 20 MiB em `atlas-web/.launcher-distribution`, ignoradas pelo Git. Em atlas-web, execute `npm run build:pages` e publique o diretório compilado no Cloudflare Pages. O preparo confere os hashes e inclui as partes por hardlink/cópia. Em checkout novo, gere/restaure todas as partes referenciadas antes de publicar; o build falha se faltarem arquivos. Publique manifesto e arquivos no mesmo deploy.
 
-## Versão 0.4.0
+O backend Java em services/backend continua independente, sem acesso às credenciais de produção do Atlas. Nenhum serviço Minecraft/API é reiniciado para atualizar o launcher.
 
-- Ícone Windows e favicon derivados da logo oficial Atlas, substituindo o favicon Angular herdado. A interface usa máscara circular e composição com o fundo para eliminar o quadrado da logo sem alterar a arte original.
-- Site: https://www.atlascobblemon.com.br. Endereço Minecraft informado pelo administrador: `stapling-gpo.tun.ply.gg`.
-- Vídeos locais Milotic, surf e farol reaproveitados de `atlas-web/public/media`. Loop sem áudio, posters de reserva, controles de pausa e respeito à redução de movimento/visibilidade. Vídeos incluídos no pacote: não dependem do site estar acessível. São cenas ilustrativas do Cobblemon, não capturas do servidor Atlas.
-- Fundação da fase 3 em `src/main/modpack`: validação de envelope Ed25519, schema, origens, caminhos Windows, SHA-256 e planejamento por arquivo. Release real 1.0.2-beta.2 assinada, com 56 mods de fontes oficiais e Atlas Interface 1.1.1 incluído.
+## Validação e limites
 
-## Instalação e login 0.4.0
+61 testes automatizados passaram, incluindo identidade da instalação, bloqueio durante jogo/operações, assinatura, corrupção, preparação do instalador e argumentos fixos sem shell. Build Electron e NSIS passaram. Os bytes do executável e do ASAR extraídos do instalador foram comparados ao pacote original. A instalação e atualização entre duas versões em Windows real ainda precisam de validação; nenhum binário Windows foi executado nesta VM Linux.
 
-No Windows, use **Conhecer o launcher → Preparar Minecraft** para instalar sem autenticação. Para jogar, configure o cadastro próprio do Atlas e entre com uma conta Microsoft que possua Minecraft Java.
-
-- [Cadastro Microsoft](docs/microsoft-login.md)
-- [Instalação, requisitos e limites](docs/installation.md)
-
-A API do site e o servidor Minecraft não foram implantados ou reiniciados nesta tarefa. O único ajuste adicional no mod cliente foi atualizar o endereço do botão Jogar Agora, gerando Atlas Interface 1.1.1.
+Documentação: [instalação](docs/installation.md), [Microsoft](docs/microsoft-login.md), [segurança](docs/security.md), [verificações](docs/verification.md), [arquitetura](docs/architecture.md).

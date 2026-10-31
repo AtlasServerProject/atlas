@@ -1,9 +1,10 @@
+import { PROJECT } from '../../shared/project';
 import { Icon } from './Icon';
 export function WindowBar() {
   return (
     <div className="window-bar">
       <span>
-        ATLAS LAUNCHER <b>PRÉVIA 0.4.0</b>
+        ATLAS LAUNCHER <b>PRÉVIA {PROJECT.version}</b>
       </span>
       <div>
         {(['minimize', 'maximize', 'close'] as const).map((action) => (

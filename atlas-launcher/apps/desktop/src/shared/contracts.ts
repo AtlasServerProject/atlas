@@ -15,6 +15,17 @@ export interface Bootstrap {
   settings: Settings;
 }
 export interface RuntimeState {
+  gameDiagnostic?: import('./diagnostics').Diagnostic & { id: string };
+  launcherUpdate?: {
+    status: string;
+    message: string;
+    version: string;
+    completed: number;
+    total: number;
+  };
+  updates?: { status: string; message: string; checkedAt: string };
+  memory?: { totalMb: number; availableMb: number; usableMb: number; recommendedMb: number };
+  launchMessage?: string;
   auth: AuthState;
   installation: InstallationState;
   canInstall: boolean;
@@ -26,6 +37,12 @@ export interface RuntimeState {
   busy: boolean;
 }
 export interface AtlasBridge {
+  applyLauncherUpdate(): Promise<void>;
+  checkLauncherUpdates(): Promise<void>;
+  downloadLauncherUpdate(): Promise<void>;
+  openLauncherDownloads(): Promise<void>;
+  signInOffline(nickname: string): Promise<void>;
+  checkUpdates(): Promise<void>;
   openDiagnostics(): Promise<void>;
   runtimeState(): Promise<RuntimeState>;
   signInMicrosoft(): Promise<void>;
@@ -41,6 +58,12 @@ export interface AtlasBridge {
 }
 export type WindowAction = 'minimize' | 'maximize' | 'close';
 export const CHANNELS = {
+  launcherApply: 'atlas:launcher:apply',
+  launcherCheck: 'atlas:launcher:check',
+  launcherDownload: 'atlas:launcher:download',
+  launcherFolder: 'atlas:launcher:folder',
+  offline: 'atlas:auth:offline',
+  updates: 'atlas:updates:check',
   diagnostics: 'atlas:diagnostics',
   runtime: 'atlas:runtime',
   signIn: 'atlas:auth:signin',

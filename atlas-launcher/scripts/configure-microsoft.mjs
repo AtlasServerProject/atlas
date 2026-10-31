@@ -12,4 +12,4 @@ const path = new URL('../apps/desktop/resources/launcher-config.json', import.me
 const config = JSON.parse(await readFile(path, 'utf8'));
 config.microsoftClientId = clientId;
 await writeFile(path, JSON.stringify(config, null, 2) + '\n');
-console.log('Client ID público configurado. Execute npm run build ou npm run package:windows.');
+console.log('Client ID público configurado. Execute npm run build ou npm run package:installer.');

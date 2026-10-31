@@ -4,21 +4,31 @@ import { PROJECT } from '../../shared/project';
 import { useState } from 'react';
 import { Icon } from '../components/Icon';
 export function Login({
-  onExplore,
   onWebsite,
   auth,
   onSignIn,
   onOpenMicrosoft,
   onCancel,
+  onOffline,
 }: {
-  onExplore: () => void;
   onWebsite: () => void;
   auth?: AuthState;
   onSignIn: () => void;
   onOpenMicrosoft: () => void;
   onCancel: () => void;
+  onOffline: (nickname: string) => Promise<void>;
 }) {
-  const [mode, setMode] = useState('official');
+  const [mode, setMode] = useState('nickname');
+  const [nickname, setNickname] = useState(() => {
+    try {
+      const saved = localStorage.getItem('atlas:last-offline-nickname') ?? '';
+      return /^[A-Za-z0-9_]{3,16}$/.test(saved) ? saved : '';
+    } catch {
+      return '';
+    }
+  });
+  const [offlineError, setOfflineError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   return (
     <div className="login-screen">
       <section className="login-panel">
@@ -38,7 +48,7 @@ export function Login({
             className={mode === 'nickname' ? 'active' : ''}
             onClick={() => setMode('nickname')}
           >
-            Por nickname
+            Modo offline
           </button>
         </div>
         {mode === 'official' ? (
@@ -66,12 +76,49 @@ export function Login({
           <>
             <label className="field">
               Nick
-              <input placeholder="Digite seu nick…" disabled />
+              <input
+                value={nickname}
+                onChange={(event) => setNickname(event.target.value)}
+                placeholder="Seu nick no Minecraft"
+                minLength={3}
+                maxLength={16}
+                autoComplete="username"
+                spellCheck={false}
+              />
             </label>
             <p className="login-explanation">
-              Acesso por nickname ainda indisponível. Depende da política de autenticação do
-              servidor.
+              Use seu nick do Atlas. Ao entrar no servidor, autentique-se com /login ou crie sua
+              conta com /register. Sua senha é informada apenas dentro do Minecraft.
             </p>
+            <button
+              className="primary wide"
+              disabled={!/^[A-Za-z0-9_]{3,16}$/.test(nickname) || submitting || !window.atlas}
+              onClick={async () => {
+                setSubmitting(true);
+                setOfflineError('');
+                try {
+                  await onOffline(nickname);
+                  try {
+                    localStorage.setItem('atlas:last-offline-nickname', nickname);
+                  } catch {
+                    // Storage availability must not prevent entry into the launcher.
+                  }
+                } catch {
+                  setOfflineError(
+                    'Não foi possível usar esse nick. Aguarde a operação atual terminar e tente novamente.',
+                  );
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+            >
+              {submitting ? 'Preparando perfil…' : 'Entrar no modo offline'}
+            </button>
+            {offlineError && (
+              <p role="alert" className="auth-error">
+                {offlineError}
+              </p>
+            )}
           </>
         )}
         {auth?.status === 'waiting' && (
@@ -96,13 +143,6 @@ export function Login({
             {auth.message}
           </p>
         )}
-        <div className="divider">
-          <span>enquanto isso</span>
-        </div>
-        <button className="primary wide" onClick={onExplore}>
-          Conhecer o launcher <Icon name="arrow" size={17} />
-        </button>
-        <p className="login-note">Explore a interface sem iniciar uma sessão.</p>
         <button className="text-button" onClick={onWebsite} disabled={!window.atlas}>
           Conheça o Atlas <Icon name="external" size={14} />
         </button>

@@ -1,5 +1,5 @@
 {
-  "microsoftClientId": null,
+  "microsoftClientId": "6dbd68a6-52e0-480e-868c-f84f1e4be4b2",
   "releasePublicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEASKDfWWuo6YlQ6YvyqKZVIaHdFbKPFkVOYdDUtLjQMLM=\n-----END PUBLIC KEY-----\n",
   "downloadOrigins": [
     "https://cdn.modrinth.com",
@@ -7,5 +7,11 @@
     "https://mediafilez.forgecdn.net",
     "https://media.forgecdn.net"
   ],
-  "bundledFiles": ["atlas-interface-1.1.0.jar", "atlas-interface-1.1.1.jar"]
+  "bundledFiles": [
+    "atlas-interface-1.1.0.jar",
+    "atlas-interface-1.1.1.jar",
+    "cobblemon-battle-positions-1.1.3.jar",
+    "atlas-interface-1.1.2.jar",
+    "atlas-interface-1.1.3.jar"
+  ]
 }

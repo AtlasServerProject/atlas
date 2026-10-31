@@ -1,10 +1,14 @@
+import { launcherDiagnostic, type Diagnostic } from '../shared/diagnostics';
+import { LauncherUpdates } from './launcher/updates';
+import { fetchRelease, selectRelease } from './modpack/updates';
 import { javaEnvironment } from './installation/java-environment';
-import { createGameLog } from './installation/game-log';
+import { createGameLog, gameExitMessage } from './installation/game-log';
 import { compareVersions } from './modpack/versions';
-import { readFile, writeFile, mkdir, unlink, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, unlink, stat, rename } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { freemem } from 'node:os';
+import { freemem, totalmem } from 'node:os';
+import { chooseGameMemory, memoryStatus } from './installation/memory';
 import { MicrosoftLogin } from './auth/microsoft';
 import { TokenVault, type Cipher } from './auth/vault';
 import { verifyManifestEnvelope, type ManifestTrust } from './modpack/manifest';
@@ -36,12 +40,23 @@ export interface InstallationState {
   label: string;
   message?: string;
   version?: string;
+  diagnostic?: Diagnostic;
 }
 export class LauncherRuntime {
   readonly auth: MicrosoftLogin;
+  readonly launcherUpdates: LauncherUpdates;
   onGameExit?: () => void;
+  private checkingUpdates = false;
+  private updates = {
+    status: 'idle',
+    message: 'Consulte novas versões do modpack.',
+    checkedAt: '',
+  };
   private controller?: AbortController;
   private running?: ChildProcess;
+  private launchMessage = '';
+  private gameDiagnostic?: Diagnostic & { id: string };
+  private diagnosticSequence = 0;
   private launching = false;
   private launchCancelled = false;
   private externalGamePid?: number;
@@ -62,6 +77,11 @@ export class LauncherRuntime {
     private settings: SettingsStore,
     cipher: Cipher,
   ) {
+    this.launcherUpdates = new LauncherUpdates(
+      join(dataDirectory, 'launcher-updates'),
+      config.releasePublicKey,
+      PROJECT.version,
+    );
     this.auth = new MicrosoftLogin(
       config.microsoftClientId,
       new TokenVault(join(dataDirectory, 'account-cache.bin'), cipher),
@@ -96,11 +116,29 @@ export class LauncherRuntime {
       const saved = JSON.parse(await readFile(join(dataDirectory, 'game-process.json'), 'utf8'));
       if (processAlive(saved.pid)) runtime.externalGamePid = saved.pid;
     } catch {}
+    for (const receipt of [
+      join(dataDirectory, 'release-cache.json'),
+      join(dataDirectory, 'instances/atlas-cobblemon/.atlas/managed-release.json'),
+    ]) {
+      try {
+        runtime.envelope = selectRelease(
+          runtime.envelope,
+          await readFile(receipt, 'utf8'),
+          trust,
+          PROJECT.version,
+        );
+      } catch {}
+    }
     return runtime;
   }
   state() {
     return {
       auth: this.auth.publicState(),
+      gameDiagnostic: this.gameDiagnostic,
+      memory: memoryStatus(totalmem(), freemem()),
+      launchMessage: this.launchMessage,
+      updates: { ...this.updates },
+      launcherUpdate: { ...this.launcherUpdates.state },
       installation: structuredClone(this.installation),
       canInstall: process.platform === 'win32' && process.arch === 'x64',
       minecraftVersion: '1.21.1',
@@ -114,8 +152,62 @@ export class LauncherRuntime {
       busy: this.isBusy(),
     };
   }
-  async install() {
-    if (this.controller || this.gameRunning())
+  async checkUpdates() {
+    if (this.isBusy() || this.gameRunning()) return;
+    this.checkingUpdates = true;
+    this.updates = { status: 'checking', message: 'Consultando catálogo assinado…', checkedAt: '' };
+    try {
+      const previous = verifyManifestEnvelope(this.envelope, this.trust).version;
+      const selected = selectRelease(
+        this.envelope,
+        await fetchRelease(),
+        this.trust,
+        PROJECT.version,
+      );
+      await mkdir(this.dataDirectory, { recursive: true });
+      await writeFile(join(this.dataDirectory, 'release-cache.next.json'), selected, {
+        mode: 0o600,
+      });
+      await rename(
+        join(this.dataDirectory, 'release-cache.next.json'),
+        join(this.dataDirectory, 'release-cache.json'),
+      );
+      this.envelope = selected;
+      const version = verifyManifestEnvelope(selected, this.trust).version;
+      if (version !== previous && this.installation.status === 'ready')
+        this.installation = {
+          ...this.installation,
+          status: 'not-installed',
+          label: 'Nova versão disponível. Atualize para continuar.',
+        };
+      this.updates = {
+        status: version !== previous ? 'available' : 'current',
+        message:
+          version !== previous
+            ? `Atlas ${version} disponível para instalar.`
+            : `Atlas ${version}: catálogo atualizado.`,
+        checkedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.updates = {
+        status: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível consultar atualizações. A versão local foi preservada.',
+        checkedAt: new Date().toISOString(),
+      };
+    } finally {
+      this.checkingUpdates = false;
+    }
+  }
+  async install(forLaunch = false) {
+    if (
+      this.controller ||
+      this.checkingUpdates ||
+      (this.launching && !forLaunch) ||
+      this.gameRunning()
+    )
       throw new Error('Aguarde o processo atual terminar.');
     if (process.platform !== 'win32' || process.arch !== 'x64')
       throw new Error('A instalação automática desta versão está disponível no Windows x64.');
@@ -181,7 +273,8 @@ export class LauncherRuntime {
         label: controller.signal.aborted
           ? 'Instalação cancelada.'
           : 'Não foi possível concluir a instalação.',
-        message: error instanceof Error ? error.message : 'Tente novamente.',
+        message: launcherDiagnostic(error).explanation,
+        diagnostic: launcherDiagnostic(error),
       };
     } finally {
       if (handle) {
@@ -243,7 +336,7 @@ export class LauncherRuntime {
       const requestedAccount = this.auth.publicState().account?.id;
       let account = await this.auth.forGame();
       if (this.launchCancelled) throw new Error('Inicialização cancelada.');
-      await this.install();
+      await this.install(true);
       if (this.installation.status !== 'ready' || !this.plan || !this.javaPath)
         throw new Error('A instalação precisa ser corrigida antes de jogar.');
       if (this.launchCancelled) throw new Error('Inicialização cancelada.');
@@ -252,12 +345,10 @@ export class LauncherRuntime {
       account = await this.auth.forGame();
       if (this.launchCancelled) throw new Error('Inicialização cancelada.');
       const preferences = await this.settings.read();
-      if (preferences.ramMb < 4096)
-        throw new Error('Configure pelo menos 4 GB de RAM para o modpack Atlas.');
-      if (preferences.ramMb * 1048576 > freemem() - 1024 ** 3)
-        throw new Error(
-          'Memória livre insuficiente. Feche outros aplicativos ou reduza a RAM do jogo.',
-        );
+      const memory = chooseGameMemory(preferences.ramMb, totalmem(), freemem());
+      this.launchMessage = memory.adjusted
+        ? `Para esta sessão, o limite do jogo foi ajustado de ${(preferences.ramMb / 1024).toLocaleString('pt-BR')} GB para ${(memory.heapMb / 1024).toLocaleString('pt-BR')} GB, conforme a memória disponível. Sua preferência foi preservada.`
+        : `Minecraft preparado com limite de ${(memory.heapMb / 1024).toLocaleString('pt-BR')} GB de RAM.`;
       const gameRoot = join(this.dataDirectory, 'minecraft');
       const instance = join(this.dataDirectory, 'instances/atlas-cobblemon');
       const plan = this.plan;
@@ -265,9 +356,9 @@ export class LauncherRuntime {
         auth_player_name: account.profile.name,
         auth_uuid: account.profile.id,
         auth_access_token: account.accessToken,
-        clientid: this.config.microsoftClientId,
+        clientid: this.config.microsoftClientId ?? '',
         auth_xuid: account.xuid,
-        user_type: 'msa',
+        user_type: account.profile.kind === 'offline' ? 'legacy' : 'msa',
         version_type: 'release',
         version_name: plan.versionId,
         game_directory: instance,
@@ -281,8 +372,9 @@ export class LauncherRuntime {
         resolution_height: String(preferences.height),
       };
       const args = [
-        `-Xmx${preferences.ramMb}M`,
+        `-Xmx${memory.heapMb}M`,
         '-Xms512M',
+        '-XX:+ExitOnOutOfMemoryError',
         ...expandArguments(plan.vanilla.arguments.jvm, variables),
         ...expandArguments(plan.fabric.arguments?.jvm ?? [], variables),
         plan.fabric.mainClass,
@@ -296,15 +388,25 @@ export class LauncherRuntime {
         '--quickPlayMultiplayer',
         PROJECT.serverAddress,
       ];
-      if (!account.xuid) {
-        const index = args.indexOf('--xuid');
+      for (const option of [
+        ...(!account.xuid ? ['--xuid'] : []),
+        ...(!this.config.microsoftClientId ? ['--clientId'] : []),
+      ]) {
+        const index = args.indexOf(option);
         if (index >= 0) args.splice(index, 2);
       }
       const executable = await ownedPath(gameRoot, this.javaPath);
       if (this.launchCancelled) throw new Error('Inicialização cancelada.');
-      const log = await createGameLog(join(this.dataDirectory, 'diagnostics'), [
-        account.accessToken,
-      ]);
+      this.gameDiagnostic = undefined;
+      const log = await createGameLog(
+        join(this.dataDirectory, 'diagnostics'),
+        account.profile.kind === 'offline' ? [] : [account.accessToken],
+        (diagnostic) => {
+          if (this.gameDiagnostic?.code === diagnostic.code) return;
+          this.gameDiagnostic = { ...diagnostic, id: `${Date.now()}-${++this.diagnosticSequence}` };
+        },
+        account.profile.kind === 'offline',
+      );
       if (this.launchCancelled) {
         await log.close();
         throw new Error('Inicialização cancelada.');
@@ -316,29 +418,44 @@ export class LauncherRuntime {
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
+      let spawnFailed = false;
       child.stdout?.on('data', (chunk) => log.append(chunk, 0));
       child.stderr?.on('data', (chunk) => log.append(chunk, 1));
       child.once('close', () => void log.close().catch(() => {}));
       this.running = child;
       this.installation.status = 'running';
-      child.once('error', () => {
+      child.once('error', (error: NodeJS.ErrnoException) => {
+        spawnFailed = true;
         this.running = undefined;
         this.installation = {
           status: 'error',
           completed: 0,
           total: 0,
-          label: 'Não foi possível iniciar o Java 21.',
+          label:
+            error.code === 'ENOMEM'
+              ? 'O sistema não conseguiu reservar memória para iniciar o Minecraft. Feche outros aplicativos e tente novamente.'
+              : 'Não foi possível iniciar o Java 21.',
         };
       });
-      child.once('exit', (code) => {
+      child.once('close', (code) => {
         this.onGameExit?.();
         void unlink(join(this.dataDirectory, 'game-process.json')).catch(() => {});
         this.running = undefined;
+        if (spawnFailed) return;
         this.installation.status = code === 0 ? 'ready' : 'error';
-        this.installation.label =
-          code === 0
-            ? 'Minecraft encerrado.'
-            : 'O Minecraft encerrou com erro. Abra Configurações → Avançado → Diagnósticos.';
+        this.installation.label = gameExitMessage(code, log.memoryFailure());
+        if (code !== 0 && !this.gameDiagnostic) {
+          const diagnostic = log.memoryFailure()
+            ? launcherDiagnostic('OutOfMemoryError')
+            : {
+                code: 'ATL-GAME-001',
+                title: 'O Minecraft encerrou com erro',
+                explanation: `O processo terminou com código ${code ?? 'indisponível'}. Esse código sozinho não identifica a causa.`,
+                steps: ['Abra os diagnósticos e informe à equipe a ação realizada antes da falha.'],
+                responsibility: 'Jogador ou equipe Atlas' as const,
+              };
+          this.gameDiagnostic = { ...diagnostic, id: `${Date.now()}-${++this.diagnosticSequence}` };
+        }
       });
       await new Promise<void>((resolve, reject) => {
         child.once('spawn', () => {
@@ -353,14 +470,22 @@ export class LauncherRuntime {
               reject(new Error('Não foi possível registrar o processo do jogo.'));
             });
         });
-        child.once('error', () => reject(new Error('Java não iniciou.')));
+        child.once('error', (error: NodeJS.ErrnoException) =>
+          reject(
+            new Error(
+              error.code === 'ENOMEM'
+                ? 'O sistema não conseguiu reservar memória para iniciar o Minecraft. Feche outros aplicativos e tente novamente.'
+                : 'Java não iniciou.',
+            ),
+          ),
+        );
       });
     } finally {
       this.launching = false;
     }
   }
   isBusy() {
-    return !!this.controller || this.launching;
+    return !!this.controller || this.launching || this.checkingUpdates;
   }
   installing() {
     return !!this.controller;

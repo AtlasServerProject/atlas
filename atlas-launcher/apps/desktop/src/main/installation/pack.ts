@@ -8,7 +8,7 @@ import {
   type Manifest,
 } from '../modpack/manifest';
 import { downloadFile, fileMatches, TrustedTransport } from './download';
-import { ownedPath } from './paths';
+import { ownedPath, safeRelative } from './paths';
 interface Journal {
   paths: string[];
   hadPrevious: string[];
@@ -101,12 +101,16 @@ export async function installPack(
       if (url.protocol === 'atlas-bundled:') {
         const name = url.pathname.slice(1);
         if (!trust.bundledFiles?.has(name)) throw new Error('Recurso local não autorizado.');
-        const source = await ownedPath(bundledRoot, name);
+        // Bundled resources are read-only and may live inside Electron's ASAR.
+        // ownedPath creates directories and is reserved for writable instance paths.
+        safeRelative(name);
+        if (name.includes('/')) throw new Error('Recurso local inválido.');
+        const source = join(bundledRoot, name);
         if (!(await fileMatches(source, expected)))
           throw new Error('Recurso do launcher corrompido.');
         const stage = await ownedPath(root, staging + '/' + file.path);
         await mkdir(dirname(stage), { recursive: true });
-        await copyFile(source, stage);
+        await writeFile(stage, await readFile(source), { mode: 0o600 });
       } else
         await downloadFile(
           root,
@@ -122,6 +126,9 @@ export async function installPack(
   const current = new Set(manifest.files.map((f) => f.path));
   const obsolete = (previous?.files ?? []).filter((f) => !current.has(f.path)).map((f) => f.path);
   for (const removal of manifest.removals) {
+    // Obsolete paths can be absent on fresh installs, skipped releases and repairs.
+    // Absence requires no mutation; existing files still require signed ownership.
+    if (!(await exists(await ownedPath(root, removal)))) continue;
     if (!previous?.files.some((f) => f.path === removal))
       throw new Error('Remoção de arquivo não gerenciado bloqueada.');
     if (!obsolete.includes(removal)) obsolete.push(removal);

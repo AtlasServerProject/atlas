@@ -1,8 +1,10 @@
+import { PROJECT } from '../../shared/project';
 import { useState } from 'react';
-import type { Bootstrap, Settings as Preferences } from '../../shared/contracts';
+import type { Bootstrap, RuntimeState, Settings as Preferences } from '../../shared/contracts';
 import { Icon } from '../components/Icon';
 export function Settings({
   data,
+  runtime,
   settings,
   onChange,
   onSave,
@@ -10,6 +12,7 @@ export function Settings({
   saving,
 }: {
   data?: Bootstrap;
+  runtime?: RuntimeState;
   settings?: Preferences;
   onChange: (value: Preferences) => void;
   onSave: () => void;
@@ -53,7 +56,8 @@ export function Settings({
               no registro do launcher.
             </p>
             <p className="muted">
-              Launcher {data?.version ?? '0.4.0'} · {data?.platform ?? 'Prévia no navegador'}
+              Launcher {data?.version ?? PROJECT.version} ·{' '}
+              {data?.platform ?? 'Prévia no navegador'}
             </p>
           </>
         ) : tab === 'Geral' ? (
@@ -114,24 +118,59 @@ export function Settings({
               </label>
             </>
           ) : (
-            <label className="field ram-field">
-              Memória RAM máxima
-              <strong>
-                {(settings.ramMb / 1024).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB
-              </strong>
-              <input
-                type="range"
-                min={512}
-                max={data.maxRamMb}
-                step={256}
-                value={settings.ramMb}
-                onChange={(e) => onChange({ ...settings, ramMb: Number(e.target.value) })}
-              />
-              <small>
-                Limite: {data.maxRamMb.toLocaleString('pt-BR')} MB, com reserva de 2 GB para o
-                sistema.
-              </small>
-            </label>
+            <div>
+              <p className="muted">
+                RAM é um limite máximo, não memória liberada. O launcher ajusta o limite desta
+                sessão se necessário, sem exigir que todo o limite esteja livre de uma vez. O jogo
+                inicia com 512 MB de heap e pode crescer até o limite escolhido.
+              </p>
+              {runtime?.memory && (
+                <p role="status">
+                  Disponível agora:{' '}
+                  {(runtime.memory.availableMb / 1024).toLocaleString('pt-BR', {
+                    maximumFractionDigits: 1,
+                  })}{' '}
+                  GB · Total:{' '}
+                  {(runtime.memory.totalMb / 1024).toLocaleString('pt-BR', {
+                    maximumFractionDigits: 1,
+                  })}{' '}
+                  GB
+                </p>
+              )}
+              {runtime?.memory?.recommendedMb ? (
+                <button
+                  className="secondary"
+                  onClick={() => onChange({ ...settings, ramMb: runtime.memory!.recommendedMb })}
+                >
+                  Usar valor recomendado (
+                  {(runtime.memory.recommendedMb / 1024).toLocaleString('pt-BR')} GB)
+                </button>
+              ) : (
+                runtime?.memory && (
+                  <p className="muted">
+                    4 GB são recomendados, mas você pode tentar iniciar com menos memória.
+                  </p>
+                )
+              )}
+              <label className="field ram-field">
+                Memória RAM máxima
+                <strong>
+                  {(settings.ramMb / 1024).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB
+                </strong>
+                <input
+                  type="range"
+                  min={512}
+                  max={data.maxRamMb}
+                  step={256}
+                  value={settings.ramMb}
+                  onChange={(e) => onChange({ ...settings, ramMb: Number(e.target.value) })}
+                />
+                <small>
+                  Limite: {data.maxRamMb.toLocaleString('pt-BR')} MB, mantendo uma reserva de
+                  memória para o sistema.
+                </small>
+              </label>
+            </div>
           )
         ) : (
           <p>Configurações locais disponíveis no aplicativo desktop, com memória suficiente.</p>

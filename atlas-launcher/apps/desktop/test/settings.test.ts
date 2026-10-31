@@ -51,10 +51,10 @@ test('preferências persistem atomicamente mesmo com gravações concorrentes', 
   }
 });
 
-test('RAM insuficiente não permite reservar mais que a capacidade disponível', () => {
-  assert.equal(ramLimit(256 * 1048576), 0);
-  assert.equal(ramLimit(2048 * 1048576), 0);
-  assert.throws(() => validateSettings(defaultSettings(512), 0));
+test('computadores com pouca RAM ainda podem salvar uma preferência para tentar iniciar', () => {
+  assert.equal(ramLimit(256 * 1048576), 512);
+  assert.equal(ramLimit(2048 * 1048576), 1024);
+  assert.equal(validateSettings(defaultSettings(1024), 1024).ramMb, 1024);
 });
 
 import { validateWindowAction } from '../src/main/window-actions';

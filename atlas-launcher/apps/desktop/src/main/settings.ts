@@ -2,7 +2,9 @@ import { readFile, mkdir, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Settings } from '../shared/contracts';
 export function ramLimit(totalBytes: number): number {
-  return Math.max(0, Math.min(32768, Math.floor((totalBytes / 1048576 - 2048) / 256) * 256));
+  const totalMb = Math.max(0, Math.floor(totalBytes / 1048576));
+  const reserveMb = Math.min(2048, totalMb / 2);
+  return Math.max(512, Math.min(32768, Math.floor((totalMb - reserveMb) / 256) * 256));
 }
 export function defaultSettings(max: number): Settings {
   return {

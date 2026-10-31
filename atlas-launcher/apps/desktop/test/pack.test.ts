@@ -10,7 +10,7 @@ const trust = {
   publicKeys: { test: keys.publicKey.export({ type: 'spki', format: 'pem' }).toString() },
   downloadOrigins: new Set(['https://fixture.invalid']),
 };
-function release(version: string, name: string, data: string) {
+function release(version: string, name: string, data: string, removals: string[] = []) {
   const payload = Buffer.from(
     JSON.stringify({
       schemaVersion: 1,
@@ -31,7 +31,7 @@ function release(version: string, name: string, data: string) {
           sha256: createHash('sha256').update(data).digest('hex'),
         },
       ],
-      removals: [],
+      removals,
     }),
   );
   return JSON.stringify({
@@ -124,6 +124,52 @@ test('launcher antigo não rebaixa uma instalação já atualizada', async () =>
       /antigo/,
     );
     assert.equal(await readFile(join(root, 'mods/a.jar'), 'utf8'), 'new');
+  } finally {
+    globalThis.fetch = original;
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('obsolete removals allow fresh install, skipped releases and repeated repair', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'atlas-pack-obsolete-'));
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response('first');
+    const first = release('1.0.0', 'a.jar', 'first', ['mods/ancient.jar']);
+    await installPack(root, first, trust, root, new AbortController().signal, () => {});
+    globalThis.fetch = async () => new Response('second');
+    const next = release('1.2.0', 'c.jar', 'second', ['mods/a.jar', 'mods/b.jar']);
+    await installPack(root, next, trust, root, new AbortController().signal, () => {});
+    await installPack(root, next, trust, root, new AbortController().signal, () => {});
+    assert.equal(await readFile(join(root, 'mods/c.jar'), 'utf8'), 'second');
+    await assert.rejects(readFile(join(root, 'mods/a.jar')));
+  } finally {
+    globalThis.fetch = original;
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('existing unowned removal remains blocked and personal file preserved', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'atlas-pack-unowned-'));
+  const original = globalThis.fetch;
+  try {
+    await mkdir(join(root, 'mods'));
+    await writeFile(join(root, 'mods/personal.jar'), 'personal');
+    globalThis.fetch = async () => new Response('new');
+    await assert.rejects(
+      installPack(
+        root,
+        release('1.0.0', 'a.jar', 'new', ['mods/personal.jar']),
+        trust,
+        root,
+        new AbortController().signal,
+        () => {},
+      ),
+      /não gerenciado/,
+    );
+    assert.equal(await readFile(join(root, 'mods/personal.jar'), 'utf8'), 'personal');
+    await assert.rejects(readFile(join(root, '.atlas/managed-release.json')));
+    await assert.rejects(readFile(join(root, 'mods/a.jar')));
   } finally {
     globalThis.fetch = original;
     await rm(root, { recursive: true, force: true });

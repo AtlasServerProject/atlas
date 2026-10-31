@@ -32,7 +32,7 @@ export function Home({
           <p>Um mundo de aventuras inspirado em Pokémon, totalmente no Minecraft.</p>
           <div className="installation-state">
             <span className="state-icon">
-              <Icon name="download" />
+              <Icon name={ready ? 'check' : 'download'} />
             </span>
             <div>
               <strong>
@@ -57,19 +57,25 @@ export function Home({
               }
               onClick={ready ? onPlay : onInstall}
             >
-              <Icon name="play" size={22} />
-              {ready ? 'JOGAR ATLAS' : 'PREPARAR MINECRAFT'}
-            </button>
-            <button aria-label="Ver instalação do modpack" onClick={onModpack}>
-              ⌄
+              <span className="launch-action-icon">
+                <Icon name={ready ? 'play' : 'download'} size={22} />
+              </span>
+              <span className="launch-action-copy">
+                <strong>
+                  {busy ? 'Preparando arquivos' : ready ? 'Jogar Atlas' : 'Instalar modpack'}
+                </strong>
+                <small>{ready ? 'Sua aventura está pronta' : 'Minecraft · Fabric · Atlas'}</small>
+              </span>
             </button>
           </div>
           <span className="play-caption">
             {ready && runtime?.auth.status !== 'signed-in'
-              ? 'Conecte sua conta Microsoft para jogar.'
-              : runtime?.canInstall
-                ? 'Minecraft, Java 21 e modpack em uma pasta exclusiva.'
-                : 'Instalação disponível no pacote Windows x64.'}
+              ? 'Escolha o modo offline ou conecte sua conta Microsoft para jogar.'
+              : runtime?.auth.account?.kind === 'offline'
+                ? 'Modo offline · use /login ao entrar no Atlas.'
+                : runtime?.canInstall
+                  ? 'Minecraft, Java 21 e modpack em uma pasta exclusiva.'
+                  : 'Instalação disponível no pacote Windows x64.'}
           </span>
         </div>
       </section>

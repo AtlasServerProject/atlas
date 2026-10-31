@@ -1,10 +1,12 @@
+import { AuthFlowError, publicAuthError, type AuthStage } from './errors';
+import { offlineProfile } from './offline';
 import { MicrosoftAuthenticator } from '@xmcl/user';
 import { PublicClientApplication, type DeviceCodeRequest } from '@azure/msal-node';
 import { TokenVault } from './vault';
 export interface PublicAccount {
   id: string;
   name: string;
-  kind: 'microsoft';
+  kind: 'microsoft' | 'offline';
 }
 export interface AuthState {
   configured: boolean;
@@ -44,31 +46,59 @@ export async function exchangeMinecraftToken(
   request: typeof fetch = fetch,
 ): Promise<GameSession> {
   const json = async (url: string, body?: unknown, bearer?: string) => {
-    const response = await request(url, {
-      method: body ? 'POST' : 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(bearer ? { Authorization: 'Bearer ' + bearer } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-      redirect: 'error',
-      signal: AbortSignal.timeout(30000),
-    });
-    if (!response.ok)
-      throw new Error(
-        response.status === 404
-          ? 'Esta conta não tem um perfil Minecraft Java disponível.'
-          : 'A Microsoft/Xbox não concluiu a autorização. Verifique as permissões da conta e do aplicativo Atlas.',
-      );
-    return response.json();
+    const stage: AuthStage = url.endsWith('/minecraft/profile')
+      ? 'Minecraft perfil'
+      : 'Minecraft autorização';
+    let response: Response;
+    try {
+      response = await request(url, {
+        method: body ? 'POST' : 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(bearer ? { Authorization: 'Bearer ' + bearer } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+        redirect: 'error',
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch {
+      throw new AuthFlowError(stage);
+    }
+    if (!response.ok) throw new AuthFlowError(stage, response.status);
+    try {
+      return await response.json();
+    } catch {
+      throw new AuthFlowError(stage, response.status);
+    }
   };
   const xboxClient = new MicrosoftAuthenticator({
-    fetch: (input, init) =>
-      request(input, {
-        ...init,
-        redirect: 'error',
-        signal: init?.signal ?? AbortSignal.timeout(30000),
-      }),
+    fetch: async (input, init) => {
+      const url = String(input);
+      const stage: AuthStage = url.includes('device.auth.xboxlive.com')
+        ? 'Xbox dispositivo'
+        : url.includes('xsts.auth.xboxlive.com')
+          ? 'Xbox XSTS'
+          : 'Xbox Live';
+      let response: Response;
+      try {
+        response = await request(input, {
+          ...init,
+          redirect: 'error',
+          signal: init?.signal ?? AbortSignal.timeout(30000),
+        });
+      } catch {
+        throw new AuthFlowError(stage);
+      }
+      if (!response.ok) {
+        let xerr: number | undefined;
+        try {
+          const body = await response.clone().json();
+          if ([2148916233, 2148916238].includes(body.XErr)) xerr = body.XErr;
+        } catch {}
+        throw new AuthFlowError(stage, response.status, xerr);
+      }
+      return response;
+    },
   });
   let xsts;
   try {
@@ -80,14 +110,13 @@ export async function exchangeMinecraftToken(
       undefined,
       device.Token,
     );
-  } catch {
-    throw new Error(
-      'A Microsoft/Xbox não concluiu a autorização. Verifique as permissões da conta e do aplicativo Atlas.',
-    );
+  } catch (error) {
+    if (error instanceof AuthFlowError) throw error;
+    throw new AuthFlowError('Xbox XSTS');
   }
   const uhs = xsts.DisplayClaims?.xui?.[0]?.uhs;
   if (typeof uhs !== 'string' || typeof xsts.Token !== 'string')
-    throw new Error('Resposta Xbox inválida.');
+    throw new AuthFlowError('Xbox XSTS');
   const game = await json('https://api.minecraftservices.com/authentication/login_with_xbox', {
     identityToken: `XBL3.0 x=${uhs};${xsts.Token}`,
   });
@@ -96,14 +125,14 @@ export async function exchangeMinecraftToken(
     !Number.isFinite(game.expires_in) ||
     game.expires_in <= 0
   )
-    throw new Error('Sessão Minecraft inválida.');
+    throw new AuthFlowError('Minecraft autorização');
   const profile = await json(
     'https://api.minecraftservices.com/minecraft/profile',
     undefined,
     game.access_token,
   );
   if (!/^[0-9a-f]{32}$/i.test(profile.id) || !/^\w{3,16}$/.test(profile.name))
-    throw new Error('Perfil Minecraft inválido.');
+    throw new AuthFlowError('Minecraft perfil');
   return {
     profile: { id: profile.id, name: profile.name, kind: 'microsoft' },
     xuid: /^\d{1,24}$/.test(String(xsts.DisplayClaims?.xui?.[0]?.xid ?? ''))
@@ -197,13 +226,23 @@ export class MicrosoftLogin {
         this.state = {
           configured: true,
           status: 'error',
-          message:
-            error instanceof Error && error.message.startsWith('Esta conta')
-              ? error.message
-              : 'Não foi possível autenticar. Confira o cadastro do aplicativo Atlas, o acesso Xbox/Minecraft e tente novamente.',
+          message: publicAuthError(error),
         };
       }
     }
+  }
+  async signInOffline(nickname: unknown) {
+    const profile = offlineProfile(nickname);
+    const generation = this.generation + 1;
+    await this.signOut();
+    if (this.generation !== generation) return;
+    this.session = { profile, accessToken: '0', expiresAt: Number.MAX_SAFE_INTEGER, xuid: '' };
+    this.state = {
+      configured: validClientId(this.clientId),
+      status: 'signed-in',
+      account: profile,
+      message: 'Modo offline. Autentique-se com /login no servidor Atlas.',
+    };
   }
   async signOut() {
     this.generation++;

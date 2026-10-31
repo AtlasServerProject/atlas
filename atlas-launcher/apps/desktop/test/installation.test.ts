@@ -76,17 +76,20 @@ test('catálogo Atlas distribuído é assinado e contém somente arquivos reais/
     downloadOrigins: new Set(config.downloadOrigins),
     bundledFiles: new Set(config.bundledFiles),
   });
-  assert.equal(manifest.files.length, 57);
+  assert.equal(manifest.files.length, 58);
   assert.equal(manifest.minecraftVersion, '1.21.1');
   assert.equal(manifest.modLoader.version, '0.18.0');
-  const own = manifest.files.find((f) => f.url.startsWith('atlas-bundled:'))!;
-  assert.ok(
-    await fileMatches(join(root, 'bundled', own.path.slice(5)), {
-      size: own.size,
-      hash: own.sha256,
-      algorithm: 'sha256',
-    }),
-  );
+  assert.ok(manifest.files.some((f) => f.path === 'mods/cobblemon-battle-positions-1.1.3.jar'));
+  assert.ok(manifest.files.some((f) => f.path.includes('rctapi-fabric-1.21.1-0.16.2')));
+  for (const own of manifest.files.filter((f) => f.url.startsWith('atlas-bundled:'))) {
+    assert.ok(
+      await fileMatches(join(root, 'bundled', own.path.slice(5)), {
+        size: own.size,
+        hash: own.sha256,
+        algorithm: 'sha256',
+      }),
+    );
+  }
   assert.ok(config.microsoftClientId === null || validClientId(config.microsoftClientId));
 });
 

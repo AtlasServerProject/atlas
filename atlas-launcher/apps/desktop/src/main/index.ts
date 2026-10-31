@@ -1,8 +1,10 @@
-import { mkdir } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { managedInstall, mayApplyUpdate, installerArguments } from './launcher/install-policy';
+import { mkdir, readFile } from 'node:fs/promises';
 import { LauncherRuntime } from './runtime';
 import { validateVerificationUri } from './auth/microsoft';
 import { app, BrowserWindow, ipcMain, shell, session, safeStorage } from 'electron';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { totalmem } from 'node:os';
 import { CHANNELS } from '../shared/contracts';
@@ -37,6 +39,59 @@ else {
         encrypt: (value) => safeStorage.encryptString(value),
         decrypt: (bytes) => safeStorage.decryptString(bytes),
       });
+      let installed = false;
+      if (app.isPackaged && process.platform === 'win32') {
+        try {
+          installed = managedInstall(
+            process.execPath,
+            process.env.LOCALAPPDATA,
+            JSON.parse(
+              await readFile(join(dirname(process.execPath), '.atlas-installation.json'), 'utf8'),
+            ),
+          );
+        } catch {}
+      }
+      runtime.launcherUpdates.configureAutomatic(installed);
+      let applyingUpdate = false;
+      let updateSpawned = false;
+      let closingAfterGame = false;
+      let gameCloseTimer: NodeJS.Timeout | undefined;
+      async function applyUpdate(restart: boolean) {
+        if (applyingUpdate) return;
+        if (
+          !mayApplyUpdate(
+            installed,
+            runtime.launcherUpdates.state.status === 'downloaded',
+            runtime.gameRunning(),
+            runtime.isBusy(),
+          )
+        )
+          throw new Error('Encerre o Minecraft e aguarde as operações antes de atualizar.');
+        applyingUpdate = true;
+        try {
+          const executable = await runtime.launcherUpdates.preparedInstaller();
+          if (!executable) throw new Error('Nenhuma atualização verificada está pronta.');
+          const child = spawn(executable, installerArguments(process.pid, restart), {
+            detached: true,
+            windowsHide: true,
+            stdio: 'ignore',
+            shell: false,
+          });
+          await new Promise<void>((resolve, reject) => {
+            child.once('spawn', resolve);
+            child.once('error', reject);
+          });
+          child.unref();
+          updateSpawned = true;
+          app.quit();
+        } catch {
+          applyingUpdate = false;
+          runtime.launcherUpdates.state.status = 'error';
+          throw new Error(
+            'Não foi possível iniciar a atualização. O launcher atual foi preservado.',
+          );
+        }
+      }
       session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) =>
         callback(false),
       );
@@ -70,7 +125,20 @@ else {
           webSecurity: true,
         },
       });
+      window.webContents.once('did-finish-load', () => {
+        void runtime.checkUpdates();
+        void runtime.launcherUpdates.check();
+      });
+      const updateTimer = setInterval(
+        () => {
+          void runtime.checkUpdates();
+          void runtime.launcherUpdates.check();
+        },
+        5 * 60 * 1000,
+      );
+      updateTimer.unref();
       runtime.onGameExit = () => {
+        if (closingAfterGame) return;
         if (window && !window.isDestroyed()) {
           window.restore();
           window.show();
@@ -98,9 +166,37 @@ else {
         const error = await shell.openPath(folder);
         if (error) throw new Error('Não foi possível abrir a pasta de diagnósticos.');
       });
+      handle(CHANNELS.launcherApply, async (...args) => {
+        noArgs(args);
+        await applyUpdate(true);
+      });
+      handle(CHANNELS.launcherCheck, (...args) => {
+        noArgs(args);
+        void runtime.launcherUpdates.check();
+      });
+      handle(CHANNELS.launcherDownload, (...args) => {
+        noArgs(args);
+        void runtime.launcherUpdates.download().catch(() => {});
+      });
+      handle(CHANNELS.launcherFolder, async (...args) => {
+        noArgs(args);
+        const folder = runtime.launcherUpdates.directory;
+        await mkdir(folder, { recursive: true, mode: 0o700 });
+        const error = await shell.openPath(folder);
+        if (error) throw new Error('Não foi possível abrir a pasta.');
+      });
+      handle(CHANNELS.updates, (...args) => {
+        if (args.length) throw new Error('Argumentos inválidos.');
+        void runtime.checkUpdates().catch(() => {});
+      });
       handle(CHANNELS.runtime, (...args) => {
         noArgs(args);
         return runtime.state();
+      });
+      handle(CHANNELS.offline, async (...args) => {
+        if (args.length !== 1 || runtime.isBusy() || runtime.gameRunning())
+          throw new Error('Aguarde o processo atual terminar.');
+        await runtime.auth.signInOffline(args[0]);
       });
       handle(CHANNELS.signIn, (...args) => {
         noArgs(args);
@@ -129,6 +225,7 @@ else {
       handle(CHANNELS.cancel, (...args) => {
         noArgs(args);
         runtime.cancel();
+        runtime.launcherUpdates.cancel();
       });
       handle(CHANNELS.play, async (...args) => {
         noArgs(args);
@@ -136,7 +233,46 @@ else {
         if ((await store.read()).minimizeOnLaunch) window?.minimize();
       });
       window.on('close', (event) => {
+        if (installed && runtime.gameRunning()) {
+          event.preventDefault();
+          closingAfterGame = true;
+          window?.hide();
+          if (!gameCloseTimer) {
+            gameCloseTimer = setInterval(() => {
+              if (!runtime.gameRunning()) {
+                clearInterval(gameCloseTimer);
+                gameCloseTimer = undefined;
+                window?.close();
+              }
+            }, 1000);
+            gameCloseTimer.unref();
+          }
+          return;
+        }
+        if (applyingUpdate && !updateSpawned) {
+          event.preventDefault();
+          return;
+        }
+        if (
+          !applyingUpdate &&
+          mayApplyUpdate(
+            installed,
+            runtime.launcherUpdates.state.status === 'downloaded',
+            runtime.gameRunning(),
+            runtime.isBusy(),
+          )
+        ) {
+          event.preventDefault();
+          void applyUpdate(false).catch(() => {
+            runtime.launcherUpdates.state.status = 'error';
+            runtime.launcherUpdates.state.message =
+              'Não foi possível aplicar a atualização. Tente novamente mais tarde.';
+            window?.close();
+          });
+          return;
+        }
         runtime.cancel();
+        runtime.launcherUpdates.cancel();
         if (runtime.installing()) {
           event.preventDefault();
           const timer = setInterval(() => {

@@ -1,6 +1,6 @@
 # Configurar login Microsoft do Atlas
 
-O código usa MSAL Node 7.1.2, aplicativo público e contas Microsoft pessoais. Não solicita senha no launcher, não usa Client Secret e não empresta o Client ID de outros launchers. O Client ID ainda está **não configurado**, portanto o login real permanece desabilitado até esta etapa externa.
+O código usa MSAL Node 7.1.2, aplicativo público e contas Microsoft pessoais. Não solicita senha no launcher, não usa Client Secret e não empresta o Client ID de outros launchers. O Client ID público foi configurado para a versão 0.7.5. O endpoint Microsoft de código de dispositivo aceitou o início da autorização (HTTP 200); a autorização completa Xbox/Minecraft com uma conta real ainda precisa ser testada.
 
 ## Cadastro
 
@@ -26,7 +26,7 @@ Na pasta `atlas-launcher`, depois de obter o ID real:
 
 ```bash
 npm run configure:microsoft -- SEU_CLIENT_ID_PUBLICO
-npm run package:windows
+npm run package:installer
 ```
 
 `SEU_CLIENT_ID_PUBLICO` é uma indicação de preenchimento, nunca uma credencial válida. O comando só aceita UUID, modifica o campo público de configuração e preserva catálogo, assinatura e chave pública do modpack. Como o código de dispositivo é um fluxo público, nenhum segredo precisa ser distribuído.
@@ -42,4 +42,8 @@ O administrador também pode informar esse Client ID público na conversa para a
 - Sair limpa o cache, inclusive gravações concorrentes. O código lógico invalida uma autorização cancelada para impedir atualização tardia do perfil.
 - O fluxo Microsoft real e a criptografia DPAPI no Windows ainda não foram testados com uma conta nesta sessão. Os testes automatizados da cadeia de autorização usam respostas artificiais identificadas como fixtures.
 
-Acesso por nickname continua indisponível: não foi publicada uma política própria de autenticação offline para o launcher. Nenhuma opção contorna o login/autenticação do servidor Atlas.
+O modo offline por nickname continua disponível. O login Microsoft do launcher não dispensa a autenticação local do servidor Atlas.
+
+## Modo offline disponível
+
+A versão 0.6.0 oferece perfil por nickname, com autenticação própria do servidor Atlas por /login ou /register. Não solicita senha Microsoft nem senha do servidor no launcher. A identidade é apresentada como offline, sem afirmar validação Microsoft. O cadastro Microsoft pode ser retomado depois.

@@ -17,7 +17,7 @@ export function Servers({ runtime, onPlay }: { runtime?: RuntimeState; onPlay: (
           {
             name: 'Atlas Cobblemon',
             description:
-              'Explore o Atlas Cobblemon. O Lobby Emerald é seu ponto de encontro dentro do servidor.',
+              'Explore o Atlas Cobblemon. O Lobby é seu ponto de encontro dentro do servidor.',
             image: 'atlas',
             address: PROJECT.serverAddress,
           },
