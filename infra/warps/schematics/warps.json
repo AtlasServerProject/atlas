@@ -1,0 +1,110 @@
+{
+  "VIP": {
+    "file": "atlas-warp-vip.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 37,
+    "blocks": 90692,
+    "notes": {
+      "pavilion": {
+        "x": 63,
+        "y": 17,
+        "z": 22
+      },
+      "fountain": {
+        "x": 63,
+        "y": 17,
+        "z": 63
+      }
+    },
+    "water_leaks": 0
+  },
+  "Raid": {
+    "file": "atlas-warp-raid.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 23,
+    "blocks": 102720,
+    "notes": {
+      "raid_den": {
+        "x": 63,
+        "y": 20,
+        "z": 63
+      }
+    },
+    "water_leaks": 0
+  },
+  "Safari": {
+    "file": "atlas-warp-safari.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 39,
+    "blocks": 107427,
+    "notes": {
+      "spawn_area": "terreno dentro da sebe (raio 56 a partir do centro x63 z63)",
+      "ranger_station": {
+        "x": 77,
+        "y": 17,
+        "z": 93
+      }
+    },
+    "water_leaks": 0
+  },
+  "SafariVip": {
+    "file": "atlas-warp-safarivip.litematic",
+    "size": [
+      128,
+      56,
+      128
+    ],
+    "arrival": {
+      "x": 63,
+      "y": 17,
+      "z": 113,
+      "yaw": 180
+    },
+    "palette": 45,
+    "blocks": 110376,
+    "notes": {
+      "biomes": {
+        "nw": "campo florido",
+        "ne": "lago",
+        "sw": "morros rochosos",
+        "se": "taiga nevada"
+      },
+      "lodge": {
+        "x": 63,
+        "y": 17,
+        "z": 61
+      }
+    },
+    "water_leaks": 0
+  }
+}
